@@ -16,9 +16,11 @@ const safeFields = {
   nom: personneTable.nom,
   prenom: personneTable.prenom,
   login: personneTable.login,
+  username: personneTable.username,
   mobile: personneTable.mobile,
   phone: personneTable.phone,
   email: personneTable.email,
+  langue: personneTable.langue,
   typePersonne: personneTable.typePersonne,
   actif: personneTable.actif,
   sexe: personneTable.sexe,
@@ -31,6 +33,26 @@ router.get("/", authorize(ROLES.ADMINISTRATEUR), async (_req, res) => {
   try {
     const personnes = await db.select(safeFields).from(personneTable).where(eq(personneTable.isDelete, 0));
     res.json(personnes);
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.get("/me", async (req, res) => {
+  try {
+    const [p] = await db.select(safeFields).from(personneTable).where(eq(personneTable.idPers, req.user!.id)).limit(1);
+    if (!p) { res.status(404).json({ error: "Personne introuvable" }); return; }
+    res.json(p);
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.put("/me", async (req, res) => {
+  try {
+    const { password, ...rest } = req.body;
+    const updateData: any = { ...rest, updatedAt: new Date() };
+    if (password) updateData.password = await bcrypt.hash(password, 12);
+    await db.update(personneTable).set(updateData).where(eq(personneTable.idPers, req.user!.id));
+    const [p] = await db.select(safeFields).from(personneTable).where(eq(personneTable.idPers, req.user!.id)).limit(1);
+    if (!p) { res.status(404).json({ error: "Personne introuvable" }); return; }
+    res.json(p);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 

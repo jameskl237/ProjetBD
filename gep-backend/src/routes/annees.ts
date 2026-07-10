@@ -91,7 +91,7 @@ router.delete("/inscriptions/:id", authorize(ROLES.ADMINISTRATEUR), async (req, 
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (_req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.ENSEIGNANT), async (_req, res) => {
   try {
     const annees = await db.select().from(anneeAcademiqueTable);
     res.json(annees);

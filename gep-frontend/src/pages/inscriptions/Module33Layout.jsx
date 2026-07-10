@@ -12,7 +12,6 @@ function buildNavGroups(roleKey) {
       label: 'Principal',
       items: [
         { label: 'Élèves', icon: '👦', to: '/eleves' },
-        { label: 'Nouvel élève', icon: '＋', to: '/eleves/create' },
       ],
     },
     {
@@ -45,7 +44,6 @@ export default function Module33Layout({ breadcrumb, backTo, children }) {
           <BrandLogo size={36} radius={10} fontSize={15} />
           <div>
             <div className="module33-brand-name"><span className="module33-brand-main">GEP</span> <span className="module33-brand-accent">Nebular</span></div>
-            <div className="module33-brand-role">Module 3.3</div>
           </div>
         </div>
 

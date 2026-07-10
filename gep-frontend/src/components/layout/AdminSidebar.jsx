@@ -1,14 +1,20 @@
 import { useContext } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import BrandLogo from '../ui/BrandLogo'
 import { AuthContext } from '../../context/AuthContext'
 import { getNavForRole, getRoleKey } from '../../config/navigation'
 import './AdminSidebar.css'
 
 export default function Sidebar() {
-  const { user } = useContext(AuthContext)
+  const { user, logout } = useContext(AuthContext)
+  const navigate = useNavigate()
   const roleKey = getRoleKey(user)
   const nav = getNavForRole(roleKey)
+
+  async function handleLogout() {
+    await logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <aside className="sidebar">
@@ -32,6 +38,13 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <div className="sidebar-footer">
+        <button type="button" className="sidebar-logout" onClick={handleLogout}>
+          <span className="nav-icon">🚪</span>
+          <span className="nav-label">Déconnexion</span>
+        </button>
+      </div>
     </aside>
   )
 }

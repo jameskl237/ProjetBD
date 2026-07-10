@@ -71,7 +71,6 @@ export default function Search() {
             <div className="module33-filters-title">Filtres</div>
             <div className="module33-filters-subtitle">Affinez la recherche avant d’afficher les résultats.</div>
             <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
-              <button className="module33-button" type="button" onClick={() => navigate('/eleves/create')}>＋ Nouvel élève</button>
               <button className="module33-button-secondary" type="button" onClick={() => setQuery('')}>Réinitialiser</button>
             </div>
           </div>
