@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { classeApi, examenApi, api, extractData, extractList } from '../../api';
+import useAuth from '../../hooks/useAuth';
 import '../discipline/Discipline.css';
 import './Notes.css';
 
@@ -11,6 +12,7 @@ const getAppreciation = (n) => {
 };
 
 export default function NotesSaisie() {
+  const { user } = useAuth();
   const [classes, setClasses] = useState([]);
   const [classeId, setClasseId] = useState('');
   const [cours, setCours] = useState([]);
@@ -25,20 +27,41 @@ export default function NotesSaisie() {
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [saving, setSaving] = useState(false);
+  const [mesCoursIds, setMesCoursIds] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([classeApi.list(), examenApi.list(), api.get('/evaluations/epreuves')])
-      .then(([classesRes, sessionsRes, epreuvesRes]) => {
+    const init = async () => {
+      try {
+        const [classesRes, sessionsRes, epreuvesRes] = await Promise.all([
+          classeApi.list(),
+          examenApi.list(),
+          api.get('/evaluations/epreuves'),
+        ]);
         if (cancelled) return;
-        const classesList = extractList(classesRes);
-        setClasses(classesList);
-        if (classesList.length > 0) setClasseId(String(classesList[0].idClasse));
+        setClasses(extractList(classesRes));
         setSessions(extractList(sessionsRes));
         setEpreuves(extractList(epreuvesRes));
-      })
-      .catch(() => { if (!cancelled) setFeedback('Impossible de charger les données depuis le backend.'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+
+        try {
+          const ensRes = await api.get('/cours/enseignants');
+          if (cancelled) return;
+          const assignments = extractList(ensRes);
+          const myIds = assignments
+            .filter(a => a.idPers === user?.id)
+            .map(a => a.idCours);
+          setMesCoursIds(myIds);
+        } catch { setMesCoursIds([]); }
+
+        const classesList = extractList(classesRes);
+        if (classesList.length > 0) setClasseId(String(classesList[0].idClasse));
+      } catch {
+        if (!cancelled) setFeedback('Impossible de charger les données depuis le backend.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    init();
     return () => { cancelled = true };
   }, []);
 
@@ -50,7 +73,10 @@ export default function NotesSaisie() {
       .then(([classeRes, elevesRes]) => {
         if (cancelled) return;
         const classeData = extractData(classeRes);
-        const matieres = Array.isArray(classeData.matieres) ? classeData.matieres : [];
+        const allMatieres = Array.isArray(classeData.matieres) ? classeData.matieres : [];
+        const matieres = mesCoursIds.length > 0
+          ? allMatieres.filter(m => mesCoursIds.includes(m.idCours))
+          : allMatieres;
         setCours(matieres);
         setCoursId(matieres.length > 0 ? String(matieres[0].idCours) : '');
         const students = extractList(elevesRes);
@@ -60,7 +86,11 @@ export default function NotesSaisie() {
       .catch(() => { if (!cancelled) setFeedback('Impossible de charger les élèves de cette classe.'); })
       .finally(() => { if (!cancelled) setStudentsLoading(false); });
     return () => { cancelled = true };
-  }, [classeId]);
+  }, [classeId, mesCoursIds]);
+
+  useEffect(() => {
+    setNotes(eleves.reduce((acc, e) => ({ ...acc, [e.matricule]: { note: '', appreciation: '', saved: false } }), {}));
+  }, [coursId]);
 
   function updateNote(matricule, value) {
     setNotes(prev => ({ ...prev, [matricule]: { ...prev[matricule], note: value, saved: false } }));
@@ -146,12 +176,12 @@ export default function NotesSaisie() {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr><th>Élève</th><th>Note /20</th><th>Appréciation</th><th>Statut</th></tr>
+              <tr><th>Élève</th><th>Note /20</th><th>Appréciation</th></tr>
             </thead>
             <tbody>
-              {studentsLoading && <tr><td colSpan={4} style={{ textAlign: 'center', padding: 20 }}>Chargement des élèves…</td></tr>}
+              {studentsLoading && <tr><td colSpan={3} style={{ textAlign: 'center', padding: 20 }}>Chargement des élèves…</td></tr>}
               {!studentsLoading && !loading && eleves.length === 0 && (
-                <tr><td colSpan={4} style={{ textAlign: 'center', padding: 20 }}>Aucun élève inscrit dans cette classe pour l'année active.</td></tr>
+                <tr><td colSpan={3} style={{ textAlign: 'center', padding: 20 }}>Aucun élève inscrit dans cette classe pour l'année active.</td></tr>
               )}
               {eleves.map(eleve => {
                 const n = notes[eleve.matricule] || { note: '', saved: false };
@@ -168,10 +198,6 @@ export default function NotesSaisie() {
                     </td>
                     <td><input type="number" min="0" max="20" step="0.5" className="note-input" value={n.note} placeholder="—" style={{ color: noteColor, fontWeight: n.note !== '' ? 700 : 400 }} onChange={ev => updateNote(eleve.matricule, ev.target.value)} /></td>
                     <td style={{ fontStyle: appre === '—' ? 'italic' : 'normal', color: appre === '—' ? '#94a3b8' : '#1E1B4B' }}>{appre}</td>
-                    <td>{n.saved && n.note !== ''
-                      ? <span style={{ color: '#059669', fontWeight: 600, fontSize: 13 }}>✓ Enregistrée</span>
-                      : <span style={{ color: '#94a3b8', fontSize: 12 }}>En attente</span>}
-                    </td>
                   </tr>
                 );
               })}

@@ -29,8 +29,9 @@ export default function Examens() {
 
   async function loadAll() {
     setLoading(true)
+    setFetchError('')
     try {
-      const [sessionsRes, epreuvesRes, naturesRes, evaluationsRes, trimestresRes, personnesRes] = await Promise.all([
+      const results = await Promise.allSettled([
         examenApi.list(),
         api.get('/evaluations/epreuves'),
         api.get('/evaluations/natures'),
@@ -38,12 +39,17 @@ export default function Examens() {
         trimestreApi.list(),
         api.get('/personnes'),
       ])
-      setSessions(extractList(sessionsRes))
-      setEpreuves(extractList(epreuvesRes))
-      setNatures(extractList(naturesRes))
-      setEvaluations(extractList(evaluationsRes))
-      setTrimestres(extractList(trimestresRes))
-      setEnseignants(extractList(personnesRes).filter(p => p.typePersonne === 1))
+      const [sessionsRes, epreuvesRes, naturesRes, evaluationsRes, trimestresRes, personnesRes] = results
+      if (sessionsRes.status === 'fulfilled') setSessions(extractList(sessionsRes.value))
+      if (epreuvesRes.status === 'fulfilled') setEpreuves(extractList(epreuvesRes.value))
+      if (naturesRes.status === 'fulfilled') setNatures(extractList(naturesRes.value))
+      if (evaluationsRes.status === 'fulfilled') setEvaluations(extractList(evaluationsRes.value))
+      if (trimestresRes.status === 'fulfilled') setTrimestres(extractList(trimestresRes.value))
+      if (personnesRes.status === 'fulfilled') setEnseignants(extractList(personnesRes.value).filter(p => p.typePersonne === 1))
+      const failures = results.filter(r => r.status === 'rejected')
+      if (failures.length > 0) {
+        console.warn('Some exam data failed to load:', failures.map(f => f.reason?.message || f.reason))
+      }
     } catch (error) {
       console.error('Failed to load examens data', error)
       setFetchError('Impossible de charger les données depuis le backend.')

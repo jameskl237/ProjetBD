@@ -29,7 +29,7 @@ const safeFields = {
   created_at: personneTable.created_at,
 };
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR), async (_req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
   try {
     const personnes = await db.select(safeFields).from(personneTable).where(eq(personneTable.isDelete, 0));
     res.json(personnes);

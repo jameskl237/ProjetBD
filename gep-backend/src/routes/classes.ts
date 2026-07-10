@@ -177,13 +177,20 @@ router.get("/:id/eleves", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLE
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE), async (_req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE), async (req, res) => {
   try {
+    const role = getRole(req.user);
+    let classFilter = eq(classeTable.isDelete, 0);
+    if (role === ROLES.ENSEIGNANT) {
+      const allowedIds = await getEnseignantClasseIds(req.user!.id);
+      if (allowedIds.length === 0) { res.json([]); return; }
+      classFilter = and(eq(classeTable.isDelete, 0), inArray(classeTable.idClasse, allowedIds))!;
+    }
     const rows = await db
       .select({ classe: classeTable, cycle: cycleTable })
       .from(classeTable)
       .leftJoin(cycleTable, eq(classeTable.idCycle, cycleTable.idCycle))
-      .where(eq(classeTable.isDelete, 0));
+      .where(classFilter);
     const stats = await attachClassStats(rows.map((r) => r.classe));
     res.json(stats.map((classe, i) => ({ ...classe, cycle: rows[i]!.cycle })));
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
