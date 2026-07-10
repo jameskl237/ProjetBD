@@ -53,7 +53,13 @@ router.post("/login", async (req, res) => {
     res.status(401).json({ error: "Identifiants incorrects" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Erreur serveur" });
+    const message = err instanceof Error ? err.message : "Erreur inconnue";
+    res.status(500).json({
+      error: "Erreur serveur",
+      detail: message.includes("Access denied")
+        ? "La base de données refuse l’utilisateur configuré. Vérifiez les identifiants MySQL."
+        : message,
+    });
   }
 });
 

@@ -3,6 +3,10 @@ export const API_ENDPOINTS = {
     login: '/auth/login',
     profile: '/auth/me',
   },
+  compte: {
+    get: '/personnes/me',
+    update: '/personnes/me',
+  },
   eleves: '/eleves',
   classes: '/classes',
   cycles: '/scolarite/cycles',

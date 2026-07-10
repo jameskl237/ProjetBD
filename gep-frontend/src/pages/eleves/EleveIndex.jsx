@@ -41,10 +41,24 @@ export default function Eleves() {
       setFetchError('')
 
       try {
-        const [elevesRes, classesRes, anneesRes] = await Promise.all([eleveApi.list(), classeApi.list(), anneeAcademiqueApi.list()])
-        setStudents(extractList(elevesRes).map(mapEleveToStudent))
-        setClasses(extractList(classesRes))
-        setAnnees(extractList(anneesRes))
+        const [elevesResult, classesResult, anneesResult] = await Promise.allSettled([
+          eleveApi.list(), classeApi.list(), anneeAcademiqueApi.list()
+        ])
+
+        if (elevesResult.status === 'fulfilled') {
+          setStudents(extractList(elevesResult.value).map(mapEleveToStudent))
+        } else {
+          setStudents([])
+          setFetchError('Impossible de charger les élèves depuis le backend.')
+        }
+
+        if (classesResult.status === 'fulfilled') {
+          setClasses(extractList(classesResult.value))
+        }
+
+        if (anneesResult.status === 'fulfilled') {
+          setAnnees(extractList(anneesResult.value))
+        }
       } catch (error) {
         console.error('Failed to load eleves', error)
         setStudents([])
@@ -117,11 +131,10 @@ export default function Eleves() {
       <div className="module33-page-header">
         <div>
           <h1 className="module33-page-title">Gestion des élèves</h1>
-          <p className="module33-page-subtitle">Consultez, ajoutez et gérez les dossiers du module 3.3, séparément du module admin.</p>
+          <p className="module33-page-subtitle">Consultez et gérez les dossiers élèves, séparément du module admin.</p>
         </div>
         <div className="module33-top-actions" style={{ marginLeft: 0 }}>
           <button className="module33-button-secondary" type="button" onClick={() => navigate('/eleves/search')}>🔍 Recherche avancée</button>
-          <button className="module33-button" type="button" onClick={() => navigate('/eleves/create')}>＋ Nouvel élève</button>
         </div>
       </div>
 

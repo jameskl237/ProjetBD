@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import AdminSidebar from '../components/layout/AdminSidebar'
 import EnseignantDashboard from '../pages/enseignant/EnseignantDashboard'
 import AbsencesSaisie from '../pages/enseignant/AbsencesSaisie'
+import EnseignantCompte from '../pages/enseignant/EnseignantCompte'
 
 export default function EnseignantRouter() {
   return (
@@ -12,6 +13,7 @@ export default function EnseignantRouter() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<EnseignantDashboard />} />
           <Route path="absences" element={<AbsencesSaisie />} />
+          <Route path="compte" element={<EnseignantCompte />} />
           <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Routes>
       </main>
