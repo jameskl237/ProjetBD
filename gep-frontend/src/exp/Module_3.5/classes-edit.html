@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Modifier une classe</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --violet-profond:#4C1D95;--violet-hover:#6D28D9;--violet-nuit:#1E0B3B;
+  --cyan:#06B6D4;--fond-page:#F8FAFF;--fond-carte:#FFFFFF;--bordure:#EDE9FE;
+  --texte-principal:#1E1B4B;--texte-sec:#6B7280;
+  --succes:#059669;--danger:#E11D48;--avertissement:#D97706;
+  --francophone:#7C3AED;--anglophone:#0284C7;--bilingue:#059669;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--fond-page);color:var(--texte-principal);display:flex;height:100vh;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:200px;min-width:200px;background:var(--violet-nuit);display:flex;flex-direction:column;padding-bottom:16px;position:relative;overflow-y:auto;}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(6,182,212,.25),transparent);}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;padding:22px 20px 26px;display:flex;align-items:center;gap:8px;letter-spacing:2px;}
+.logo-dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 9px var(--cyan);}
+.logo span{color:var(--cyan);}
+.nav-section{padding:0 12px;}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.52);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(109,40,217,.3);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.4);}
+.na{margin-left:auto;font-size:10px;opacity:.45;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 24px;height:60px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.back-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.back-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.breadcrumb{font-size:12px;color:var(--texte-sec);}
+.breadcrumb strong{color:var(--texte-principal);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);cursor:pointer;}
+.ava{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;font-family:'Sora',sans-serif;}
+.uname{font-size:12px;font-weight:600;}
+.urole{font-size:10px;color:var(--texte-sec);}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:26px 32px;}
+.page-header{margin-bottom:22px;}
+.page-header h1{font-family:'Sora',sans-serif;font-size:21px;font-weight:800;}
+.page-header p{font-size:13px;color:var(--texte-sec);margin-top:3px;}
+
+/* ALERT BANNER */
+.alert-edit{display:flex;align-items:flex-start;gap:12px;background:rgba(217,119,6,.06);border:1.5px solid rgba(217,119,6,.25);border-radius:12px;padding:14px 16px;margin-bottom:22px;}
+.ae-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.ae-title{font-size:13px;font-weight:700;color:var(--avertissement);margin-bottom:2px;}
+.ae-desc{font-size:12px;color:var(--texte-sec);line-height:1.5;}
+
+/* FORM GRID */
+.form-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;}
+
+/* CARDS */
+.card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;margin-bottom:16px;}
+.card-header{padding:15px 20px;border-bottom:1px solid var(--bordure);display:flex;align-items:center;gap:10px;}
+.card-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.ci-v{background:rgba(76,29,149,.1);}
+.ci-c{background:rgba(6,182,212,.1);}
+.ci-g{background:rgba(5,150,105,.1);}
+.ci-a{background:rgba(217,119,6,.1);}
+.ci-r{background:rgba(225,29,72,.1);}
+.card-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--texte-principal);}
+.card-sub{font-size:11px;color:var(--texte-sec);margin-top:1px;}
+.card-body{padding:20px;}
+
+/* FORM */
+.form-row{display:grid;gap:14px;margin-bottom:14px;}
+.form-row.c2{grid-template-columns:1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+label.fl{font-size:11px;font-weight:700;color:var(--texte-sec);letter-spacing:.4px;text-transform:uppercase;}
+.req{color:var(--danger);}
+.hint{font-weight:400;color:var(--texte-sec);font-size:10px;text-transform:none;letter-spacing:0;}
+input,select,textarea{border:1.5px solid var(--bordure);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--texte-principal);background:var(--fond-page);outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--violet-profond);box-shadow:0 0 0 3px rgba(76,29,149,.07);background:#fff;}
+input::placeholder,textarea::placeholder{color:var(--texte-sec);font-size:12px;}
+textarea{resize:vertical;min-height:80px;}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.readonly-field{background:rgba(76,29,149,.04) !important;color:var(--violet-profond) !important;font-weight:700;font-family:'Sora',sans-serif;cursor:default;}
+
+/* SECTION PICKER */
+.section-picker{display:flex;gap:10px;}
+.sec-opt{flex:1;border:2px solid var(--bordure);border-radius:12px;padding:12px 8px;cursor:pointer;transition:all .2s;text-align:center;position:relative;background:var(--fond-page);}
+.sec-opt:hover{border-color:rgba(109,40,217,.3);}
+.sec-opt.sel-fr{border-color:var(--francophone);background:rgba(124,58,237,.06);}
+.sec-opt.sel-en{border-color:var(--anglophone);background:rgba(2,132,199,.06);}
+.sec-opt.sel-bi{border-color:var(--bilingue);background:rgba(5,150,105,.06);}
+.sec-icon{font-size:20px;margin-bottom:5px;}
+.sec-name{font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:var(--texte-principal);}
+.sec-lang{font-size:10px;color:var(--texte-sec);margin-top:2px;}
+.sec-check{width:16px;height:16px;border-radius:50%;border:2px solid var(--bordure);margin:6px auto 0;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .2s;}
+.sec-opt.sel-fr .sec-check{background:var(--francophone);border-color:var(--francophone);color:#fff;}
+.sec-opt.sel-en .sec-check{background:var(--anglophone);border-color:var(--anglophone);color:#fff;}
+.sec-opt.sel-bi .sec-check{background:var(--bilingue);border-color:var(--bilingue);color:#fff;}
+
+/* NIVEAU PICKER */
+.niveau-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.niv-btn{border:2px solid var(--bordure);border-radius:10px;padding:10px 6px;cursor:pointer;transition:all .2s;text-align:center;background:var(--fond-page);font-family:'Sora',sans-serif;font-size:13px;font-weight:800;color:var(--texte-sec);}
+.niv-btn:hover{border-color:rgba(109,40,217,.3);color:var(--violet-profond);}
+.niv-btn.selected{border-color:var(--violet-profond);background:rgba(76,29,149,.08);color:var(--violet-profond);}
+.niv-sub{font-size:9px;font-weight:500;font-family:'DM Sans',sans-serif;opacity:.7;margin-top:2px;}
+
+/* STATUT TOGGLE */
+.statut-toggle{display:flex;gap:8px;}
+.st-opt{flex:1;border:1.5px solid var(--bordure);border-radius:10px;padding:10px;cursor:pointer;transition:all .2s;text-align:center;background:var(--fond-page);}
+.st-opt.sel-actif{border-color:var(--succes);background:rgba(5,150,105,.05);}
+.st-opt.sel-inactif{border-color:var(--danger);background:rgba(225,29,72,.05);}
+.st-icon{font-size:18px;margin-bottom:4px;}
+.st-name{font-family:'Sora',sans-serif;font-size:12px;font-weight:800;}
+.st-opt.sel-actif .st-name{color:var(--succes);}
+.st-opt.sel-inactif .st-name{color:var(--danger);}
+
+/* APERÇU SIDEBAR */
+.preview-card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;position:sticky;top:0;margin-bottom:16px;}
+.preview-head{padding:14px 18px;border-bottom:1px solid var(--bordure);}
+.preview-head-title{font-family:'Sora',sans-serif;font-size:12px;font-weight:800;color:var(--texte-principal);}
+.preview-body{padding:18px;}
+.prev-av{width:62px;height:62px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px;border:2px solid var(--bordure);transition:all .3s;}
+.prev-name{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;color:var(--texte-principal);text-align:center;}
+.prev-code{font-family:monospace;font-size:11px;color:var(--texte-sec);text-align:center;margin-top:4px;}
+.prev-sb{display:flex;justify-content:center;margin:8px 0;}
+.prev-sb span{display:inline-flex;align-items:center;gap:4px;padding:3px 12px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;}
+.psb-fr{background:rgba(124,58,237,.1);color:#7C3AED;border:1px solid rgba(124,58,237,.2);}
+.psb-en{background:rgba(2,132,199,.1);color:#0284C7;border:1px solid rgba(2,132,199,.2);}
+.psb-bi{background:rgba(5,150,105,.1);color:#059669;border:1px solid rgba(5,150,105,.2);}
+.psb-none{background:rgba(107,114,128,.1);color:var(--texte-sec);border:1px solid var(--bordure);}
+.divider{height:1px;background:var(--bordure);margin:12px 0;}
+.prev-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.prev-row:last-child{margin-bottom:0;}
+.pr-lbl{font-size:11px;color:var(--texte-sec);}
+.pr-val{font-size:12px;font-weight:700;color:var(--texte-principal);}
+
+/* DIFF BADGE */
+.diff-card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:14px;padding:14px 16px;margin-bottom:16px;}
+.diff-title{font-family:'Sora',sans-serif;font-size:12px;font-weight:800;color:var(--texte-principal);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.diff-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px;}
+.diff-row:last-child{margin-bottom:0;}
+.diff-label{color:var(--texte-sec);min-width:80px;}
+.diff-old{text-decoration:line-through;color:var(--danger);background:rgba(225,29,72,.06);padding:2px 7px;border-radius:5px;}
+.diff-arr{color:var(--texte-sec);font-size:10px;}
+.diff-new{color:var(--succes);background:rgba(5,150,105,.06);padding:2px 7px;border-radius:5px;font-weight:600;}
+.diff-unchanged{color:var(--texte-sec);font-style:italic;font-size:11px;}
+
+/* ZONE DANGER */
+.danger-zone{background:rgba(225,29,72,.03);border:1.5px solid rgba(225,29,72,.15);border-radius:14px;padding:16px 20px;}
+.dz-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;color:var(--danger);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.dz-desc{font-size:12px;color:var(--texte-sec);margin-bottom:14px;line-height:1.55;}
+.btn-danger-outline{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--danger);background:transparent;color:var(--danger);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-danger-outline:hover{background:rgba(225,29,72,.07);}
+
+/* ACTIONS */
+.form-actions{display:flex;gap:10px;align-items:center;padding-top:14px;border-top:1px solid var(--bordure);margin-top:14px;}
+.btn-cancel{display:flex;align-items:center;gap:5px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-principal);border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-cancel:hover{border-color:var(--danger);color:var(--danger);}
+.btn-submit{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 14px rgba(76,29,149,.3);transition:all .2s;margin-left:auto;}
+.btn-submit:hover{background:linear-gradient(135deg,var(--violet-hover),var(--cyan));}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--violet-nuit);color:#fff;padding:14px 20px;border-radius:14px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translateY(80px);opacity:0;transition:all .35s;z-index:999;border:1px solid rgba(6,182,212,.3);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-dot{width:8px;height:8px;border-radius:50%;background:var(--succes);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);z-index:900;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--fond-carte);border-radius:18px;padding:28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:fadeIn .2s ease;}
+@keyframes fadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-icon{font-size:36px;text-align:center;margin-bottom:12px;}
+.modal-title{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:var(--texte-principal);text-align:center;margin-bottom:8px;}
+.modal-desc{font-size:13px;color:var(--texte-sec);text-align:center;line-height:1.6;margin-bottom:20px;}
+.modal-actions{display:flex;gap:10px;}
+.modal-actions button{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all .2s;}
+.modal-cancel{border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-principal);}
+.modal-cancel:hover{border-color:var(--texte-sec);}
+.modal-confirm{background:linear-gradient(135deg,var(--danger),#F43F5E);color:#fff;border:none;box-shadow:0 4px 14px rgba(225,29,72,.3);}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo"><div class="logo-dot"></div>SCHOOL<span>i</span></div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item">🏠 <span>Tableau de bord</span></div>
+    <div class="nav-item">🎓 <span>Élèves</span><span class="na">312</span></div>
+    <div class="nav-item">📋 <span>Inscriptions</span></div>
+    <div class="nav-item active">🏫 <span>Classes</span><span class="na">15</span></div>
+    <div class="nav-item">💰 <span>Paiements</span></div>
+    <div class="nav-label">Pédagogie</div>
+    <div class="nav-item">📝 <span>Notes</span></div>
+    <div class="nav-item">⚠️ <span>Discipline</span></div>
+    <div class="nav-item">🚌 <span>Transport</span></div>
+    <div class="nav-label">Administration</div>
+    <div class="nav-item">🖨️ <span>Impressions</span></div>
+    <div class="nav-item">⚙️ <span>Paramètres</span></div>
+    <div class="nav-item">👥 <span>Utilisateurs</span></div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">← Retour</button>
+    <div class="breadcrumb">Classes &nbsp;›&nbsp; CM2 Bilingue &nbsp;›&nbsp; <strong>Modifier</strong></div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="ava">AD</div>
+        <div><div class="uname">Admin</div><div class="urole">Administrateur</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <h1>✏️ Modifier la classe</h1>
+      <p>Mise à jour des informations de la classe <strong>CM2 — Section Bilingue</strong></p>
+    </div>
+
+    <div class="alert-edit">
+      <div class="ae-icon">⚠️</div>
+      <div>
+        <div class="ae-title">Attention — Modification d'une classe active</div>
+        <div class="ae-desc">Cette classe compte <strong>38 élèves inscrits</strong>. Changer le niveau ou la section peut affecter les inscriptions, les bulletins et les rapports existants. Procédez avec précaution.</div>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <!-- COLONNE FORMULAIRE -->
+      <div>
+
+        <!-- IDENTIFICATION -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-v">🏷️</div>
+            <div><div class="card-title">Identification</div><div class="card-sub">Niveau et section pédagogique</div></div>
+          </div>
+          <div class="card-body">
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="fl">Niveau scolaire <span class="req">*</span></label>
+              <div class="niveau-grid">
+                <div class="niv-btn" data-niv="CP"  onclick="selectNiveau('CP')">CP<div class="niv-sub">Cours Prépa.</div></div>
+                <div class="niv-btn" data-niv="CE1" onclick="selectNiveau('CE1')">CE1<div class="niv-sub">Cours Élém.</div></div>
+                <div class="niv-btn" data-niv="CE2" onclick="selectNiveau('CE2')">CE2<div class="niv-sub">Cours Élém.</div></div>
+                <div class="niv-btn" data-niv="CM1" onclick="selectNiveau('CM1')">CM1<div class="niv-sub">Cours Moyen</div></div>
+                <div class="niv-btn selected" data-niv="CM2" onclick="selectNiveau('CM2')">CM2<div class="niv-sub">Cours Moyen</div></div>
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="fl">Section <span class="req">*</span></label>
+              <div class="section-picker">
+                <div class="sec-opt" id="opt-fr" onclick="selectSection('fr')">
+                  <div class="sec-icon">🇫🇷</div>
+                  <div class="sec-name">Francophone</div>
+                  <div class="sec-lang">Français</div>
+                  <div class="sec-check" id="chk-fr"></div>
+                </div>
+                <div class="sec-opt" id="opt-en" onclick="selectSection('en')">
+                  <div class="sec-icon">🇬🇧</div>
+                  <div class="sec-name">Anglophone</div>
+                  <div class="sec-lang">English</div>
+                  <div class="sec-check" id="chk-en"></div>
+                </div>
+                <div class="sec-opt sel-bi" id="opt-bi" onclick="selectSection('bi')">
+                  <div class="sec-icon">🌐</div>
+                  <div class="sec-name">Bilingue</div>
+                  <div class="sec-lang">Fr / En</div>
+                  <div class="sec-check" id="chk-bi">✓</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row c2">
+              <div class="form-group">
+                <label class="fl">Code classe <span class="hint">(auto-généré)</span></label>
+                <input type="text" id="codeClasse" value="CM2/BI" readonly class="readonly-field">
+              </div>
+              <div class="form-group">
+                <label class="fl">Intitulé personnalisé</label>
+                <input type="text" id="intitule" value="CM2 Bilingue" placeholder="ex: CM2-A Bilingue">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- CONFIGURATION -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-c">⚙️</div>
+            <div><div class="card-title">Configuration</div><div class="card-sub">Capacité, salle et statut</div></div>
+          </div>
+          <div class="card-body">
+            <div class="form-row c2" style="margin-bottom:14px;">
+              <div class="form-group">
+                <label class="fl">Capacité maximale <span class="req">*</span></label>
+                <input type="number" id="capacite" min="1" max="60" value="45" oninput="updatePreview()">
+              </div>
+              <div class="form-group">
+                <label class="fl">Salle de classe</label>
+                <input type="text" id="salle" value="Salle C4 — Bloc C" placeholder="ex: Salle B2" oninput="updatePreview()">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="fl">Statut de la classe</label>
+              <div class="statut-toggle">
+                <div class="st-opt sel-actif" id="st-actif" onclick="selectStatut('actif')">
+                  <div class="st-icon">✅</div><div class="st-name">Active</div>
+                </div>
+                <div class="st-opt" id="st-inactif" onclick="selectStatut('inactif')">
+                  <div class="st-icon">🚫</div><div class="st-name">Inactive</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ENSEIGNANT -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-g">👨‍🏫</div>
+            <div><div class="card-title">Enseignant principal</div></div>
+          </div>
+          <div class="card-body">
+            <div class="form-group" style="margin-bottom:14px;">
+              <label class="fl">Enseignant titulaire</label>
+              <select id="enseignant" onchange="updatePreview()">
+                <option value="">— Aucun pour l'instant —</option>
+                <option>M. Mbarga Jean</option>
+                <option>Mme Fotso Claire</option>
+                <option>M. Ateba Pierre</option>
+                <option>Mme Bella Rose</option>
+                <option>M. Kotto André</option>
+                <option>Mme Mongo Hélène</option>
+                <option>M. Soppo Luc</option>
+                <option>Mme Nganou Anne</option>
+                <option>M. Tagne Paul</option>
+                <option selected>Mme Ekotto Sylvie</option>
+                <option>M. Feudjio Marc</option>
+                <option>Mme Ndoumbe Sara</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="fl">Observations</label>
+              <textarea id="observations" oninput="updatePreview()">Classe bilingue de CM2. Cours de sciences et mathématiques dispensés en anglais, français et matières littéraires en français.</textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn-cancel" onclick="history.back()">✕ Annuler</button>
+              <button class="btn-submit" onclick="submitForm()">💾 Enregistrer les modifications</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ZONE DANGER -->
+        <div class="danger-zone">
+          <div class="dz-title">🗑️ Zone dangereuse</div>
+          <div class="dz-desc">La désactivation de cette classe la rend inaccessible. Les inscriptions et données associées sont conservées mais aucune nouvelle affectation ne sera possible. Cette action est réversible.</div>
+          <button class="btn-danger-outline" onclick="openModal()">🚫 Désactiver cette classe</button>
+        </div>
+
+      </div>
+
+      <!-- COLONNE DROITE -->
+      <div>
+        <!-- APERÇU -->
+        <div class="preview-card">
+          <div class="preview-head"><div class="preview-head-title">👁 Aperçu en temps réel</div></div>
+          <div class="preview-body">
+            <div class="prev-av" id="prevAv" style="background:linear-gradient(135deg,#059669,#34D399);">🌐</div>
+            <div class="prev-name" id="prevName">CM2 — Bilingue</div>
+            <div class="prev-code" id="prevCode">CM2/BI &nbsp;·&nbsp; CLS127</div>
+            <div class="prev-sb"><span class="psb-bi" id="prevSb">🌐 Section Bilingue</span></div>
+            <div class="divider"></div>
+            <div class="prev-row"><span class="pr-lbl">Année</span><span class="pr-val">2025 – 2026</span></div>
+            <div class="prev-row"><span class="pr-lbl">Capacité</span><span class="pr-val" id="prevCap">45 élèves</span></div>
+            <div class="prev-row"><span class="pr-lbl">Salle</span><span class="pr-val" id="prevSalle">Salle C4 — Bloc C</span></div>
+            <div class="prev-row"><span class="pr-lbl">Enseignant</span><span class="pr-val" id="prevEns" style="font-size:11px;text-align:right;max-width:150px;">Mme Ekotto Sylvie</span></div>
+            <div class="prev-row"><span class="pr-lbl">Statut</span><span id="prevStatut" style="font-size:12px;font-weight:700;color:var(--succes);">✅ Active</span></div>
+          </div>
+        </div>
+
+        <!-- DIFF DES CHANGEMENTS -->
+        <div class="diff-card" id="diffCard" style="display:none;">
+          <div class="diff-title">📝 Modifications en cours</div>
+          <div id="diffBody"></div>
+        </div>
+
+        <!-- INFOS EXISTANTES -->
+        <div class="card" style="margin-bottom:0;">
+          <div class="card-header">
+            <div class="card-icon ci-a">📊</div>
+            <div><div class="card-title">Données actuelles</div></div>
+          </div>
+          <div class="card-body" style="padding:14px 18px;">
+            <div class="prev-row" style="margin-bottom:9px;"><span class="pr-lbl" style="font-size:12px;">Élèves inscrits</span><span class="pr-val" style="color:var(--violet-profond);">38 / 45</span></div>
+            <div class="prev-row" style="margin-bottom:9px;"><span class="pr-lbl" style="font-size:12px;">Créée le</span><span class="pr-val">01/09/2025</span></div>
+            <div class="prev-row" style="margin-bottom:0;"><span class="pr-lbl" style="font-size:12px;">Dernière modif.</span><span class="pr-val">15/01/2026</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DÉSACTIVATION -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon">🚫</div>
+    <div class="modal-title">Désactiver la classe CM2 Bilingue ?</div>
+    <div class="modal-desc">Cette classe compte <strong>38 élèves inscrits</strong>. Elle sera marquée comme inactive et n'apparaîtra plus dans les listes de sélection. Les données sont conservées. Confirmez-vous ?</div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Annuler</button>
+      <button class="modal-confirm" onclick="confirmDesactivation()">Oui, désactiver</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg"></span></div>
+
+<script>
+// ── STATE ──
+const ORIGINAL = { niveau:'CM2', section:'bi', cap:'45', salle:'Salle C4 — Bloc C', ens:'Mme Ekotto Sylvie', statut:'actif' };
+let state = { niveau:'CM2', section:'bi', cap:'45', salle:'Salle C4 — Bloc C', ens:'Mme Ekotto Sylvie', statut:'actif' };
+
+const sectionLabels = {fr:'Francophone', en:'Anglophone', bi:'Bilingue'};
+const sectionIcons  = {fr:'🇫🇷', en:'🇬🇧', bi:'🌐'};
+const sectionAvBg   = {fr:'linear-gradient(135deg,#7C3AED,#A78BFA)', en:'linear-gradient(135deg,#0284C7,#38BDF8)', bi:'linear-gradient(135deg,#059669,#34D399)'};
+const sectionSbCls  = {fr:'psb-fr', en:'psb-en', bi:'psb-bi'};
+const sectionSelCls = {fr:'sel-fr', en:'sel-en', bi:'sel-bi'};
+
+function selectNiveau(niv){
+  state.niveau = niv;
+  document.querySelectorAll('.niv-btn').forEach(b=>b.classList.toggle('selected',b.dataset.niv===niv));
+  updateAll();
+}
+
+function selectSection(sec){
+  state.section = sec;
+  ['fr','en','bi'].forEach(s=>{
+    const opt=document.getElementById('opt-'+s);
+    opt.className='sec-opt';
+    if(s===sec) opt.classList.add(sectionSelCls[s]);
+    document.getElementById('chk-'+s).textContent = s===sec ? '✓' : '';
+  });
+  updateAll();
+}
+
+function selectStatut(s){
+  state.statut = s;
+  document.getElementById('st-actif').className  = 'st-opt' + (s==='actif'?' sel-actif':'');
+  document.getElementById('st-inactif').className= 'st-opt' + (s==='inactif'?' sel-inactif':'');
+  updateAll();
+}
+
+function updateAll(){
+  state.cap   = document.getElementById('capacite').value;
+  state.salle = document.getElementById('salle').value;
+  state.ens   = document.getElementById('enseignant').value || 'Non affecté';
+
+  const code = state.niveau + '/' + state.section.toUpperCase();
+  document.getElementById('codeClasse').value = code;
+
+  document.getElementById('prevAv').style.background = sectionAvBg[state.section];
+  document.getElementById('prevAv').textContent = sectionIcons[state.section];
+  document.getElementById('prevName').textContent = state.niveau + ' — ' + sectionLabels[state.section];
+  document.getElementById('prevCode').textContent = code + ' · CLS127';
+  const sb = document.getElementById('prevSb');
+  sb.className = sectionSbCls[state.section];
+  sb.textContent = sectionIcons[state.section] + ' Section ' + sectionLabels[state.section];
+  document.getElementById('prevCap').textContent = (state.cap||'45') + ' élèves';
+  document.getElementById('prevSalle').textContent = state.salle || '—';
+  document.getElementById('prevEns').textContent = state.ens;
+  document.getElementById('prevStatut').innerHTML = state.statut==='actif'
+    ? '<span style="color:var(--succes)">✅ Active</span>'
+    : '<span style="color:var(--danger)">🚫 Inactive</span>';
+
+  renderDiff();
+}
+
+function updatePreview(){ updateAll(); }
+
+function renderDiff(){
+  const checks = [
+    {key:'niveau', label:'Niveau', orig:ORIGINAL.niveau, curr:state.niveau},
+    {key:'section',label:'Section', orig:sectionLabels[ORIGINAL.section], curr:sectionLabels[state.section]},
+    {key:'cap',    label:'Capacité', orig:ORIGINAL.cap+' élèves', curr:(state.cap||'45')+' élèves'},
+    {key:'salle',  label:'Salle',    orig:ORIGINAL.salle, curr:state.salle||'—'},
+    {key:'ens',    label:'Enseignant',orig:ORIGINAL.ens, curr:state.ens},
+    {key:'statut', label:'Statut',   orig:ORIGINAL.statut, curr:state.statut},
+  ];
+  const changed = checks.filter(c=>c.orig!==c.curr);
+  const card = document.getElementById('diffCard');
+  if(changed.length===0){ card.style.display='none'; return; }
+  card.style.display='block';
+  document.getElementById('diffBody').innerHTML = changed.map(c=>`
+    <div class="diff-row">
+      <span class="diff-label">${c.label}</span>
+      <span class="diff-old">${c.orig}</span>
+      <span class="diff-arr">→</span>
+      <span class="diff-new">${c.curr}</span>
+    </div>`).join('');
+}
+
+function openModal(){ document.getElementById('modalOverlay').classList.add('open'); }
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+function confirmDesactivation(){
+  closeModal();
+  selectStatut('inactif');
+  showToast('🚫 Classe désactivée. Les données sont conservées.');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+function submitForm(){
+  const btn = document.querySelector('.btn-submit');
+  btn.disabled=true; btn.textContent='⏳ Enregistrement…';
+  setTimeout(()=>{
+    btn.disabled=false; btn.innerHTML='💾 Enregistrer les modifications';
+    showToast('✅ Classe CM2 '+sectionLabels[state.section]+' mise à jour avec succès !');
+    Object.assign(ORIGINAL, {...state});
+    renderDiff();
+  },1200);
+}
+
+// Init live listeners
+['capacite','salle','enseignant'].forEach(id=>document.getElementById(id).addEventListener('input',updateAll));
+document.getElementById('enseignant').addEventListener('change',updateAll);
+</script>
+</body>
+</html>

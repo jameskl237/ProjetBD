@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Désactiver élève</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --violet-profond:#4C1D95;--violet-hover:#6D28D9;--violet-nuit:#1E0B3B;
+  --cyan:#06B6D4;--fond-page:#F8FAFF;--fond-carte:#FFFFFF;
+  --bordure:#EDE9FE;--texte-principal:#1E1B4B;--texte-sec:#6B7280;
+  --succes:#059669;--danger:#E11D48;--avertissement:#D97706;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--fond-page);color:var(--texte-principal);display:flex;height:100vh;overflow:hidden;}
+
+.sidebar{width:200px;min-width:200px;background:var(--violet-nuit);display:flex;flex-direction:column;padding-bottom:16px;position:relative;overflow-y:auto;}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(6,182,212,.25),transparent);}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;padding:22px 20px 26px;display:flex;align-items:center;gap:8px;letter-spacing:2px;}
+.logo-dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 9px var(--cyan);}
+.logo span{color:var(--cyan);}
+.nav-section{padding:0 12px;}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.52);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(109,40,217,.3);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.4);}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 24px;height:60px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.back-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.back-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.breadcrumb{font-size:12px;color:var(--texte-sec);}
+.breadcrumb strong{color:var(--texte-principal);}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);cursor:pointer;}
+.ava{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;}
+.uname{font-size:12px;font-weight:600;}
+.urole{font-size:10px;color:var(--texte-sec);}
+
+.content{flex:1;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:40px 24px;}
+.page-wrap{width:100%;max-width:680px;}
+
+/* DANGER ZONE HEADER */
+.dz-header{text-align:center;margin-bottom:28px;}
+.dz-icon-wrap{width:72px;height:72px;border-radius:20px;background:rgba(225,29,72,.1);border:2px solid rgba(225,29,72,.2);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px;}
+.dz-title{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--texte-principal);}
+.dz-sub{font-size:13px;color:var(--texte-sec);margin-top:6px;line-height:1.6;}
+
+/* ELEVE CARD */
+.eleve-preview{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.ep-av{width:56px;height:56px;border-radius:15px;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:18px;color:#fff;flex-shrink:0;}
+.ep-name{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:var(--texte-principal);}
+.ep-mat{font-size:11px;color:var(--texte-sec);font-family:monospace;margin-top:2px;}
+.ep-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.eptag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.eptag-v{background:rgba(76,29,149,.08);color:var(--violet-profond);}
+.eptag-c{background:rgba(6,182,212,.1);color:var(--cyan);}
+.eptag-g{background:rgba(5,150,105,.1);color:var(--succes);}
+.ep-right{margin-left:auto;text-align:right;}
+.ep-status{display:inline-flex;align-items:center;gap:5px;background:rgba(5,150,105,.1);color:var(--succes);font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;}
+.bdot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+/* IMPACT GRID */
+.impact-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--texte-principal);margin-bottom:12px;}
+.impact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.impact-item{padding:14px 16px;border-radius:12px;border:1.5px solid;display:flex;align-items:flex-start;gap:10px;}
+.ii-warn{background:rgba(217,119,6,.05);border-color:rgba(217,119,6,.2);}
+.ii-info{background:rgba(6,182,212,.05);border-color:rgba(6,182,212,.15);}
+.ii-neutral{background:var(--fond-page);border-color:var(--bordure);}
+.ii-ok{background:rgba(5,150,105,.05);border-color:rgba(5,150,105,.15);}
+.ii-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.ii-title{font-size:12px;font-weight:700;color:var(--texte-principal);}
+.ii-desc{font-size:11px;color:var(--texte-sec);margin-top:3px;line-height:1.5;}
+
+/* DIFFERENCE: désactivation vs suppression */
+.diff-box{background:rgba(76,29,149,.04);border:1.5px solid rgba(76,29,149,.12);border-radius:14px;padding:16px 18px;margin-bottom:20px;}
+.diff-box-title{font-family:'Sora',sans-serif;font-size:12px;font-weight:700;color:var(--violet-profond);margin-bottom:12px;text-transform:uppercase;letter-spacing:.4px;}
+.diff-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.diff-col{padding:12px 14px;border-radius:10px;}
+.dc-desac{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.15);}
+.dc-supp{background:rgba(225,29,72,.05);border:1px solid rgba(225,29,72,.12);}
+.dc-label{font-size:11px;font-weight:700;margin-bottom:6px;}
+.dcl-g{color:var(--succes);}
+.dcl-r{color:var(--danger);}
+.dc-point{font-size:11px;color:var(--texte-sec);display:flex;align-items:baseline;gap:6px;margin-bottom:4px;line-height:1.4;}
+.dc-point::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;margin-top:5px;}
+.dc-point.g{color:var(--succes);}
+.dc-point.r{color:var(--danger);}
+.dc-point.n{color:var(--texte-sec);}
+
+/* MOTIF */
+.motif-section{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:14px;padding:18px;margin-bottom:20px;}
+.motif-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--texte-principal);margin-bottom:12px;}
+.motif-options{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+.motif-opt{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--bordure);border-radius:10px;cursor:pointer;transition:all .2s;}
+.motif-opt:hover{border-color:var(--violet-profond);}
+.motif-opt.selected{border-color:var(--violet-profond);background:rgba(76,29,149,.04);}
+.mo-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--bordure);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.motif-opt.selected .mo-radio{border-color:var(--violet-profond);background:var(--violet-profond);}
+.mo-radio::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;}
+.motif-opt:not(.selected) .mo-radio::after{display:none;}
+.mo-label{font-size:13px;font-weight:600;color:var(--texte-principal);}
+.motif-textarea{width:100%;border:1.5px solid var(--bordure);border-radius:10px;padding:10px 13px;font-size:13px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:70px;outline:none;transition:all .2s;background:var(--fond-page);}
+.motif-textarea:focus{border-color:var(--violet-profond);background:#fff;}
+
+/* CONFIRMATION INPUT */
+.confirm-section{background:rgba(225,29,72,.04);border:1.5px solid rgba(225,29,72,.15);border-radius:14px;padding:18px;margin-bottom:20px;}
+.confirm-label{font-size:13px;color:var(--texte-principal);margin-bottom:10px;line-height:1.6;}
+.confirm-label strong{color:var(--danger);font-family:monospace;background:rgba(225,29,72,.08);padding:2px 8px;border-radius:5px;}
+.confirm-input{width:100%;border:1.5px solid rgba(225,29,72,.3);border-radius:10px;padding:10px 14px;font-size:14px;font-family:'Sora',sans-serif;font-weight:700;color:var(--texte-principal);background:#fff;outline:none;transition:all .2s;letter-spacing:1px;}
+.confirm-input:focus{border-color:var(--danger);box-shadow:0 0 0 3px rgba(225,29,72,.08);}
+.confirm-input.valid{border-color:var(--succes);background:rgba(5,150,105,.03);}
+.confirm-hint{font-size:11px;color:var(--texte-sec);margin-top:6px;}
+
+/* ACTIONS */
+.action-row{display:flex;gap:10px;align-items:center;}
+.btn-cancel{flex:1;padding:12px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:transparent;color:var(--texte-sec);border:1.5px solid var(--bordure);transition:all .2s;}
+.btn-cancel:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.btn-confirm{flex:2;padding:12px;border-radius:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:linear-gradient(135deg,var(--danger),#F43F5E);color:#fff;border:none;box-shadow:0 4px 14px rgba(225,29,72,.3);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;opacity:.5;pointer-events:none;}
+.btn-confirm.ready{opacity:1;pointer-events:all;}
+.btn-confirm.ready:hover{background:linear-gradient(135deg,#BE123C,var(--danger));}
+
+/* SUCCESS OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(30,11,59,.7);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s;}
+.overlay.show{opacity:1;pointer-events:all;}
+.overlay-card{background:var(--fond-carte);border-radius:20px;padding:36px 32px;text-align:center;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:popIn .35s ease;}
+@keyframes popIn{from{transform:scale(.85);opacity:0;}to{transform:scale(1);opacity:1;}}
+.ov-icon{font-size:48px;margin-bottom:14px;}
+.ov-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--texte-principal);margin-bottom:8px;}
+.ov-desc{font-size:13px;color:var(--texte-sec);line-height:1.6;margin-bottom:22px;}
+.btn-ov{padding:11px 28px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;border:none;box-shadow:0 4px 14px rgba(76,29,149,.3);}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bordure);border-radius:4px;}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo"><div class="logo-dot"></div>SCHOOL<span>i</span></div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item">⊞ Tableau de bord</div>
+    <div class="nav-item active">👦 Élèves</div>
+    <div class="nav-item">📋 Inscriptions</div>
+    <div class="nav-item">🏫 Classes</div>
+    <div class="nav-item">💳 Paiements</div>
+    <div class="nav-label">Pédagogie</div>
+    <div class="nav-item">📝 Notes</div>
+    <div class="nav-item">🚨 Discipline</div>
+    <div class="nav-item">🚌 Transport</div>
+    <div class="nav-label">Système</div>
+    <div class="nav-item">👥 Utilisateurs</div>
+    <div class="nav-item">⚙️ Paramètres</div>
+    <div class="nav-item">🖨️ Impressions</div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <button class="back-btn" onclick="history.back()">← Retour</button>
+    <span class="breadcrumb">Élèves › Emile Mbarga › <strong>Désactiver</strong></span>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="ava">SM</div>
+        <div><div class="uname">Sophie M.</div><div class="urole">Secrétaire</div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div class="page-wrap">
+
+      <!-- HEADER -->
+      <div class="dz-header">
+        <div class="dz-icon-wrap">🗑</div>
+        <div class="dz-title">Désactiver un élève</div>
+        <div class="dz-sub">Cette action retirera l'élève de toutes les listes actives.<br>Le dossier restera archivé et consultable.</div>
+      </div>
+
+      <!-- ÉLÈVE PREVIEW -->
+      <div class="eleve-preview">
+        <div class="ep-av">EM</div>
+        <div>
+          <div class="ep-name">Emile Jean Mbarga</div>
+          <div class="ep-mat">ELV10047</div>
+          <div class="ep-tags">
+            <span class="eptag eptag-v">CM2 — Section A</span>
+            <span class="eptag eptag-c">♂ Garçon</span>
+            <span class="eptag eptag-g">2025–2026</span>
+          </div>
+        </div>
+        <div class="ep-right">
+          <div class="ep-status"><span class="bdot"></span>Actif</div>
+        </div>
+      </div>
+
+      <!-- IMPACT -->
+      <div class="impact-title">⚠️ Ce qui sera affecté</div>
+      <div class="impact-grid">
+        <div class="impact-item ii-warn">
+          <div class="ii-icon">📋</div>
+          <div>
+            <div class="ii-title">Inscription retirée</div>
+            <div class="ii-desc">L'élève sera retiré de la liste active de sa classe (CM2-A).</div>
+          </div>
+        </div>
+        <div class="impact-item ii-info">
+          <div class="ii-icon">📝</div>
+          <div>
+            <div class="ii-title">Notes conservées</div>
+            <div class="ii-desc">Toutes les notes et bulletins restent accessibles dans l'archive.</div>
+          </div>
+        </div>
+        <div class="impact-item ii-warn">
+          <div class="ii-icon">🚌</div>
+          <div>
+            <div class="ii-title">Abonnement transport suspendu</div>
+            <div class="ii-desc">L'abonnement au transport scolaire sera automatiquement suspendu.</div>
+          </div>
+        </div>
+        <div class="impact-item ii-ok">
+          <div class="ii-icon">💳</div>
+          <div>
+            <div class="ii-title">Historique paiements intact</div>
+            <div class="ii-desc">Les paiements enregistrés ne seront pas supprimés.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DÉSACTIVATION VS SUPPRESSION -->
+      <div class="diff-box">
+        <div class="diff-box-title">ℹ️ Désactivation ≠ Suppression</div>
+        <div class="diff-row">
+          <div class="diff-col dc-desac">
+            <div class="dc-label dcl-g">✅ Désactivation (cette action)</div>
+            <div class="dc-point g">Dossier archivé et consultable</div>
+            <div class="dc-point g">Données conservées</div>
+            <div class="dc-point g">Réactivable à tout moment</div>
+            <div class="dc-point n">Retiré des listes actives</div>
+          </div>
+          <div class="diff-col dc-supp">
+            <div class="dc-label dcl-r">❌ Suppression définitive</div>
+            <div class="dc-point r">Dossier effacé à jamais</div>
+            <div class="dc-point r">Notes et historique perdus</div>
+            <div class="dc-point r">Irréversible</div>
+            <div class="dc-point n">Réservée à l'administrateur</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOTIF -->
+      <div class="motif-section">
+        <div class="motif-title">Motif de désactivation <span style="color:var(--danger)">*</span></div>
+        <div class="motif-options" id="motifOptions">
+          <div class="motif-opt" onclick="selectMotif(this)">
+            <div class="mo-radio"></div>
+            <span class="mo-label">🎓 Fin de cursus — élève diplômé</span>
+          </div>
+          <div class="motif-opt" onclick="selectMotif(this)">
+            <div class="mo-radio"></div>
+            <span class="mo-label">🔄 Transfert vers un autre établissement</span>
+          </div>
+          <div class="motif-opt" onclick="selectMotif(this)">
+            <div class="mo-radio"></div>
+            <span class="mo-label">📅 Abandon en cours d'année</span>
+          </div>
+          <div class="motif-opt" onclick="selectMotif(this)">
+            <div class="mo-radio"></div>
+            <span class="mo-label">✏️ Autre motif (préciser ci-dessous)</span>
+          </div>
+        </div>
+        <textarea class="motif-textarea" id="motifText" placeholder="Précisez le motif si nécessaire..." oninput="checkReady()"></textarea>
+      </div>
+
+      <!-- CONFIRMATION -->
+      <div class="confirm-section">
+        <div class="confirm-label">
+          Pour confirmer, saisissez le matricule de l'élève : <strong>ELV10047</strong>
+        </div>
+        <input class="confirm-input" id="confirmInput" type="text" placeholder="Saisissez ELV10047"
+          oninput="checkReady()" autocomplete="off" spellcheck="false">
+        <div class="confirm-hint" id="confirmHint">Le bouton de désactivation sera débloqué après saisie.</div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="action-row">
+        <button class="btn-cancel" onclick="history.back()">✕ Annuler</button>
+        <button class="btn-confirm" id="btnConfirm" onclick="handleConfirm()">
+          🗑 Désactiver l'élève
+        </button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <div class="ov-icon">✅</div>
+    <div class="ov-title">Élève désactivé</div>
+    <div class="ov-desc">
+      Le dossier d'<strong>Emile Jean Mbarga</strong> (ELV10047) a bien été désactivé.<br>
+      Il reste archivé et consultable depuis la liste des élèves inactifs.
+    </div>
+    <button class="btn-ov" onclick="window.location='eleves-index.html'">Retour à la liste</button>
+  </div>
+</div>
+
+<script>
+let motifSelected = false;
+
+function selectMotif(el){
+  document.querySelectorAll('.motif-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  motifSelected = true;
+  checkReady();
+}
+
+function checkReady(){
+  const input = document.getElementById('confirmInput');
+  const val = input.value.trim();
+  const valid = val === 'ELV10047';
+  input.classList.toggle('valid', valid);
+
+  const hint = document.getElementById('confirmHint');
+  if(val.length > 0 && !valid){
+    hint.textContent = '❌ Matricule incorrect. Essayez à nouveau.';
+    hint.style.color = 'var(--danger)';
+  } else if(valid){
+    hint.textContent = '✅ Matricule confirmé.';
+    hint.style.color = 'var(--succes)';
+  } else {
+    hint.textContent = 'Le bouton de désactivation sera débloqué après saisie.';
+    hint.style.color = 'var(--texte-sec)';
+  }
+
+  const btn = document.getElementById('btnConfirm');
+  if(valid && motifSelected){
+    btn.classList.add('ready');
+  } else {
+    btn.classList.remove('ready');
+  }
+}
+
+function handleConfirm(){
+  document.getElementById('overlay').classList.add('show');
+}
+</script>
+</body>
+</html>

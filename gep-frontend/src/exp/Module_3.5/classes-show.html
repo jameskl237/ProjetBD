@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Fiche classe</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --violet-profond: #4C1D95;
+  --violet-hover:   #6D28D9;
+  --violet-nuit:    #1E0B3B;
+  --cyan:           #06B6D4;
+  --cyan-hover:     #22D3EE;
+  --fond-page:      #F8FAFF;
+  --fond-carte:     #FFFFFF;
+  --bordure:        #EDE9FE;
+  --texte-principal:#1E1B4B;
+  --texte-sec:      #6B7280;
+  --succes:         #059669;
+  --danger:         #E11D48;
+  --avertissement:  #D97706;
+  --francophone:    #7C3AED;
+  --anglophone:     #0284C7;
+  --bilingue:       #059669;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--fond-page);color:var(--texte-principal);display:flex;height:100vh;overflow:hidden;}
+
+/* ══ SIDEBAR ══ */
+.sidebar{width:200px;min-width:200px;background:var(--violet-nuit);display:flex;flex-direction:column;padding-bottom:16px;position:relative;overflow-y:auto;}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(6,182,212,.25),transparent);}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;padding:22px 20px 26px;display:flex;align-items:center;gap:8px;letter-spacing:2px;}
+.logo-dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 9px var(--cyan);}
+.logo span{color:var(--cyan);}
+.nav-section{padding:0 12px;}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.52);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(109,40,217,.3);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.4);}
+.na{margin-left:auto;font-size:10px;opacity:.45;}
+
+/* ══ MAIN ══ */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 24px;height:60px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.back-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.back-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.breadcrumb{font-size:12px;color:var(--texte-sec);}
+.breadcrumb strong{color:var(--texte-principal);}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.btn-sec{display:flex;align-items:center;gap:5px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-principal);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-sec:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.btn-prim{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 14px rgba(76,29,149,.3);transition:all .2s;}
+.btn-prim:hover{background:linear-gradient(135deg,var(--violet-hover),var(--cyan));}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);cursor:pointer;}
+.ava{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;font-family:'Sora',sans-serif;}
+.uname{font-size:12px;font-weight:600;color:var(--texte-principal);}
+.urole{font-size:10px;color:var(--texte-sec);}
+
+/* SCROLLABLE */
+.scroll-area{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+
+/* ══ HERO ══ */
+.hero{background:var(--violet-nuit);position:relative;overflow:hidden;padding:28px 32px 0;flex-shrink:0;}
+.hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 85% 50%,rgba(6,182,212,.2) 0%,transparent 55%),radial-gradient(circle at 5% 80%,rgba(76,29,149,.45) 0%,transparent 50%);pointer-events:none;}
+.hero::after{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.05) 1px,transparent 1px);background-size:26px 26px;pointer-events:none;}
+
+.hero-top{display:flex;align-items:flex-start;gap:20px;position:relative;z-index:2;margin-bottom:20px;}
+.hero-av{width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:22px;color:#fff;border:3px solid rgba(255,255,255,.15);flex-shrink:0;box-shadow:0 8px 24px rgba(0,0,0,.3);}
+.hero-av.sec-fr{background:linear-gradient(135deg,#7C3AED,#A78BFA);}
+.hero-av.sec-en{background:linear-gradient(135deg,#0284C7,#38BDF8);}
+.hero-av.sec-bi{background:linear-gradient(135deg,#059669,#34D399);}
+.hero-info{flex:1;}
+.hero-name{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;}
+.hero-sub{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:10px;font-family:monospace;}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap;}
+.htag{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;}
+.htag-v{background:rgba(76,29,149,.5);color:#C4B5FD;border:1px solid rgba(109,40,217,.4);}
+.htag-c{background:rgba(6,182,212,.15);color:var(--cyan);border:1px solid rgba(6,182,212,.3);}
+.htag-g{background:rgba(5,150,105,.15);color:#34D399;border:1px solid rgba(5,150,105,.3);}
+.htag-a{background:rgba(217,119,6,.15);color:#FBBF24;border:1px solid rgba(217,119,6,.3);}
+
+.hero-stats{display:flex;gap:0;position:relative;z-index:2;border-top:1px solid rgba(255,255,255,.08);}
+.hstat{flex:1;padding:14px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07);}
+.hstat:last-child{border-right:none;}
+.hstat-val{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:#fff;}
+.hstat-val .accent{color:var(--cyan);}
+.hstat-lbl{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* TABS */
+.tabs-bar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 32px;display:flex;gap:0;flex-shrink:0;}
+.tab-item{padding:13px 18px;font-size:13px;font-weight:600;color:var(--texte-sec);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.tab-item:hover{color:var(--violet-profond);}
+.tab-item.active{color:var(--violet-profond);border-bottom-color:var(--violet-profond);}
+.tab-badge{background:rgba(76,29,149,.1);color:var(--violet-profond);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;}
+
+/* PANELS */
+.panels{padding:24px 32px;flex:1;}
+.panel{display:none;}
+.panel.active{display:block;animation:fadeIn .22s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+
+/* LAYOUT */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+/* CARDS */
+.card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:14px;overflow:hidden;margin-bottom:16px;}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--bordure);display:flex;align-items:center;justify-content:space-between;}
+.card-title-row{display:flex;align-items:center;gap:8px;}
+.card-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.ci-v{background:rgba(76,29,149,.1);}
+.ci-c{background:rgba(6,182,212,.1);}
+.ci-g{background:rgba(5,150,105,.1);}
+.ci-a{background:rgba(217,119,6,.1);}
+.ci-r{background:rgba(225,29,72,.1);}
+.card-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--texte-principal);}
+.card-action{font-size:11px;font-weight:600;color:var(--violet-profond);cursor:pointer;}
+.card-action:hover{text-decoration:underline;}
+.card-body{padding:18px;}
+
+/* INFO GRID */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.info-item{padding:10px 12px;background:var(--fond-page);border:1px solid var(--bordure);border-radius:10px;}
+.info-lbl{font-size:10px;color:var(--texte-sec);font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-bottom:3px;}
+.info-val{font-size:13px;font-weight:600;color:var(--texte-principal);}
+.info-val.mono{font-family:monospace;color:var(--violet-profond);}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.b-active{background:rgba(5,150,105,.1);color:var(--succes);}
+.b-inactif{background:rgba(225,29,72,.1);color:var(--danger);}
+.b-warn{background:rgba(217,119,6,.1);color:var(--avertissement);}
+.b-info{background:rgba(6,182,212,.1);color:var(--cyan);}
+.b-fr{background:rgba(124,58,237,.1);color:#7C3AED;}
+.b-en{background:rgba(2,132,199,.1);color:#0284C7;}
+.b-bi{background:rgba(5,150,105,.1);color:#059669;}
+.bdot{width:5px;height:5px;border-radius:50%;background:currentColor;}
+
+/* TABLE ÉLÈVES */
+.mini-table{width:100%;border-collapse:collapse;font-size:12px;}
+.mini-table th{padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--texte-sec);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bordure);background:var(--fond-page);}
+.mini-table td{padding:9px 12px;border-bottom:1px solid var(--bordure);vertical-align:middle;}
+.mini-table tr:last-child td{border-bottom:none;}
+.mini-table tbody tr:hover{background:rgba(76,29,149,.025);}
+.eleve-cell{display:flex;align-items:center;gap:9px;}
+.elv-av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;}
+.av1{background:linear-gradient(135deg,#7C3AED,#A78BFA);}
+.av2{background:linear-gradient(135deg,#0284C7,#38BDF8);}
+.av3{background:linear-gradient(135deg,#059669,#34D399);}
+.av4{background:linear-gradient(135deg,#D97706,#FBBF24);}
+.av5{background:linear-gradient(135deg,#E11D48,#FB7185);}
+.av6{background:linear-gradient(135deg,#4C1D95,#6D28D9);}
+.av7{background:linear-gradient(135deg,#06B6D4,#22D3EE);}
+.av8{background:linear-gradient(135deg,#374151,#6B7280);}
+.ename{font-size:12px;font-weight:600;color:var(--texte-principal);}
+.eid{font-size:10px;color:var(--texte-sec);}
+
+/* TABLE SEARCH */
+.table-search-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bordure);}
+.tsearch{flex:1;max-width:260px;position:relative;}
+.tsearch input{width:100%;border:1.5px solid var(--bordure);border-radius:9px;padding:7px 12px 7px 32px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--texte-principal);background:var(--fond-page);outline:none;transition:border-color .2s;}
+.tsearch input:focus{border-color:var(--violet-profond);}
+.tsearch input::placeholder{color:var(--texte-sec);}
+.tsi{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--texte-sec);}
+.table-info{font-size:12px;color:var(--texte-sec);margin-left:auto;}
+.table-info strong{color:var(--texte-principal);}
+
+/* NOTES / MOYENNES */
+.matiere-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--bordure);}
+.matiere-row:last-child{border-bottom:none;}
+.mat-name{font-size:13px;font-weight:600;color:var(--texte-principal);}
+.mat-ens{font-size:11px;color:var(--texte-sec);}
+.pbar-wrap{display:flex;align-items:center;gap:8px;min-width:180px;}
+.pbar{flex:1;height:6px;background:var(--bordure);border-radius:4px;overflow:hidden;}
+.pbar-fill{height:100%;border-radius:4px;}
+.fg{background:linear-gradient(90deg,var(--succes),#34D399);}
+.fv{background:linear-gradient(90deg,var(--violet-profond),var(--violet-hover));}
+.fa{background:linear-gradient(90deg,var(--avertissement),#FBBF24);}
+.fd{background:linear-gradient(90deg,var(--danger),#FB7185);}
+.note-val{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;min-width:44px;text-align:right;}
+.nv-good{color:var(--succes);}
+.nv-mid{color:var(--violet-profond);}
+.nv-warn{color:var(--avertissement);}
+.nv-bad{color:var(--danger);}
+
+/* DISCIPLINE */
+.incident-row{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--bordure);}
+.incident-row:last-child{border-bottom:none;}
+.inc-dot{width:10px;height:10px;border-radius:50%;margin-top:3px;flex-shrink:0;}
+.inc-grave{background:var(--danger);}
+.inc-moyen{background:var(--avertissement);}
+.inc-leger{background:var(--cyan);}
+.inc-info{flex:1;}
+.inc-type{font-size:12px;font-weight:700;color:var(--texte-principal);}
+.inc-eleve{font-size:11px;color:var(--violet-profond);font-weight:600;}
+.inc-desc{font-size:11px;color:var(--texte-sec);margin-top:2px;}
+.inc-date{font-size:10px;color:var(--texte-sec);}
+.inc-sanction{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;margin-top:4px;}
+.is-g{background:rgba(225,29,72,.08);color:var(--danger);}
+.is-a{background:rgba(217,119,6,.08);color:var(--avertissement);}
+
+/* TAUX REMPLISSAGE */
+.jauge-wrap{margin:14px 0 6px;}
+.jauge-bar{height:10px;background:var(--bordure);border-radius:6px;overflow:hidden;}
+.jauge-fill{height:100%;border-radius:6px;transition:width .6s ease;}
+
+/* MINI STAT ROW */
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.ms-card{background:var(--fond-page);border:1.5px solid var(--bordure);border-radius:12px;padding:12px 14px;text-align:center;}
+.ms-val{font-family:'Sora',sans-serif;font-size:19px;font-weight:800;color:var(--texte-principal);}
+.ms-lbl{font-size:10px;color:var(--texte-sec);margin-top:3px;}
+
+/* TRIMESTRE TABS */
+.tri-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.tri-btn{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);font-family:'DM Sans',sans-serif;}
+.tri-btn.active{background:var(--violet-profond);color:#fff;border-color:var(--violet-profond);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bordure);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:#C4B5FD;}
+
+/* ACTION BTN */
+.act-btn{width:26px;height:26px;border-radius:7px;border:1.5px solid var(--bordure);background:var(--fond-page);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;transition:all .2s;}
+.act-btn:hover{border-color:var(--violet-profond);}
+.action-cell{display:flex;gap:4px;}
+
+/* RANG BADGE */
+.rang-badge{width:22px;height:22px;border-radius:6px;background:rgba(76,29,149,.08);color:var(--violet-profond);font-family:'Sora',sans-serif;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+.rang-1{background:rgba(217,119,6,.12);color:var(--avertissement);}
+.rang-2{background:rgba(107,114,128,.1);color:var(--texte-sec);}
+.rang-3{background:rgba(5,150,105,.1);color:var(--succes);}
+
+/* SEXE PILL */
+.sexe-pill{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;}
+.sp-m{background:rgba(2,132,199,.08);color:#0284C7;}
+.sp-f{background:rgba(225,29,72,.08);color:#E11D48;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo"><div class="logo-dot"></div>SCHOOL<span>i</span></div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item">🏠 <span>Tableau de bord</span></div>
+    <div class="nav-item">🎓 <span>Élèves</span><span class="na">312</span></div>
+    <div class="nav-item">📋 <span>Inscriptions</span></div>
+    <div class="nav-item active">🏫 <span>Classes</span><span class="na">15</span></div>
+    <div class="nav-item">💰 <span>Paiements</span></div>
+    <div class="nav-label">Pédagogie</div>
+    <div class="nav-item">📝 <span>Notes</span></div>
+    <div class="nav-item">⚠️ <span>Discipline</span></div>
+    <div class="nav-item">🚌 <span>Transport</span></div>
+    <div class="nav-label">Administration</div>
+    <div class="nav-item">🖨️ <span>Impressions</span></div>
+    <div class="nav-item">⚙️ <span>Paramètres</span></div>
+    <div class="nav-item">👥 <span>Utilisateurs</span></div>
+  </div>
+</nav>
+
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">← Retour</button>
+    <div class="breadcrumb">Classes &nbsp;›&nbsp; <strong>CM2 — Bilingue</strong></div>
+    <div class="topbar-right">
+      <button class="btn-sec">🖨️ Liste de classe</button>
+      <button class="btn-sec">👨‍🏫 Affecter enseignant</button>
+      <button class="btn-prim">🎓 Affecter un élève</button>
+      <div class="user-pill" style="margin-left:4px;">
+        <div class="ava">AD</div>
+        <div><div class="uname">Admin</div><div class="urole">Administrateur</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-area">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-top">
+        <div class="hero-av sec-bi">🌐</div>
+        <div class="hero-info">
+          <div class="hero-name">CM2 — Section Bilingue</div>
+          <div class="hero-sub">CLS127 &nbsp;·&nbsp; Code : CM2/BI &nbsp;·&nbsp; Créée le 01/09/2025</div>
+          <div class="hero-tags">
+            <span class="htag htag-g">🌐 Bilingue (Fr / En)</span>
+            <span class="htag htag-c">📍 Salle C4</span>
+            <span class="htag htag-a">📅 2025 – 2026</span>
+            <span class="htag htag-v">✅ Active</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><div class="hstat-val" id="hEff">38</div><div class="hstat-lbl">Élèves inscrits</div></div>
+        <div class="hstat"><div class="hstat-val">45</div><div class="hstat-lbl">Capacité</div></div>
+        <div class="hstat"><div class="hstat-val">7</div><div class="hstat-lbl">Places libres</div></div>
+        <div class="hstat"><div class="hstat-val">13<span class="accent">.2</span></div><div class="hstat-lbl">Moyenne générale</div></div>
+        <div class="hstat"><div class="hstat-val" style="color:var(--danger);">4</div><div class="hstat-lbl">Incidents discipline</div></div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-bar">
+      <div class="tab-item active" onclick="switchTab('infos',this)">📄 Informations</div>
+      <div class="tab-item" onclick="switchTab('eleves',this)">🎓 Élèves <span class="tab-badge" id="tabBadgeEleves">38</span></div>
+      <div class="tab-item" onclick="switchTab('notes',this)">📝 Notes & Moyennes</div>
+      <div class="tab-item" onclick="switchTab('discipline',this)">⚠️ Discipline <span class="tab-badge">4</span></div>
+    </div>
+
+    <!-- PANELS -->
+    <div class="panels">
+
+      <!-- ══ PANEL INFOS ══ -->
+      <div class="panel active" id="panel-infos">
+        <div class="two-col">
+          <!-- INFOS GÉNÉRALES -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-v">🏫</div><div class="card-title">Informations générales</div></div>
+                <span class="card-action">✏️ Modifier</span>
+              </div>
+              <div class="card-body">
+                <div class="info-grid">
+                  <div class="info-item"><div class="info-lbl">Niveau</div><div class="info-val">CM2</div></div>
+                  <div class="info-item"><div class="info-lbl">Section</div><div class="info-val"><span class="badge b-bi"><span class="bdot"></span> Bilingue</span></div></div>
+                  <div class="info-item"><div class="info-lbl">Code classe</div><div class="info-val mono">CM2/BI</div></div>
+                  <div class="info-item"><div class="info-lbl">Identifiant</div><div class="info-val mono">CLS127</div></div>
+                  <div class="info-item"><div class="info-lbl">Salle</div><div class="info-val">Salle C4 — Bloc C</div></div>
+                  <div class="info-item"><div class="info-lbl">Année scolaire</div><div class="info-val">2025 – 2026</div></div>
+                  <div class="info-item"><div class="info-lbl">Capacité max.</div><div class="info-val">45 élèves</div></div>
+                  <div class="info-item"><div class="info-lbl">Statut</div><div class="info-val"><span class="badge b-active"><span class="bdot"></span> Active</span></div></div>
+                </div>
+                <div style="margin-top:12px;">
+                  <div class="info-lbl" style="margin-bottom:6px;">Taux de remplissage</div>
+                  <div class="jauge-wrap">
+                    <div class="jauge-bar"><div class="jauge-fill fg" style="width:84%;background:linear-gradient(90deg,#059669,#34D399);"></div></div>
+                    <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--texte-sec);">
+                      <span>38 / 45 élèves</span><span style="color:var(--succes);font-weight:700;">84%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-c">💬</div><div class="card-title">Observations</div></div>
+              </div>
+              <div class="card-body">
+                <p style="font-size:13px;color:var(--texte-sec);line-height:1.6;">Classe bilingue de CM2. Les cours de sciences et mathématiques sont dispensés en anglais, les cours de français, histoire et géographie en français. Classe très dynamique avec un bon niveau général.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ENSEIGNANT + MATIÈRES -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-g">👨‍🏫</div><div class="card-title">Enseignant principal</div></div>
+                <span class="card-action">Changer</span>
+              </div>
+              <div class="card-body">
+                <div style="display:flex;align-items:center;gap:14px;padding:14px;background:rgba(5,150,105,.04);border:1.5px solid rgba(5,150,105,.15);border-radius:12px;">
+                  <div style="width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,#059669,#34D399);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:16px;color:#fff;flex-shrink:0;">ME</div>
+                  <div>
+                    <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--texte-principal);">Mme Ekotto Sylvie</div>
+                    <div style="font-size:12px;color:var(--texte-sec);margin-top:2px;">Professeure titulaire · Bilingue</div>
+                    <div style="font-size:11px;color:var(--succes);margin-top:4px;font-weight:600;">✅ En poste depuis sept. 2023</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-a">📚</div><div class="card-title">Matières enseignées</div></div>
+              </div>
+              <div class="card-body" style="padding:12px 18px;">
+                <div id="matieresList"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-v">👦👧</div><div class="card-title">Répartition des élèves</div></div>
+              </div>
+              <div class="card-body">
+                <div class="three-col">
+                  <div class="ms-card"><div class="ms-val" id="repTotal">38</div><div class="ms-lbl">Total</div></div>
+                  <div class="ms-card"><div class="ms-val" style="color:#0284C7;" id="repG">0</div><div class="ms-lbl">Garçons</div></div>
+                  <div class="ms-card"><div class="ms-val" style="color:#E11D48;" id="repF">0</div><div class="ms-lbl">Filles</div></div>
+                </div>
+                <div style="margin-top:10px;background:var(--fond-page);border-radius:8px;overflow:hidden;height:8px;display:flex;">
+                  <div id="barG" style="height:100%;background:linear-gradient(90deg,#0284C7,#38BDF8);transition:width .5s;"></div>
+                  <div id="barF" style="height:100%;background:linear-gradient(90deg,#E11D48,#FB7185);transition:width .5s;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL ÉLÈVES ══ -->
+      <div class="panel" id="panel-eleves">
+        <div class="card" style="margin-bottom:0;">
+          <div class="table-search-row">
+            <div class="tsearch"><span class="tsi">🔍</span><input type="text" id="eleveSearch" placeholder="Rechercher un élève…" oninput="filterEleves()"></div>
+            <div style="display:flex;gap:6px;margin-left:8px;">
+              <select style="border:1.5px solid var(--bordure);border-radius:8px;padding:6px 10px;font-size:12px;font-family:'DM Sans',sans-serif;color:var(--texte-sec);outline:none;" onchange="filterBySexe(this.value)">
+                <option value="">Tous (M/F)</option>
+                <option value="M">Garçons</option>
+                <option value="F">Filles</option>
+              </select>
+            </div>
+            <div class="table-info" id="eleveCount"></div>
+            <button class="btn-prim" style="margin-left:10px;font-size:12px;padding:7px 14px;">🎓 Affecter un élève</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="mini-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Élève</th>
+                  <th>Sexe</th>
+                  <th>Date de naissance</th>
+                  <th>Tuteur</th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="eleveBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL NOTES ══ -->
+      <div class="panel" id="panel-notes">
+        <div class="two-col">
+          <!-- MOYENNES PAR MATIÈRE -->
+          <div>
+            <div class="tri-tabs">
+              <div class="tri-btn active" onclick="selectTri('T1',this)">Trimestre 1</div>
+              <div class="tri-btn" onclick="selectTri('T2',this)">Trimestre 2</div>
+              <div class="tri-btn" onclick="selectTri('T3',this)">Trimestre 3</div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-v">📊</div><div class="card-title">Moyennes par matière</div></div>
+                <span class="card-action">Saisir les notes →</span>
+              </div>
+              <div class="card-body" style="padding:10px 18px 14px;">
+                <div id="notesBody"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CLASSEMENT + STATS -->
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-a">🏆</div><div class="card-title">Top 5 — Meilleurs élèves</div></div>
+              </div>
+              <div class="card-body" style="padding:10px 18px;">
+                <table class="mini-table">
+                  <thead><tr><th>Rang</th><th>Élève</th><th style="text-align:right;">Moy.</th></tr></thead>
+                  <tbody id="topBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-g">📈</div><div class="card-title">Distribution des moyennes</div></div>
+              </div>
+              <div class="card-body">
+                <div id="distBody"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ PANEL DISCIPLINE ══ -->
+      <div class="panel" id="panel-discipline">
+        <div class="two-col">
+          <div>
+            <div class="mini-stats">
+              <div class="ms-card"><div class="ms-val" style="color:var(--danger);">1</div><div class="ms-lbl">Incidents graves</div></div>
+              <div class="ms-card"><div class="ms-val" style="color:var(--avertissement);">2</div><div class="ms-lbl">Incidents moyens</div></div>
+              <div class="ms-card"><div class="ms-val" style="color:var(--cyan);">1</div><div class="ms-lbl">Incidents légers</div></div>
+            </div>
+            <div class="card" style="margin-bottom:0;">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-r">⚠️</div><div class="card-title">Incidents signalés</div></div>
+                <button class="btn-prim" style="font-size:11px;padding:6px 12px;">＋ Signaler</button>
+              </div>
+              <div class="card-body" style="padding:6px 18px 14px;">
+                <div id="incidentBody"></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-r">⚖️</div><div class="card-title">Élèves avec incidents</div></div>
+              </div>
+              <div class="card-body" style="padding:10px 18px;">
+                <table class="mini-table">
+                  <thead><tr><th>Élève</th><th style="text-align:center;">Incidents</th><th>Dernière sanction</th></tr></thead>
+                  <tbody id="discEleveBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /panels -->
+  </div><!-- /scroll-area -->
+</div><!-- /main -->
+
+<script>
+// ── DATA ──
+const prenoms = ['Émile','Carine','Joël','Fatima','Brice','Nadia','Armel','Victoire','Kevin','Laure','Nathan','Esther','Serge','Linda','Paul','Marie','Théo','Aicha','Alexis','Mireille','Samuel','Chloé','David','Rachel','Simon','Ornella','Franck','Béatrice','Amos','Vanessa','Élise','Boris','Séraphine','Dieudonné','Clarisse','Hugo','Larissa','Mathieu'];
+const noms    = ['Mbarga','Fotso','Ateba','Essama','Nkomo','Bilong','Ewane','Mba','Fouda','Bella','Nganou','Soppo','Mongo','Kotto','Djike','Feudjio','Epanda','Bekolo','Tonye','Abena','Ondoa','Mvogo','Ngolle','Kameni','Tagne','Djoumessi','Bengono','Biyong','Fomekong','Nyambi','Ekotto','Samba','Bassong','Njoya','Foumbi','Engonga','Bessa','Mengue'];
+const tuteurs = ['M. Mbarga Jean','Mme Fotso Claire','M. Ateba Pierre','Mme Bella Rose','M. Kotto André','Mme Mongo Hélène','M. Soppo Luc','Mme Nganou Anne','M. Tagne Paul','Mme Ekotto Sylvie'];
+const avCls   = ['av1','av2','av3','av4','av5','av6','av7','av8'];
+const matieres = [
+  {nom:'Mathématiques', emoji:'🔢', coef:4},
+  {nom:'Sciences',      emoji:'🔬', coef:3},
+  {nom:'Français',      emoji:'📖', coef:4},
+  {nom:'Anglais',       emoji:'🇬🇧', coef:3},
+  {nom:'Histoire-Géo',  emoji:'🌍', coef:2},
+  {nom:'Éducation civ.',emoji:'⚖️', coef:1},
+  {nom:'Sport',         emoji:'⚽', coef:1},
+];
+
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function fmtDate(d){return d.toLocaleDateString('fr-FR');}
+
+// Générer 38 élèves
+const eleves = Array.from({length:38},(_,i)=>{
+  const prenom=prenoms[i]||pick(prenoms), nom=noms[i]||pick(noms);
+  const sexe = i < 20 ? 'M' : 'F';
+  const yr=rnd(2013,2015), mo=rnd(1,12), day=rnd(1,28);
+  const moy = parseFloat((rnd(70,190)/10).toFixed(1));
+  return {
+    id:'ELV'+String(10200+i).padStart(5,'0'),
+    prenom, nom,
+    fullName: prenom+' '+nom,
+    initials: prenom[0]+nom[0],
+    avCls: avCls[i%8],
+    sexe,
+    dateNaissance: new Date(yr,mo-1,day),
+    tuteur: tuteurs[i%tuteurs.length],
+    statut: Math.random()<.9 ? 'active' : 'inactif',
+    moy,
+    notes: matieres.map(m=>({...m, moy:parseFloat((rnd(60,200)/10).toFixed(1))}))
+  };
+});
+
+// Stats genre
+const nbG = eleves.filter(e=>e.sexe==='M').length;
+const nbF = eleves.filter(e=>e.sexe==='F').length;
+document.getElementById('repG').textContent = nbG;
+document.getElementById('repF').textContent = nbF;
+document.getElementById('barG').style.width = (nbG/38*100)+'%';
+document.getElementById('barF').style.width = (nbF/38*100)+'%';
+
+// TABS
+function switchTab(id, el){
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+}
+
+// ── MATIÈRES (infos) ──
+const matieresData = [
+  {emoji:'📖', nom:'Français',       enseignant:'Mme Ekotto Sylvie'},
+  {emoji:'🇬🇧', nom:'Anglais',        enseignant:'Mme Ekotto Sylvie'},
+  {emoji:'🔢', nom:'Mathématiques',  enseignant:'M. Tagne Paul'},
+  {emoji:'🔬', nom:'Sciences',       enseignant:'M. Tagne Paul'},
+  {emoji:'🌍', nom:'Histoire-Géo',   enseignant:'Mme Ekotto Sylvie'},
+  {emoji:'⚖️', nom:'Éducation civ.', enseignant:'Mme Ekotto Sylvie'},
+  {emoji:'⚽', nom:'Sport',          enseignant:'M. Bekolo André'},
+];
+document.getElementById('matieresList').innerHTML = matieresData.map((m,i)=>`
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;${i<matieresData.length-1?'border-bottom:1px solid var(--bordure);':''}">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:28px;height:28px;border-radius:8px;background:rgba(76,29,149,.07);display:flex;align-items:center;justify-content:center;font-size:13px;">${m.emoji}</div>
+      <div style="font-size:12px;font-weight:600;color:var(--texte-principal);">${m.nom}</div>
+    </div>
+    <div style="font-size:11px;color:var(--texte-sec);">${m.enseignant}</div>
+  </div>`).join('');
+
+// ── ÉLÈVES ──
+let filteredEleves = [...eleves];
+let sexeFilter = '';
+
+function filterEleves(){
+  const q = document.getElementById('eleveSearch').value.toLowerCase();
+  filteredEleves = eleves.filter(e=>{
+    const matchQ = !q || e.fullName.toLowerCase().includes(q) || e.id.toLowerCase().includes(q);
+    const matchS = !sexeFilter || e.sexe === sexeFilter;
+    return matchQ && matchS;
+  });
+  renderEleves();
+}
+function filterBySexe(v){sexeFilter=v;filterEleves();}
+
+function renderEleves(){
+  const sLbl={active:'Actif',inactif:'Désactivé'};
+  const sCls={active:'b-active',inactif:'b-inactif'};
+  document.getElementById('eleveCount').innerHTML=`<strong>${filteredEleves.length}</strong> élève(s)`;
+  document.getElementById('eleveBody').innerHTML = filteredEleves.map((e,i)=>`
+    <tr>
+      <td style="font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:var(--texte-sec);">${i+1}</td>
+      <td><div class="eleve-cell"><div class="elv-av ${e.avCls}">${e.initials}</div><div><div class="ename">${e.fullName}</div><div class="eid">${e.id}</div></div></div></td>
+      <td><span class="sexe-pill ${e.sexe==='M'?'sp-m':'sp-f'}">${e.sexe==='M'?'♂ Garçon':'♀ Fille'}</span></td>
+      <td style="font-size:12px;color:var(--texte-sec);">${fmtDate(e.dateNaissance)}</td>
+      <td style="font-size:11px;color:var(--texte-sec);">${e.tuteur}</td>
+      <td><span class="badge ${sCls[e.statut]}"><span class="bdot"></span>${sLbl[e.statut]}</span></td>
+      <td><div class="action-cell"><div class="act-btn" title="Voir la fiche">👁</div><div class="act-btn" title="Retirer de la classe" style="font-size:11px;color:var(--texte-sec);">↩</div></div></td>
+    </tr>`).join('');
+}
+filterEleves();
+
+// ── NOTES ──
+function moyNoteColor(m){
+  if(m>=14)return{cls:'nv-good',bar:'fg'};
+  if(m>=10)return{cls:'nv-mid',bar:'fv'};
+  if(m>=8) return{cls:'nv-warn',bar:'fa'};
+  return{cls:'nv-bad',bar:'fd'};
+}
+
+const notesParMat = matieres.map(m=>{
+  const moys = eleves.map(e=>parseFloat((rnd(60,200)/10).toFixed(1)));
+  const classMoy = parseFloat((moys.reduce((a,b)=>a+b,0)/moys.length).toFixed(1));
+  return {...m, classMoy};
+});
+
+function renderNotes(){
+  document.getElementById('notesBody').innerHTML = notesParMat.map(m=>{
+    const c = moyNoteColor(m.classMoy);
+    const pct = (m.classMoy/20)*100;
+    return `<div class="matiere-row">
+      <div><div class="mat-name">${m.emoji} ${m.nom}</div><div class="mat-ens">Coeff. ${m.coef}</div></div>
+      <div class="pbar-wrap">
+        <div class="pbar"><div class="pbar-fill ${c.bar}" style="width:${pct}%"></div></div>
+        <div class="note-val ${c.cls}">${m.classMoy}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+renderNotes();
+
+function selectTri(t,el){
+  document.querySelectorAll('.tri-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  // Re-randomise légèrement pour simuler un changement de trimestre
+  notesParMat.forEach(m=>{ m.classMoy = parseFloat((rnd(80,185)/10).toFixed(1)); });
+  renderNotes();
+  renderTop();
+  renderDist();
+}
+
+// TOP 5
+function renderTop(){
+  const sorted = [...eleves].sort((a,b)=>b.moy-a.moy).slice(0,5);
+  const rangCls = ['rang-1','rang-2','rang-3','','',''];
+  document.getElementById('topBody').innerHTML = sorted.map((e,i)=>`
+    <tr>
+      <td><div class="rang-badge ${rangCls[i]||''}">${i+1}</div></td>
+      <td><div class="eleve-cell"><div class="elv-av ${e.avCls}">${e.initials}</div><div class="ename">${e.fullName}</div></div></td>
+      <td style="text-align:right;"><span class="note-val ${moyNoteColor(e.moy).cls}" style="font-size:13px;">${e.moy}</span></td>
+    </tr>`).join('');
+}
+renderTop();
+
+// DISTRIBUTION
+function renderDist(){
+  const tranches = [
+    {lbl:'16–20', min:16, max:20, color:'var(--succes)'},
+    {lbl:'12–15', min:12, max:15.9, color:'var(--violet-profond)'},
+    {lbl:'10–11', min:10, max:11.9, color:'var(--avertissement)'},
+    {lbl:'< 10',  min:0,  max:9.9,  color:'var(--danger)'},
+  ];
+  const max = 38;
+  document.getElementById('distBody').innerHTML = tranches.map(t=>{
+    const n = eleves.filter(e=>e.moy>=t.min&&e.moy<=t.max).length;
+    const pct = Math.round((n/max)*100);
+    return `<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;font-weight:600;color:var(--texte-principal);">${t.lbl} / 20</span>
+        <span style="font-size:12px;color:var(--texte-sec);">${n} élève(s) &nbsp;<strong style="color:${t.color};">(${pct}%)</strong></span>
+      </div>
+      <div style="background:var(--bordure);border-radius:5px;height:8px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${t.color};border-radius:5px;transition:width .5s;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+renderDist();
+
+// ── DISCIPLINE ──
+const incidents = [
+  {type:'Bagarre', gravite:'grave', eleve:'Joël Ateba', desc:'Altercation physique avec un camarade en récréation.', date:'12/03/2026', sanction:'Suspension 2 jours', sanctionCls:'is-g'},
+  {type:'Insolence', gravite:'moyen', eleve:'Brice Nkomo', desc:'Comportement irrespectueux envers l\'enseignante de français.', date:'05/03/2026', sanction:'Avertissement écrit', sanctionCls:'is-a'},
+  {type:'Retard répété', gravite:'moyen', eleve:'Fatima Essama', desc:'3ème retard non justifié ce trimestre.', date:'28/02/2026', sanction:'Convocation tuteur', sanctionCls:'is-a'},
+  {type:'Perturbation', gravite:'leger', eleve:'Armel Ewane', desc:'Bavardages persistants durant le cours de mathématiques.', date:'20/02/2026', sanction:null, sanctionCls:null},
+];
+const dotCls = {grave:'inc-grave', moyen:'inc-moyen', leger:'inc-leger'};
+
+document.getElementById('incidentBody').innerHTML = incidents.map(inc=>`
+  <div class="incident-row">
+    <div class="inc-dot ${dotCls[inc.gravite]}"></div>
+    <div class="inc-info">
+      <div class="inc-type">${inc.type} <span class="inc-eleve">— ${inc.eleve}</span></div>
+      <div class="inc-desc">${inc.desc}</div>
+      ${inc.sanction?`<div class="inc-sanction ${inc.sanctionCls}">⚖️ ${inc.sanction}</div>`:'<div class="inc-sanction" style="background:rgba(107,114,128,.07);color:var(--texte-sec);">Sans sanction</div>'}
+    </div>
+    <div class="inc-date">${inc.date}</div>
+  </div>`).join('');
+
+// Élèves avec incidents
+const discEleves = [
+  {eleve:'Joël Ateba',    avCls:'av3', nb:1, derniere:'Suspension 2 jours'},
+  {eleve:'Brice Nkomo',  avCls:'av4', nb:1, derniere:'Avertissement écrit'},
+  {eleve:'Fatima Essama',avCls:'av2', nb:1, derniere:'Convocation tuteur'},
+  {eleve:'Armel Ewane',  avCls:'av6', nb:1, derniere:'Aucune sanction'},
+];
+document.getElementById('discEleveBody').innerHTML = discEleves.map(d=>`
+  <tr>
+    <td><div class="eleve-cell"><div class="elv-av ${d.avCls}">${d.eleve.split(' ').map(w=>w[0]).join('')}</div><div class="ename">${d.eleve}</div></div></td>
+    <td style="text-align:center;"><span class="badge b-warn"><span class="bdot"></span>${d.nb}</span></td>
+    <td style="font-size:11px;color:var(--texte-sec);">${d.derniere}</td>
+  </tr>`).join('');
+</script>
+</body>
+</html>

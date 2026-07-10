@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Nouvel élève</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --violet-profond: #4C1D95;
+  --violet-hover:   #6D28D9;
+  --violet-nuit:    #1E0B3B;
+  --cyan:           #06B6D4;
+  --cyan-hover:     #22D3EE;
+  --fond-page:      #F8FAFF;
+  --fond-carte:     #FFFFFF;
+  --bordure:        #EDE9FE;
+  --texte-principal:#1E1B4B;
+  --texte-sec:      #6B7280;
+  --succes:         #059669;
+  --danger:         #E11D48;
+  --avertissement:  #D97706;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--fond-page);color:var(--texte-principal);display:flex;height:100vh;overflow:hidden;}
+
+/* ══ SIDEBAR ══ */
+.sidebar{width:200px;min-width:200px;background:var(--violet-nuit);display:flex;flex-direction:column;padding-bottom:16px;position:relative;overflow-y:auto;}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(6,182,212,.25),transparent);}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;padding:22px 20px 26px;display:flex;align-items:center;gap:8px;letter-spacing:2px;}
+.logo-dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 9px var(--cyan);}
+.logo span{color:var(--cyan);}
+.nav-section{padding:0 12px;}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.52);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(109,40,217,.3);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.4);}
+
+/* ══ MAIN ══ */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 24px;height:60px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.back-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.back-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.breadcrumb{font-size:12px;color:var(--texte-sec);}
+.breadcrumb strong{color:var(--texte-principal);}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);cursor:pointer;}
+.ava{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;font-family:'Sora',sans-serif;}
+.uname{font-size:12px;font-weight:600;color:var(--texte-principal);}
+.urole{font-size:10px;color:var(--texte-sec);}
+
+/* ══ CONTENT ══ */
+.content{flex:1;overflow-y:auto;padding:26px 32px;}
+
+/* Page header */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;}
+.page-header h1{font-family:'Sora',sans-serif;font-size:21px;font-weight:800;color:var(--texte-principal);}
+.page-header p{font-size:13px;color:var(--texte-sec);margin-top:3px;}
+
+/* STEPS */
+.steps{display:flex;align-items:center;gap:0;margin-bottom:28px;}
+.step{display:flex;align-items:center;gap:8px;}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:12px;font-weight:700;flex-shrink:0;}
+.step.done .step-num{background:var(--succes);color:#fff;}
+.step.active .step-num{background:var(--violet-profond);color:#fff;box-shadow:0 0 0 4px rgba(76,29,149,.15);}
+.step.pending .step-num{background:var(--fond-page);color:var(--texte-sec);border:2px solid var(--bordure);}
+.step-label{font-size:12px;font-weight:600;}
+.step.active .step-label{color:var(--violet-profond);}
+.step.pending .step-label{color:var(--texte-sec);}
+.step.done .step-label{color:var(--succes);}
+.step-line{flex:1;height:2px;background:var(--bordure);margin:0 12px;min-width:30px;}
+.step-line.done{background:var(--succes);}
+.step-line.active{background:linear-gradient(90deg,var(--succes),var(--violet-profond));}
+
+/* GRID LAYOUT */
+.form-grid{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;}
+
+/* CARDS */
+.card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;margin-bottom:16px;}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--bordure);display:flex;align-items:center;gap:10px;}
+.card-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.ci-v{background:rgba(76,29,149,.1);}
+.ci-c{background:rgba(6,182,212,.1);}
+.ci-g{background:rgba(5,150,105,.1);}
+.ci-a{background:rgba(217,119,6,.1);}
+.card-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--texte-principal);}
+.card-sub{font-size:11px;color:var(--texte-sec);margin-top:1px;}
+.card-body{padding:20px;}
+
+/* FORM FIELDS */
+.form-row{display:grid;gap:14px;margin-bottom:14px;}
+.form-row.cols-2{grid-template-columns:1fr 1fr;}
+.form-row.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-label{font-size:11px;font-weight:700;color:var(--texte-sec);letter-spacing:.4px;text-transform:uppercase;}
+.required{color:var(--danger);}
+.form-input,.form-select,.form-textarea{border:1.5px solid var(--bordure);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--texte-principal);background:var(--fond-page);outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--texte-sec);font-size:12px;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--violet-profond);box-shadow:0 0 0 3px rgba(76,29,149,.07);background:#fff;}
+.form-textarea{resize:vertical;min-height:72px;}
+.form-hint{font-size:11px;color:var(--texte-sec);margin-top:2px;}
+.form-input.error{border-color:var(--danger);}
+.form-error{font-size:11px;color:var(--danger);margin-top:2px;}
+
+/* RADIO GROUP */
+.radio-group{display:flex;gap:8px;}
+.radio-opt{flex:1;border:1.5px solid var(--bordure);border-radius:10px;padding:9px 12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px;}
+.radio-opt:hover{border-color:var(--violet-profond);}
+.radio-opt.selected{border-color:var(--violet-profond);background:rgba(76,29,149,.04);}
+.radio-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--bordure);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.radio-opt.selected .radio-dot{border-color:var(--violet-profond);background:var(--violet-profond);}
+.radio-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;}
+.radio-opt:not(.selected) .radio-dot::after{display:none;}
+.radio-label{font-size:12px;font-weight:600;color:var(--texte-principal);}
+
+/* PHOTO UPLOAD */
+.photo-zone{border:2px dashed var(--bordure);border-radius:12px;padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all .2s;min-height:140px;}
+.photo-zone:hover{border-color:var(--violet-profond);background:rgba(76,29,149,.02);}
+.photo-preview{width:80px;height:80px;border-radius:16px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;font-family:'Sora',sans-serif;font-weight:800;margin-bottom:4px;}
+.photo-lbl{font-size:12px;font-weight:600;color:var(--texte-sec);}
+.photo-hint{font-size:10px;color:var(--texte-sec);}
+
+/* MATRICULE PREVIEW */
+.mat-preview{background:rgba(76,29,149,.05);border:1.5px dashed rgba(76,29,149,.2);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;}
+.mat-val{font-family:monospace;font-size:16px;font-weight:700;color:var(--violet-profond);letter-spacing:2px;}
+.mat-info{font-size:10px;color:var(--texte-sec);}
+
+/* SUMMARY CARD */
+.summary-card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;position:sticky;top:0;}
+.summary-hero{height:90px;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));display:flex;align-items:center;justify-content:center;position:relative;}
+.summary-hero::after{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0,rgba(255,255,255,.04) 1px,transparent 0,transparent 50%);background-size:14px 14px;}
+.summary-av{width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-family:'Sora',sans-serif;font-weight:800;border:2px solid rgba(255,255,255,.3);}
+.summary-body{padding:16px;}
+.sum-name{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--texte-principal);text-align:center;min-height:20px;}
+.sum-id{font-size:10px;color:var(--texte-sec);text-align:center;font-family:monospace;margin-top:2px;}
+.sum-divider{height:1px;background:var(--bordure);margin:12px 0;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.sum-lbl{font-size:11px;color:var(--texte-sec);font-weight:500;}
+.sum-val{font-size:12px;font-weight:700;color:var(--texte-principal);}
+.sum-val.placeholder{color:var(--bordure);font-style:italic;font-weight:400;}
+
+/* FORM FOOTER */
+.form-footer{display:flex;gap:10px;padding:16px 20px;border-top:1px solid var(--bordure);background:var(--fond-carte);}
+.btn-cancel{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:transparent;color:var(--texte-sec);border:1.5px solid var(--bordure);transition:all .2s;}
+.btn-cancel:hover{border-color:var(--danger);color:var(--danger);}
+.btn-save{flex:2;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;border:none;box-shadow:0 4px 14px rgba(76,29,149,.3);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-save:hover{background:linear-gradient(135deg,var(--violet-hover),var(--cyan));}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bordure);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:#C4B5FD;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo"><div class="logo-dot"></div>SCHOOL<span>i</span></div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item">⊞ Tableau de bord</div>
+    <div class="nav-item active">👦 Élèves</div>
+    <div class="nav-item">📋 Inscriptions</div>
+    <div class="nav-item">🏫 Classes</div>
+    <div class="nav-item">💳 Paiements</div>
+    <div class="nav-label">Pédagogie</div>
+    <div class="nav-item">📝 Notes</div>
+    <div class="nav-item">🚨 Discipline</div>
+    <div class="nav-item">🚌 Transport</div>
+    <div class="nav-label">Système</div>
+    <div class="nav-item">👥 Utilisateurs</div>
+    <div class="nav-item">⚙️ Paramètres</div>
+    <div class="nav-item">🖨️ Impressions</div>
+  </div>
+</aside>
+
+<div class="main">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" onclick="history.back()">← Retour</button>
+      <span class="breadcrumb">Élèves &rsaquo; <strong>Nouvel élève</strong></span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="ava">SM</div>
+        <div><div class="uname">Sophie M.</div><div class="urole">Secrétaire</div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <h1>➕ Ajouter un élève</h1>
+        <p>Remplissez les informations ci-dessous pour créer le dossier de l'élève.</p>
+      </div>
+    </div>
+
+    <!-- STEPS -->
+    <div class="steps">
+      <div class="step active">
+        <div class="step-num">1</div>
+        <div class="step-label">Identité</div>
+      </div>
+      <div class="step-line active"></div>
+      <div class="step pending">
+        <div class="step-num">2</div>
+        <div class="step-label">Tuteur</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step pending">
+        <div class="step-num">3</div>
+        <div class="step-label">Scolarité</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step pending">
+        <div class="step-num">4</div>
+        <div class="step-label">Confirmation</div>
+      </div>
+    </div>
+
+    <!-- FORM GRID -->
+    <div class="form-grid">
+      <div>
+
+        <!-- SECTION 1 : IDENTITÉ -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-v">👦</div>
+            <div><div class="card-title">Informations personnelles</div><div class="card-sub">Données d'état civil de l'élève</div></div>
+          </div>
+          <div class="card-body">
+
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label class="form-label">Nom <span class="required">*</span></label>
+                <input class="form-input" id="nom" type="text" placeholder="Ex : Mbarga" oninput="updateSummary()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Prénom(s) <span class="required">*</span></label>
+                <input class="form-input" id="prenom" type="text" placeholder="Ex : Emile Jean" oninput="updateSummary()">
+              </div>
+            </div>
+
+            <div class="form-row cols-3">
+              <div class="form-group">
+                <label class="form-label">Date de naissance <span class="required">*</span></label>
+                <input class="form-input" id="dob" type="date" onchange="updateSummary()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Lieu de naissance <span class="required">*</span></label>
+                <input class="form-input" type="text" placeholder="Ex : Yaoundé">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nationalité</label>
+                <input class="form-input" type="text" placeholder="Ex : Camerounaise" value="Camerounaise">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Sexe <span class="required">*</span></label>
+                <div class="radio-group">
+                  <div class="radio-opt selected" id="radioM" onclick="selectSexe('M')">
+                    <div class="radio-dot"></div><span class="radio-label">♂ Masculin</span>
+                  </div>
+                  <div class="radio-opt" id="radioF" onclick="selectSexe('F')">
+                    <div class="radio-dot"></div><span class="radio-label">♀ Féminin</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION 2 : TUTEUR -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-c">👨‍👩‍👧</div>
+            <div><div class="card-title">Tuteur / Parent</div><div class="card-sub">Personne responsable de l'élève</div></div>
+          </div>
+          <div class="card-body">
+
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label class="form-label">Nom complet du tuteur <span class="required">*</span></label>
+                <input class="form-input" type="text" placeholder="Ex : M. Mbarga Jean" oninput="updateSummary()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Lien de parenté <span class="required">*</span></label>
+                <select class="form-select">
+                  <option value="">Sélectionner...</option>
+                  <option>Père</option>
+                  <option>Mère</option>
+                  <option>Oncle / Tante</option>
+                  <option>Tuteur légal</option>
+                  <option>Autre</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label class="form-label">Téléphone <span class="required">*</span></label>
+                <input class="form-input" type="tel" placeholder="Ex : 699 000 000">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Téléphone secondaire</label>
+                <input class="form-input" type="tel" placeholder="Ex : 677 000 000">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Adresse domicile</label>
+                <input class="form-input" type="text" placeholder="Ex : Quartier Melen, Yaoundé">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Profession du tuteur</label>
+                <input class="form-input" type="text" placeholder="Ex : Fonctionnaire">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION 3 : SCOLARITÉ -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-g">🏫</div>
+            <div><div class="card-title">Informations scolaires</div><div class="card-sub">Affectation et antécédents</div></div>
+          </div>
+          <div class="card-body">
+
+            <div class="form-row cols-3">
+              <div class="form-group">
+                <label class="form-label">Classe <span class="required">*</span></label>
+                <select class="form-select" id="classe" onchange="updateSummary()">
+                  <option value="">Choisir...</option>
+                  <option>CP</option>
+                  <option>CE1</option>
+                  <option>CE2</option>
+                  <option>CM1</option>
+                  <option>CM2</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Section <span class="required">*</span></label>
+                <select class="form-select" id="section" onchange="updateSummary()">
+                  <option value="">Choisir...</option>
+                  <option>A</option>
+                  <option>B</option>
+                  <option>C</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Année scolaire <span class="required">*</span></label>
+                <select class="form-select">
+                  <option>2025–2026</option>
+                  <option>2024–2025</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row cols-2">
+              <div class="form-group">
+                <label class="form-label">École d'origine</label>
+                <input class="form-input" type="text" placeholder="Laisser vide si primo-inscrit">
+                <span class="form-hint">Pour les transferts d'autres établissements.</span>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Groupe sanguin</label>
+                <select class="form-select">
+                  <option value="">Inconnu</option>
+                  <option>A+</option><option>A-</option>
+                  <option>B+</option><option>B-</option>
+                  <option>AB+</option><option>AB-</option>
+                  <option>O+</option><option>O-</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Observations / Besoins particuliers</label>
+                <textarea class="form-textarea" placeholder="Ex : Allergies, handicap, besoins spéciaux..."></textarea>
+              </div>
+            </div>
+
+            <!-- MATRICULE AUTO -->
+            <div class="form-group">
+              <label class="form-label">Matricule (généré automatiquement)</label>
+              <div class="mat-preview">
+                <span class="mat-val" id="matriculePreview">ELV — — —</span>
+                <span class="mat-info">Attribué à l'enregistrement</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- FOOTER BUTTONS -->
+        <div class="card" style="margin-bottom:30px;">
+          <div class="form-footer">
+            <button class="btn-cancel" onclick="history.back()">✕ Annuler</button>
+            <button class="btn-save" onclick="handleSave()">
+              <span>✓</span> Enregistrer l'élève
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: PHOTO + SUMMARY -->
+      <div>
+        <!-- PHOTO UPLOAD -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div class="card-icon ci-a">📷</div>
+            <div><div class="card-title">Photo d'identité</div><div class="card-sub">Optionnel</div></div>
+          </div>
+          <div class="card-body">
+            <div class="photo-zone" onclick="document.getElementById('photoInput').click()">
+              <div class="photo-preview" id="photoPreview">📷</div>
+              <div class="photo-lbl">Cliquez pour uploader</div>
+              <div class="photo-hint">JPG, PNG · Max 2 Mo</div>
+            </div>
+            <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+          </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="summary-card">
+          <div class="summary-hero">
+            <div class="summary-av" id="sumAv">👦</div>
+          </div>
+          <div class="summary-body">
+            <div class="sum-name" id="sumName" style="color:var(--texte-sec);font-style:italic;font-size:12px;font-weight:400;">Nom non saisi...</div>
+            <div class="sum-id" id="sumId">ELV — — —</div>
+            <div class="sum-divider"></div>
+            <div class="sum-row">
+              <span class="sum-lbl">Classe</span>
+              <span class="sum-val placeholder" id="sumClasse">—</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-lbl">Section</span>
+              <span class="sum-val placeholder" id="sumSection">—</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-lbl">Date de naissance</span>
+              <span class="sum-val placeholder" id="sumDob">—</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-lbl">Sexe</span>
+              <span class="sum-val" id="sumSexe">Masculin</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-lbl">Année scolaire</span>
+              <span class="sum-val">2025–2026</span>
+            </div>
+            <div class="sum-divider"></div>
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.15);border-radius:9px;padding:9px 12px;">
+              <span style="font-size:14px;">✅</span>
+              <div>
+                <div style="font-size:11px;font-weight:700;color:var(--succes);">Prêt à enregistrer</div>
+                <div style="font-size:10px;color:var(--texte-sec);">Complétez les champs requis</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+let sexeActuel = 'M';
+
+function selectSexe(s){
+  sexeActuel = s;
+  document.getElementById('radioM').classList.toggle('selected', s==='M');
+  document.getElementById('radioF').classList.toggle('selected', s==='F');
+  document.getElementById('sumSexe').textContent = s==='M' ? 'Masculin' : 'Féminin';
+  document.getElementById('sumAv').textContent = s==='M' ? '👦' : '👧';
+}
+
+function updateSummary(){
+  const nom = document.getElementById('nom').value.trim();
+  const prenom = document.getElementById('prenom').value.trim();
+  const dob = document.getElementById('dob').value;
+  const classe = document.getElementById('classe').value;
+  const section = document.getElementById('section').value;
+
+  const fullName = [prenom, nom].filter(Boolean).join(' ');
+  const initials = (prenom[0]||'')+(nom[0]||'');
+
+  const sumName = document.getElementById('sumName');
+  if(fullName){
+    sumName.textContent = fullName;
+    sumName.style.cssText = 'color:var(--texte-principal);font-style:normal;font-size:14px;font-weight:800;text-align:center;';
+  } else {
+    sumName.textContent = 'Nom non saisi...';
+    sumName.style.cssText = 'color:var(--texte-sec);font-style:italic;font-size:12px;font-weight:400;text-align:center;';
+  }
+
+  if(initials){
+    document.getElementById('sumAv').textContent = initials.toUpperCase();
+    document.getElementById('sumAv').style.fontSize = '18px';
+  } else {
+    document.getElementById('sumAv').textContent = sexeActuel==='M'?'👦':'👧';
+    document.getElementById('sumAv').style.fontSize = '22px';
+  }
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    el.textContent = val || '—';
+    el.className = val ? 'sum-val' : 'sum-val placeholder';
+  };
+
+  setVal('sumClasse', classe ? classe : '');
+  setVal('sumSection', section ? 'Section '+section : '');
+
+  if(dob){
+    const d = new Date(dob);
+    setVal('sumDob', d.toLocaleDateString('fr-FR'));
+    const age = Math.floor((Date.now()-d.getTime())/(365.25*24*3600*1000));
+    document.getElementById('sumDob').textContent += ` (${age} ans)`;
+  } else {
+    setVal('sumDob','');
+  }
+
+  // Update matricule preview
+  const mat = nom&&prenom ? 'ELV' + String(Math.floor(10000+Math.random()*90000)) : 'ELV — — —';
+  document.getElementById('matriculePreview').textContent = mat;
+  document.getElementById('sumId').textContent = mat;
+}
+
+function previewPhoto(input){
+  if(input.files&&input.files[0]){
+    const reader = new FileReader();
+    reader.onload = e => {
+      const prev = document.getElementById('photoPreview');
+      prev.style.backgroundImage = `url(${e.target.result})`;
+      prev.style.backgroundSize = 'cover';
+      prev.style.backgroundPosition = 'center';
+      prev.textContent = '';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function handleSave(){
+  const nom = document.getElementById('nom').value.trim();
+  const prenom = document.getElementById('prenom').value.trim();
+  const dob = document.getElementById('dob').value;
+  const classe = document.getElementById('classe').value;
+  const section = document.getElementById('section').value;
+
+  let ok = true;
+  [['nom',nom],['prenom',prenom],['dob',dob],['classe',classe],['section',section]].forEach(([id,val])=>{
+    const el = document.getElementById(id);
+    if(!val){el.classList.add('error');ok=false;}
+    else el.classList.remove('error');
+  });
+
+  if(!ok){
+    alert('Veuillez remplir tous les champs obligatoires (*).');
+    return;
+  }
+  alert('✅ Élève enregistré avec succès !');
+}
+</script>
+</body>
+</html>

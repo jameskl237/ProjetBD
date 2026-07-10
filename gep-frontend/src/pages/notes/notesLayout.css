@@ -1,0 +1,78 @@
+.notes-shell {
+  min-height: 100vh;
+  background: #f8faff;
+  padding: 32px 36px;
+}
+
+.notes-shell-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.notes-shell-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6d28d9;
+  margin-bottom: 4px;
+}
+
+.notes-shell-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e1b4b;
+}
+
+.notes-shell-back {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4c1d95;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #ede9fe;
+  background: #fff;
+}
+
+.notes-shell-back:hover {
+  border-color: #6d28d9;
+}
+
+.notes-shell-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.notes-shell-nav-item {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid #ede9fe;
+  transition: all 0.15s;
+}
+
+.notes-shell-nav-item:hover {
+  color: #4c1d95;
+  border-color: #c4b5fd;
+}
+
+.notes-shell-nav-item.active {
+  color: #fff;
+  background: linear-gradient(135deg, #4c1d95, #7c3aed);
+  border-color: #4c1d95;
+}
+
+.notes-shell-content .page-title {
+  font-size: 22px;
+}

@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Connexion</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --violet-profond: #4C1D95;
+  --violet-hover:   #6D28D9;
+  --violet-nuit:    #1E0B3B;
+  --cyan:           #06B6D4;
+  --cyan-hover:     #22D3EE;
+  --fond-page:      #F8FAFF;
+  --fond-carte:     #FFFFFF;
+  --bordure:        #EDE9FE;
+  --texte-principal:#1E1B4B;
+  --texte-sec:      #6B7280;
+  --succes:         #059669;
+  --danger:         #E11D48;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;}
+
+body {
+  display:flex;
+  min-height:100vh;
+  background:var(--fond-page);
+  overflow:hidden;
+}
+
+/* ══ LEFT PANEL ══ */
+.panel-left {
+  width:52%;
+  background:var(--violet-nuit);
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:44px 52px;
+  overflow:hidden;
+}
+
+/* Animated background orbs */
+.orb {
+  position:absolute;
+  border-radius:50%;
+  filter:blur(80px);
+  opacity:.35;
+  animation:drift 8s ease-in-out infinite;
+}
+.orb1 { width:420px;height:420px; background:var(--violet-profond); top:-100px;left:-80px; animation-delay:0s; }
+.orb2 { width:300px;height:300px; background:var(--cyan); bottom:60px;right:-60px; animation-delay:-3s; }
+.orb3 { width:200px;height:200px; background:var(--violet-hover); top:40%;left:30%; animation-delay:-5s; }
+
+@keyframes drift {
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(20px,-30px) scale(1.05);}
+  66%{transform:translate(-15px,20px) scale(.97);}
+}
+
+/* Grid dots overlay */
+.panel-left::before {
+  content:'';
+  position:absolute;inset:0;
+  background-image: radial-gradient(circle, rgba(255,255,255,.08) 1px, transparent 1px);
+  background-size:32px 32px;
+  pointer-events:none;
+}
+
+/* Top: logo */
+.left-logo {
+  display:flex;align-items:center;gap:10px;
+  font-family:'Sora',sans-serif;font-weight:800;font-size:20px;
+  color:#fff;letter-spacing:2px;
+  position:relative;z-index:2;
+}
+.logo-dot {
+  width:10px;height:10px;background:var(--cyan);
+  border-radius:50%;box-shadow:0 0 12px var(--cyan);
+}
+.logo-dot2 {
+  width:6px;height:6px;background:var(--cyan);
+  border-radius:50%;opacity:.5;margin-left:-6px;
+}
+.left-logo span{color:var(--cyan);}
+
+/* Middle: hero text */
+.left-hero {
+  position:relative;z-index:2;
+  flex:1;display:flex;flex-direction:column;justify-content:center;
+  padding:40px 0;
+}
+
+.hero-badge {
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);
+  border-radius:20px;padding:6px 14px;
+  font-size:11px;font-weight:700;color:var(--cyan);
+  letter-spacing:.8px;text-transform:uppercase;
+  margin-bottom:24px;width:fit-content;
+}
+.badge-dot{width:6px;height:6px;background:var(--cyan);border-radius:50%;animation:pulse 1.8s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+
+.hero-title {
+  font-family:'Sora',sans-serif;font-weight:800;
+  font-size:42px;line-height:1.15;color:#fff;
+  margin-bottom:18px;
+}
+.hero-title .accent{color:var(--cyan);}
+.hero-title .line2{color:rgba(255,255,255,.55);}
+
+.hero-desc {
+  font-size:15px;line-height:1.7;
+  color:rgba(255,255,255,.55);max-width:380px;
+  margin-bottom:36px;
+}
+
+/* Feature pills */
+.features {
+  display:flex;flex-direction:column;gap:12px;
+}
+.feat {
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:12px 16px;
+  transition:background .2s;
+}
+.feat:hover{background:rgba(255,255,255,.09);}
+.feat-icon {
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.fi1{background:rgba(76,29,149,.4);}
+.fi2{background:rgba(6,182,212,.2);}
+.fi3{background:rgba(5,150,105,.2);}
+.feat-name{font-size:13px;font-weight:600;color:#fff;}
+.feat-desc{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;}
+
+/* Bottom: stats row */
+.left-stats {
+  position:relative;z-index:2;
+  display:flex;gap:32px;
+  padding-top:28px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.lstat-val {
+  font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:#fff;
+}
+.lstat-val span{color:var(--cyan);}
+.lstat-lbl{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;font-weight:500;}
+
+/* ══ RIGHT PANEL ══ */
+.panel-right {
+  flex:1;
+  display:flex;align-items:center;justify-content:center;
+  padding:40px 48px;
+  position:relative;
+  overflow-y:auto;
+}
+
+/* Subtle bg pattern */
+.panel-right::before {
+  content:'';
+  position:absolute;inset:0;
+  background-image: radial-gradient(circle at 80% 10%, rgba(76,29,149,.06) 0%, transparent 50%),
+                    radial-gradient(circle at 20% 90%, rgba(6,182,212,.05) 0%, transparent 50%);
+  pointer-events:none;
+}
+
+.form-wrap {
+  width:100%;max-width:400px;
+  position:relative;z-index:1;
+}
+
+/* Welcome text */
+.form-welcome {
+  margin-bottom:32px;
+}
+.form-welcome h2 {
+  font-family:'Sora',sans-serif;font-size:26px;font-weight:800;
+  color:var(--texte-principal);margin-bottom:6px;
+}
+.form-welcome p{font-size:14px;color:var(--texte-sec);}
+
+/* Role selector */
+.role-selector {
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:8px;margin-bottom:28px;
+  background:var(--fond-page);
+  border:1.5px solid var(--bordure);
+  border-radius:12px;padding:5px;
+}
+.role-btn {
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 6px;border-radius:9px;cursor:pointer;
+  transition:all .2s;
+  font-size:11px;font-weight:700;color:var(--texte-sec);
+  font-family:'DM Sans',sans-serif;
+  border:1.5px solid transparent;
+}
+.role-btn.active {
+  background:var(--fond-carte);
+  border-color:var(--bordure);
+  color:var(--violet-profond);
+  box-shadow:0 2px 8px rgba(76,29,149,.1);
+}
+.role-btn:not(.active):hover{color:var(--violet-profond);}
+.role-ico{font-size:18px;}
+
+/* Form */
+.form-group{margin-bottom:18px;}
+
+label {
+  display:block;font-size:12px;font-weight:700;
+  color:var(--texte-principal);margin-bottom:7px;
+  letter-spacing:.3px;
+}
+
+.input-wrap{position:relative;}
+
+.input-wrap input {
+  width:100%;
+  border:1.5px solid var(--bordure);
+  border-radius:11px;
+  padding:12px 14px 12px 42px;
+  font-size:14px;
+  font-family:'DM Sans',sans-serif;
+  color:var(--texte-principal);
+  background:var(--fond-carte);
+  outline:none;
+  transition:all .25s;
+}
+.input-wrap input::placeholder{color:#B5B8C8;}
+.input-wrap input:focus {
+  border-color:var(--violet-profond);
+  box-shadow:0 0 0 4px rgba(76,29,149,.08);
+}
+.input-wrap input.error{border-color:var(--danger);box-shadow:0 0 0 4px rgba(225,29,72,.07);}
+
+.inp-icon {
+  position:absolute;left:13px;top:50%;
+  transform:translateY(-50%);font-size:16px;
+  pointer-events:none;
+}
+.inp-action {
+  position:absolute;right:13px;top:50%;
+  transform:translateY(-50%);font-size:14px;
+  cursor:pointer;color:var(--texte-sec);
+  transition:color .2s;
+  user-select:none;
+}
+.inp-action:hover{color:var(--violet-profond);}
+
+/* Error msg */
+.error-msg {
+  font-size:11px;color:var(--danger);font-weight:600;
+  margin-top:5px;display:none;
+}
+.error-msg.show{display:block;}
+
+/* Remember / forgot */
+.form-meta {
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:22px;
+}
+.remember {
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:var(--texte-sec);cursor:pointer;
+}
+.custom-cb {
+  width:16px;height:16px;border:2px solid var(--bordure);
+  border-radius:5px;display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:#fff;transition:all .2s;flex-shrink:0;
+}
+.custom-cb.on{background:var(--violet-profond);border-color:var(--violet-profond);}
+
+.forgot {
+  font-size:12px;font-weight:700;color:var(--violet-profond);
+  cursor:pointer;text-decoration:none;transition:color .2s;
+}
+.forgot:hover{color:var(--cyan);}
+
+/* Submit */
+.btn-submit {
+  width:100%;
+  background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));
+  color:#fff;border:none;border-radius:12px;
+  padding:14px;
+  font-size:15px;font-weight:700;
+  font-family:'Sora',sans-serif;
+  cursor:pointer;
+  box-shadow:0 6px 20px rgba(76,29,149,.35);
+  transition:all .25s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  letter-spacing:.3px;
+  position:relative;overflow:hidden;
+}
+.btn-submit::before {
+  content:'';
+  position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
+  transition:left .4s ease;
+}
+.btn-submit:hover::before{left:100%;}
+.btn-submit:hover {
+  background:linear-gradient(135deg,var(--violet-hover),var(--cyan));
+  box-shadow:0 8px 24px rgba(6,182,212,.3);
+  transform:translateY(-1px);
+}
+.btn-submit:active{transform:translateY(0);}
+
+/* Loading state */
+.btn-submit.loading {
+  pointer-events:none;
+  background:linear-gradient(135deg,#7C5AB8,#8B5CF6);
+}
+.spinner {
+  width:16px;height:16px;
+  border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  display:none;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.btn-submit.loading .spinner{display:block;}
+.btn-submit.loading .btn-text{display:none;}
+
+/* Divider */
+.divider {
+  display:flex;align-items:center;gap:12px;
+  margin:20px 0;
+}
+.div-line{flex:1;height:1px;background:var(--bordure);}
+.div-text{font-size:11px;color:var(--texte-sec);font-weight:600;white-space:nowrap;}
+
+/* Social login */
+.social-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.social-btn {
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  border:1.5px solid var(--bordure);background:var(--fond-carte);
+  border-radius:11px;padding:11px;
+  font-size:13px;font-weight:600;color:var(--texte-principal);
+  cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;
+}
+.social-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);box-shadow:0 3px 12px rgba(76,29,149,.08);}
+.social-icon{font-size:18px;}
+
+/* Register link */
+.register-link {
+  text-align:center;font-size:13px;color:var(--texte-sec);
+}
+.register-link a{color:var(--violet-profond);font-weight:700;cursor:pointer;text-decoration:none;}
+.register-link a:hover{color:var(--cyan);}
+
+/* Success state */
+.success-overlay {
+  position:fixed;inset:0;background:rgba(30,11,59,.5);
+  backdrop-filter:blur(8px);z-index:200;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.success-overlay.show{opacity:1;pointer-events:all;}
+.success-box {
+  background:var(--fond-carte);border-radius:22px;
+  padding:44px 36px;text-align:center;
+  border:1.5px solid var(--bordure);
+  box-shadow:0 24px 60px rgba(30,11,59,.2);
+  width:340px;
+  transform:scale(.9);transition:transform .3s ease;
+}
+.success-overlay.show .success-box{transform:scale(1);}
+.success-icon {
+  width:70px;height:70px;
+  background:linear-gradient(135deg,var(--succes),#34D399);
+  border-radius:50%;margin:0 auto 20px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;
+  box-shadow:0 8px 24px rgba(5,150,105,.3);
+  animation:bounceIn .4s ease;
+}
+@keyframes bounceIn{0%{transform:scale(0);}60%{transform:scale(1.1);}100%{transform:scale(1);}}
+.success-title{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--texte-principal);margin-bottom:8px;}
+.success-sub{font-size:13px;color:var(--texte-sec);margin-bottom:24px;line-height:1.6;}
+.btn-go {
+  display:inline-flex;align-items:center;gap:6px;
+  background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));
+  color:#fff;border:none;border-radius:12px;padding:12px 28px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;
+  box-shadow:0 4px 16px rgba(76,29,149,.3);transition:all .2s;
+}
+.btn-go:hover{background:linear-gradient(135deg,var(--violet-hover),var(--cyan));}
+
+/* Animations */
+@keyframes slideUp {
+  from{opacity:0;transform:translateY(24px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.form-wrap>*{animation:slideUp .4s ease both;}
+.form-welcome{animation-delay:.05s;}
+.role-selector{animation-delay:.1s;}
+.form-group:nth-child(1){animation-delay:.15s;}
+.form-group:nth-child(2){animation-delay:.2s;}
+.form-meta{animation-delay:.25s;}
+.btn-submit{animation-delay:.3s;}
+.divider{animation-delay:.35s;}
+.social-btns{animation-delay:.38s;}
+.register-link{animation-delay:.4s;}
+
+@keyframes leftSlide{
+  from{opacity:0;transform:translateX(-30px);}
+  to{opacity:1;transform:translateX(0);}
+}
+.left-logo{animation:leftSlide .5s ease both .1s;}
+.hero-badge{animation:leftSlide .5s ease both .2s;}
+.hero-title{animation:leftSlide .5s ease both .3s;}
+.hero-desc{animation:leftSlide .5s ease both .4s;}
+.features{animation:leftSlide .5s ease both .5s;}
+.left-stats{animation:leftSlide .5s ease both .6s;}
+
+/* Responsive */
+@media(max-width:900px){
+  .panel-left{display:none;}
+  .panel-right{padding:32px 24px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LEFT PANEL ══ -->
+<div class="panel-left">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <!-- Logo -->
+  <div class="left-logo">
+    <div class="logo-dot"></div>
+    <div class="logo-dot2"></div>
+    <span>NEBULA</span>
+    <span style="font-size:13px;font-weight:400;color:rgba(255,255,255,.4);letter-spacing:1px;">SCHOOL</span>
+  </div>
+
+  <!-- Hero -->
+  <div class="left-hero">
+    <div class="hero-badge">
+      <div class="badge-dot"></div>
+      Plateforme éducative
+    </div>
+    <h1 class="hero-title">
+      Gérez votre<br>
+      établissement<br>
+      <span class="accent">avec clarté.</span>
+    </h1>
+    <p class="hero-desc">
+      Un espace centralisé pour suivre vos étudiants, enseignants, emplois du temps et résultats — le tout en temps réel.
+    </p>
+
+    <div class="features">
+      <div class="feat">
+        <div class="feat-icon fi1">📊</div>
+        <div>
+          <div class="feat-name">Tableaux de bord en temps réel</div>
+          <div class="feat-desc">Visualisez les performances instantanément</div>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon fi2">👥</div>
+        <div>
+          <div class="feat-name">Gestion complète des profils</div>
+          <div class="feat-desc">Étudiants, enseignants, classes et matières</div>
+        </div>
+      </div>
+      <div class="feat">
+        <div class="feat-icon fi3">✅</div>
+        <div>
+          <div class="feat-name">Suivi de présence automatisé</div>
+          <div class="feat-desc">Alertes et rapports exportables</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom stats -->
+  <div class="left-stats">
+    <div>
+      <div class="lstat-val">15<span>K+</span></div>
+      <div class="lstat-lbl">Étudiants actifs</div>
+    </div>
+    <div>
+      <div class="lstat-val">200<span>+</span></div>
+      <div class="lstat-lbl">Enseignants</div>
+    </div>
+    <div>
+      <div class="lstat-val">98<span>%</span></div>
+      <div class="lstat-lbl">Satisfaction</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RIGHT PANEL ══ -->
+<div class="panel-right">
+  <div class="form-wrap">
+
+    <!-- Welcome -->
+    <div class="form-welcome">
+      <h2>Bon retour 👋</h2>
+      <p>Connectez-vous à votre espace Nebula School.</p>
+    </div>
+
+    <!-- Role selector -->
+    <div class="role-selector" id="roleSelector">
+      <div class="role-btn active" data-role="admin" onclick="selectRole(this)">
+        <span class="role-ico">🛡️</span>Admin
+      </div>
+      <div class="role-btn" data-role="teacher" onclick="selectRole(this)">
+        <span class="role-ico">🎓</span>Enseignant
+      </div>
+      <div class="role-btn" data-role="student" onclick="selectRole(this)">
+        <span class="role-ico">👤</span>Étudiant
+      </div>
+    </div>
+
+    <!-- Email -->
+    <div class="form-group">
+      <label for="email">Adresse e-mail</label>
+      <div class="input-wrap">
+        <span class="inp-icon">📧</span>
+        <input type="email" id="email" placeholder="exemple@nebula.school" autocomplete="off">
+      </div>
+      <div class="error-msg" id="emailErr">Veuillez entrer une adresse e-mail valide.</div>
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <label for="password">Mot de passe</label>
+      <div class="input-wrap">
+        <span class="inp-icon">🔒</span>
+        <input type="password" id="password" placeholder="••••••••••">
+        <span class="inp-action" id="togglePwd" onclick="togglePassword()">👁</span>
+      </div>
+      <div class="error-msg" id="pwdErr">Le mot de passe doit contenir au moins 6 caractères.</div>
+    </div>
+
+    <!-- Remember + forgot -->
+    <div class="form-meta">
+      <div class="remember" onclick="toggleRemember()">
+        <div class="custom-cb" id="rememberCb"></div>
+        <span>Se souvenir de moi</span>
+      </div>
+      <a class="forgot" href="#">Mot de passe oublié ?</a>
+    </div>
+
+    <!-- Submit -->
+    <button class="btn-submit" id="btnSubmit" onclick="handleLogin()">
+      <div class="spinner" id="spinner"></div>
+      <span class="btn-text">Se connecter →</span>
+    </button>
+
+    <!-- Divider -->
+    <div class="divider">
+      <div class="div-line"></div>
+      <div class="div-text">ou continuer avec</div>
+      <div class="div-line"></div>
+    </div>
+
+    <!-- Social -->
+    <div class="social-btns">
+      <button class="social-btn">
+        <span class="social-icon">🌐</span> Google
+      </button>
+      <button class="social-btn">
+        <span class="social-icon">🪟</span> Microsoft
+      </button>
+    </div>
+
+    <!-- Register -->
+    <div class="register-link">
+      Pas encore de compte ? <a href="#">Demandez un accès</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-box">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Connexion réussie !</div>
+    <div class="success-sub" id="successMsg">Bienvenue sur Nebula School.<br>Redirection vers votre tableau de bord…</div>
+    <button class="btn-go" onclick="goToDashboard()">
+      Accéder au dashboard →
+    </button>
+  </div>
+</div>
+
+<script>
+// Role selector
+function selectRole(el){
+  document.querySelectorAll('.role-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Password toggle
+let pwdVisible = false;
+function togglePassword(){
+  pwdVisible = !pwdVisible;
+  const inp = document.getElementById('password');
+  inp.type = pwdVisible ? 'text' : 'password';
+  document.getElementById('togglePwd').textContent = pwdVisible ? '🙈' : '👁';
+}
+
+// Remember me
+let remembered = false;
+function toggleRemember(){
+  remembered = !remembered;
+  const cb = document.getElementById('rememberCb');
+  cb.classList.toggle('on', remembered);
+  cb.textContent = remembered ? '✓' : '';
+}
+
+// Validation
+function validateEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+// Login handler
+function handleLogin(){
+  const email = document.getElementById('email').value.trim();
+  const pwd   = document.getElementById('password').value;
+  const emailErr = document.getElementById('emailErr');
+  const pwdErr   = document.getElementById('pwdErr');
+  const emailInp = document.getElementById('email');
+  const pwdInp   = document.getElementById('password');
+
+  let valid = true;
+
+  // Reset
+  emailErr.classList.remove('show');
+  pwdErr.classList.remove('show');
+  emailInp.classList.remove('error');
+  pwdInp.classList.remove('error');
+
+  if(!validateEmail(email)){
+    emailErr.classList.add('show');
+    emailInp.classList.add('error');
+    valid = false;
+  }
+  if(pwd.length < 6){
+    pwdErr.classList.add('show');
+    pwdInp.classList.add('error');
+    valid = false;
+  }
+  if(!valid) return;
+
+  // Loading
+  const btn = document.getElementById('btnSubmit');
+  btn.classList.add('loading');
+
+  // Simulate API call
+  setTimeout(()=>{
+    btn.classList.remove('loading');
+    const role = document.querySelector('.role-btn.active').dataset.role;
+    const roleLabel = {admin:'Administrateur',teacher:'Enseignant',student:'Étudiant'};
+    document.getElementById('successMsg').innerHTML =
+      `Bienvenue, <strong>${email}</strong> !<br>Rôle détecté : <strong>${roleLabel[role]}</strong>.<br>Redirection en cours…`;
+    document.getElementById('successOverlay').classList.add('show');
+  }, 1800);
+}
+
+// Enter key
+document.addEventListener('keydown', e => {
+  if(e.key === 'Enter') handleLogin();
+});
+
+function goToDashboard(){
+  document.getElementById('successOverlay').classList.remove('show');
+  // In a real app: window.location.href = 'dashboard.html';
+}
+
+// Live validation
+document.getElementById('email').oninput = function(){
+  if(this.classList.contains('error') && validateEmail(this.value.trim())){
+    this.classList.remove('error');
+    document.getElementById('emailErr').classList.remove('show');
+  }
+};
+document.getElementById('password').oninput = function(){
+  if(this.classList.contains('error') && this.value.length>=6){
+    this.classList.remove('error');
+    document.getElementById('pwdErr').classList.remove('show');
+  }
+};
+</script>
+</body>
+</html>

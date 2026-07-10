@@ -1,0 +1,30 @@
+.annees-list { overflow: hidden; }
+
+.annee-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-light);
+  transition: background 0.15s;
+}
+.annee-row:last-child { border-bottom: none; }
+.annee-row.active { background: rgba(59, 130, 246, 0.04); }
+.annee-row:hover { background: #fafafa; }
+.annee-row.active:hover { background: rgba(59, 130, 246, 0.07); }
+
+.annee-icon-wrap { flex-shrink: 0; }
+.annee-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.icon-active { background: var(--info-light); }
+.icon-done { background: var(--border-light); }
+
+.annee-info { flex: 1; }
+.annee-label { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.annee-dates { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+.annee-badges { display: flex; gap: 8px; align-items: center; }

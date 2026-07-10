@@ -1,0 +1,44 @@
+import { Router, type IRouter } from "express";
+import healthRouter from "./health.ts";
+import authRouter from "./auth.ts";
+import adminRouter from "./admin.ts";
+import elevesRouter from "./eleves.ts";
+import classesRouter from "./classes.ts";
+import sallesRouter from "./salles.ts";
+import anneesRouter from "./annees.ts";
+import coursRouter from "./cours.ts";
+import evaluationsRouter from "./evaluations.ts";
+import scolariteRouter from "./scolarite.ts";
+import paiementsRouter from "./paiements.ts";
+import parentsRouter from "./parents.ts";
+import messagesRouter from "./messages.ts";
+import quartiersRouter from "./quartiers.ts";
+import livresRouter from "./livres.ts";
+import personnesRouter from "./personnes.ts";
+import dashboardRouter from "./dashboard.ts";
+import absencesRouter from "./absences.ts";
+import transportRouter from "./transport.ts";
+
+const router: IRouter = Router();
+
+router.use(healthRouter);
+router.use("/auth", authRouter);
+router.use("/admins", adminRouter);
+router.use("/dashboard", dashboardRouter);
+router.use("/eleves", elevesRouter);
+router.use("/classes", classesRouter);
+router.use("/salles", sallesRouter);
+router.use("/annees", anneesRouter);
+router.use("/cours", coursRouter);
+router.use("/evaluations", evaluationsRouter);
+router.use("/scolarite", scolariteRouter);
+router.use("/paiements", paiementsRouter);
+router.use("/parents", parentsRouter);
+router.use("/messages", messagesRouter);
+router.use("/quartiers", quartiersRouter);
+router.use("/livres", livresRouter);
+router.use("/personnes", personnesRouter);
+router.use("/absences", absencesRouter);
+router.use("/transport", transportRouter);
+
+export default router;

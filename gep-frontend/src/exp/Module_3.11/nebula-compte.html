@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Compte</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --violet-profond:#4C1D95;--violet-hover:#6D28D9;--violet-nuit:#1E0B3B;
+  --cyan:#06B6D4;--cyan-hover:#22D3EE;--fond-page:#F8FAFF;--fond-carte:#FFFFFF;
+  --bordure:#EDE9FE;--texte-principal:#1E1B4B;--texte-sec:#6B7280;
+  --succes:#059669;--danger:#E11D48;--avertissement:#D97706;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--fond-page);color:var(--texte-principal);display:flex;height:100vh;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:200px;min-width:200px;background:var(--violet-nuit);display:flex;flex-direction:column;padding-bottom:16px;position:relative;overflow-y:auto;}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(6,182,212,.25),transparent);}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;padding:22px 20px 26px;display:flex;align-items:center;gap:8px;letter-spacing:2px;}
+.logo-dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 9px var(--cyan);}
+.logo span{color:var(--cyan);}
+.nav-section{padding:0 12px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.52);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(109,40,217,.3);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.4);}
+.na{margin-left:auto;font-size:10px;opacity:.45;}
+.upgrade-box{margin:16px 12px 0;background:linear-gradient(135deg,rgba(76,29,149,.55),rgba(30,11,59,.8));border:1px solid rgba(6,182,212,.18);border-radius:14px;padding:14px;text-align:center;}
+.upgrade-box p{color:rgba(255,255,255,.65);font-size:11px;margin-bottom:10px;line-height:1.4;}
+.upgrade-box p strong{color:var(--cyan);}
+.btn-up{display:block;width:100%;background:#fff;color:var(--violet-profond);border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all .2s;}
+.btn-up:hover{background:var(--cyan);color:#fff;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 24px;height:60px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.search-wrap{flex:1;max-width:320px;position:relative;}
+.search-wrap input{width:100%;border:1.5px solid var(--bordure);border-radius:10px;padding:8px 14px 8px 36px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--texte-principal);background:var(--fond-page);outline:none;transition:border-color .2s;}
+.search-wrap input::placeholder{color:var(--texte-sec);}
+.search-wrap input:focus{border-color:var(--violet-profond);}
+.si{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--texte-sec);font-size:13px;}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--texte-sec);font-size:15px;transition:all .2s;position:relative;}
+.icon-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.ndot{width:7px;height:7px;background:var(--danger);border-radius:50%;position:absolute;top:6px;right:6px;border:1.5px solid #fff;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);cursor:pointer;}
+.ava{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;font-family:'Sora',sans-serif;}
+.uname{font-size:12px;font-weight:600;color:var(--texte-principal);}
+.urole{font-size:10px;color:var(--texte-sec);}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:24px 28px;}
+
+/* TABS NAV */
+.account-tabs{display:flex;gap:2px;margin-bottom:24px;background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:13px;padding:5px;width:fit-content;}
+.atab{padding:9px 20px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--texte-sec);font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:7px;}
+.atab.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 3px 12px rgba(76,29,149,.3);}
+.atab:not(.active):hover{color:var(--violet-profond);}
+
+/* TAB PANELS */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* ─── PROFIL ─── */
+.profile-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;}
+
+.profile-card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:18px;overflow:hidden;}
+.profile-banner{height:90px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));position:relative;}
+.profile-banner::after{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0,rgba(255,255,255,.05) 1px,transparent 0,transparent 50%);background-size:12px 12px;}
+.profile-avatar-wrap{display:flex;justify-content:center;margin-top:-34px;position:relative;z-index:1;}
+.profile-avatar{width:68px;height:68px;border-radius:20px;background:linear-gradient(135deg,var(--violet-nuit),var(--violet-profond));border:4px solid var(--fond-carte);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:22px;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.15);cursor:pointer;position:relative;overflow:hidden;}
+.avatar-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:18px;opacity:0;transition:opacity .2s;}
+.profile-avatar:hover .avatar-overlay{opacity:1;}
+.profile-info-card{padding:14px 20px 20px;text-align:center;}
+.profile-name{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:var(--texte-principal);}
+.profile-role-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(76,29,149,.08);color:var(--violet-profond);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin:6px 0 12px;}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+.ps-item{background:var(--fond-page);border:1px solid var(--bordure);border-radius:10px;padding:10px 6px;text-align:center;}
+.ps-val{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:var(--texte-principal);}
+.ps-lbl{font-size:10px;color:var(--texte-sec);margin-top:2px;}
+.profile-divider{height:1px;background:var(--bordure);margin:0 0 14px;}
+.profile-meta-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--texte-sec);margin-bottom:8px;}
+.pm-icon{width:28px;height:28px;border-radius:8px;background:rgba(76,29,149,.07);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.pm-val{font-size:12px;color:var(--texte-principal);font-weight:500;}
+
+/* ─── FORM SECTIONS ─── */
+.form-sections{display:flex;flex-direction:column;gap:16px;}
+.form-section{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;padding:20px 22px;}
+.fs-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.fs-title{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--texte-principal);}
+.fs-subtitle{font-size:11px;color:var(--texte-sec);margin-top:2px;}
+.btn-edit{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;border:1.5px solid var(--bordure);background:transparent;color:var(--violet-profond);transition:all .2s;}
+.btn-edit:hover{background:rgba(76,29,149,.06);border-color:var(--violet-profond);}
+.btn-save{display:flex;align-items:center;gap:5px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;border:none;box-shadow:0 3px 10px rgba(76,29,149,.25);transition:all .2s;}
+.btn-save:hover{background:linear-gradient(135deg,var(--violet-hover),var(--cyan));}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid.full{grid-template-columns:1fr;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:11px;font-weight:700;color:var(--texte-sec);letter-spacing:.4px;text-transform:uppercase;}
+.form-input{border:1.5px solid var(--bordure);border-radius:10px;padding:10px 13px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--texte-principal);background:var(--fond-page);outline:none;transition:all .2s;}
+.form-input:focus{border-color:var(--violet-profond);box-shadow:0 0 0 3px rgba(76,29,149,.07);background:#fff;}
+.form-input:disabled{opacity:.55;cursor:not-allowed;}
+.form-select{border:1.5px solid var(--bordure);border-radius:10px;padding:10px 13px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--texte-principal);background:var(--fond-page);outline:none;cursor:pointer;transition:border-color .2s;}
+.form-select:focus{border-color:var(--violet-profond);}
+
+/* Activity log */
+.activity-list{display:flex;flex-direction:column;gap:0;}
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--bordure);position:relative;}
+.activity-item:last-child{border-bottom:none;}
+.activity-item::before{content:'';position:absolute;left:17px;top:36px;bottom:-12px;width:2px;background:var(--bordure);}
+.activity-item:last-child::before{display:none;}
+.act-icon{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;position:relative;z-index:1;}
+.act-v{background:rgba(76,29,149,.1);}
+.act-c{background:rgba(6,182,212,.1);}
+.act-g{background:rgba(5,150,105,.1);}
+.act-a{background:rgba(217,119,6,.1);}
+.act-d{background:rgba(225,29,72,.1);}
+.act-title{font-size:13px;font-weight:600;color:var(--texte-principal);}
+.act-desc{font-size:11px;color:var(--texte-sec);margin-top:2px;}
+.act-time{font-size:10px;color:var(--texte-sec);margin-left:auto;white-space:nowrap;padding-top:2px;}
+
+/* ─── SECURITE ─── */
+.security-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--bordure);}
+.security-item:last-child{border-bottom:none;}
+.sec-icon{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.sec-title{font-size:13px;font-weight:700;color:var(--texte-principal);}
+.sec-desc{font-size:11px;color:var(--texte-sec);margin-top:2px;}
+.sec-action{margin-left:auto;flex-shrink:0;}
+.toggle-wrap{display:flex;align-items:center;gap:8px;}
+.toggle{width:44px;height:24px;border-radius:12px;background:var(--bordure);position:relative;cursor:pointer;transition:background .25s;}
+.toggle.on{background:var(--violet-profond);}
+.toggle-knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .25s;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+.toggle.on .toggle-knob{left:23px;}
+.btn-change{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;border:1.5px solid var(--bordure);background:transparent;color:var(--violet-profond);transition:all .2s;}
+.btn-change:hover{background:rgba(76,29,149,.06);border-color:var(--violet-profond);}
+.btn-danger{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;border:1.5px solid rgba(225,29,72,.3);background:rgba(225,29,72,.05);color:var(--danger);transition:all .2s;}
+.btn-danger:hover{background:rgba(225,29,72,.1);}
+.session-item{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--fond-page);border:1px solid var(--bordure);border-radius:12px;margin-bottom:8px;}
+.session-item:last-child{margin-bottom:0;}
+.ses-icon{font-size:20px;}
+.ses-name{font-size:13px;font-weight:600;color:var(--texte-principal);}
+.ses-info{font-size:11px;color:var(--texte-sec);}
+.ses-current{margin-left:auto;font-size:11px;font-weight:700;color:var(--succes);background:rgba(5,150,105,.1);padding:3px 9px;border-radius:20px;}
+.ses-revoke{margin-left:auto;font-size:11px;font-weight:700;color:var(--danger);cursor:pointer;}
+
+/* ─── NOTIFS ─── */
+.notif-section{margin-bottom:20px;}
+.notif-section-title{font-family:'Sora',sans-serif;font-size:12px;font-weight:700;color:var(--texte-sec);letter-spacing:.6px;text-transform:uppercase;margin-bottom:12px;}
+.notif-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--bordure);}
+.notif-row:last-child{border-bottom:none;}
+.notif-label{font-size:13px;font-weight:600;color:var(--texte-principal);}
+.notif-sub{font-size:11px;color:var(--texte-sec);margin-top:2px;}
+.notif-channels{display:flex;gap:8px;}
+.channel-btn{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--bordure);background:transparent;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:all .2s;color:var(--texte-sec);}
+.channel-btn.active{background:rgba(76,29,149,.08);border-color:var(--violet-profond);color:var(--violet-profond);}
+.channel-btn:hover{border-color:var(--violet-profond);}
+
+/* ─── PLAN ─── */
+.plan-layout{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;}
+.plan-card{background:var(--fond-carte);border:2px solid var(--bordure);border-radius:18px;padding:22px 20px;transition:all .25s;cursor:pointer;position:relative;overflow:hidden;}
+.plan-card:hover{box-shadow:0 8px 24px rgba(76,29,149,.1);}
+.plan-card.current{border-color:var(--violet-profond);box-shadow:0 6px 20px rgba(76,29,149,.15);}
+.plan-card.popular{border-color:var(--cyan);}
+.plan-popular-badge{position:absolute;top:14px;right:14px;background:linear-gradient(135deg,var(--cyan),var(--violet-hover));color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.plan-current-badge{position:absolute;top:14px;right:14px;background:rgba(76,29,149,.1);color:var(--violet-profond);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.plan-icon{font-size:28px;margin-bottom:10px;}
+.plan-name{font-family:'Sora',sans-serif;font-size:15px;font-weight:800;color:var(--texte-principal);margin-bottom:4px;}
+.plan-price{font-family:'Sora',sans-serif;font-size:26px;font-weight:800;color:var(--violet-profond);margin-bottom:14px;}
+.plan-price span{font-size:13px;font-weight:500;color:var(--texte-sec);}
+.plan-feature{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--texte-sec);margin-bottom:7px;}
+.plan-feature.yes{color:var(--texte-principal);}
+.plan-feature .feat-dot{width:16px;height:16px;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.feat-yes{background:rgba(5,150,105,.1);color:var(--succes);}
+.feat-no{background:var(--fond-page);color:var(--texte-sec);}
+.btn-plan{display:block;width:100%;margin-top:16px;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;transition:all .2s;text-align:center;border:none;}
+.btn-plan-outline{background:transparent;border:1.5px solid var(--bordure);color:var(--texte-sec);}
+.btn-plan-solid{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.3);}
+.btn-plan-solid:hover{background:linear-gradient(135deg,var(--violet-hover),var(--cyan));}
+.btn-plan-cyan{background:linear-gradient(135deg,var(--cyan),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(6,182,212,.3);}
+
+.usage-bar-section{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;padding:20px 22px;}
+.usage-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.usage-row:last-child{margin-bottom:0;}
+.usage-label{font-size:13px;font-weight:600;color:var(--texte-principal);width:140px;flex-shrink:0;}
+.usage-track{flex:1;height:8px;background:var(--bordure);border-radius:4px;overflow:hidden;}
+.usage-fill{height:100%;border-radius:4px;}
+.uf-v{background:linear-gradient(90deg,var(--violet-profond),var(--violet-hover));}
+.uf-c{background:linear-gradient(90deg,var(--cyan),var(--cyan-hover));}
+.uf-g{background:linear-gradient(90deg,var(--succes),#34D399);}
+.uf-a{background:linear-gradient(90deg,var(--avertissement),#FBBF24);}
+.usage-pct{font-size:12px;font-weight:700;color:var(--texte-principal);width:50px;text-align:right;flex-shrink:0;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bordure);border-radius:4px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.tab-panel.active{animation:fadeIn .3s ease;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo"><div class="logo-dot"></div><span>NEBULA</span></div>
+  <div class="nav-section">
+    <div class="nav-item">⊞ Dashboard <span class="na">∨</span></div>
+    <div class="nav-item">👥 Étudiants <span class="na">∨</span></div>
+    <div class="nav-item">🎓 Enseignants <span class="na">∨</span></div>
+    <div class="nav-item">📚 Bibliothèque</div>
+    <div class="nav-item active">👤 Compte <span class="na">∨</span></div>
+    <div class="nav-item">🏫 Classe</div>
+    <div class="nav-item">📖 Matière</div>
+    <div class="nav-item">📅 Routine</div>
+    <div class="nav-item">✅ Présence</div>
+    <div class="nav-item">📝 Examens <span class="na">∨</span></div>
+    <div class="nav-item">🔔 Avis</div>
+    <div class="nav-item">🚌 Transport</div>
+    <div class="nav-item">🏠 Internat</div>
+  </div>
+  <div class="upgrade-box">
+    <p>Vous êtes sur le plan <strong>Gratuit</strong>.<br>Passez à Pro.</p>
+    <button class="btn-up">⚡ Upgrade</button>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="search-wrap"><span class="si">🔍</span><input type="text" placeholder="Rechercher ici..."></div>
+    <div class="topbar-right">
+      <div class="icon-btn">🔔<span class="ndot"></span></div>
+      <div class="icon-btn">💬</div>
+      <div class="user-pill">
+        <div class="ava">LR</div>
+        <div><div class="uname">Luke J R</div><div class="urole">Admin</div></div>
+        <span style="font-size:10px;color:var(--texte-sec);margin-left:4px;">∨</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+    <div style="margin-bottom:20px;">
+      <h1 style="font-family:'Sora',sans-serif;font-size:21px;font-weight:800;">👤 Mon Compte</h1>
+      <p style="font-size:13px;color:var(--texte-sec);margin-top:3px;">Gérez votre profil, sécurité et préférences.</p>
+    </div>
+
+    <!-- TABS -->
+    <div class="account-tabs">
+      <div class="atab active" onclick="switchTab('profil',this)">👤 Profil</div>
+      <div class="atab" onclick="switchTab('securite',this)">🔒 Sécurité</div>
+      <div class="atab" onclick="switchTab('notifications',this)">🔔 Notifications</div>
+      <div class="atab" onclick="switchTab('abonnement',this)">💎 Abonnement</div>
+    </div>
+
+    <!-- ─── PROFIL ─── -->
+    <div class="tab-panel active" id="tab-profil">
+      <div class="profile-layout">
+
+        <!-- LEFT CARD -->
+        <div>
+          <div class="profile-card">
+            <div class="profile-banner"></div>
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar">
+                LR
+                <div class="avatar-overlay">📷</div>
+              </div>
+            </div>
+            <div class="profile-info-card">
+              <div class="profile-name">Luke J. Robert</div>
+              <div class="profile-role-badge">🛡️ Administrateur</div>
+              <div class="profile-stats">
+                <div class="ps-item"><div class="ps-val">15K</div><div class="ps-lbl">Étudiants</div></div>
+                <div class="ps-item"><div class="ps-val">200</div><div class="ps-lbl">Enseignants</div></div>
+                <div class="ps-item"><div class="ps-val">48</div><div class="ps-lbl">Classes</div></div>
+              </div>
+              <div class="profile-divider"></div>
+              <div class="profile-meta-item"><div class="pm-icon">📧</div><div class="pm-val">luke.robert@nebula.school</div></div>
+              <div class="profile-meta-item"><div class="pm-icon">📞</div><div class="pm-val">+237 699 123 456</div></div>
+              <div class="profile-meta-item"><div class="pm-icon">📍</div><div class="pm-val">Yaoundé, Cameroun</div></div>
+              <div class="profile-meta-item"><div class="pm-icon">🗓️</div><div class="pm-val">Membre depuis Jan 2022</div></div>
+            </div>
+          </div>
+
+          <!-- Activity -->
+          <div style="background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;padding:18px 20px;margin-top:16px;">
+            <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;margin-bottom:14px;">Activité récente</div>
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="act-icon act-g">✅</div>
+                <div><div class="act-title">Connexion réussie</div><div class="act-desc">Chrome · Yaoundé</div></div>
+                <div class="act-time">Il y a 2 min</div>
+              </div>
+              <div class="activity-item">
+                <div class="act-icon act-v">👤</div>
+                <div><div class="act-title">Profil modifié</div><div class="act-desc">Photo de profil mise à jour</div></div>
+                <div class="act-time">Hier 14h32</div>
+              </div>
+              <div class="activity-item">
+                <div class="act-icon act-c">📝</div>
+                <div><div class="act-title">Examen créé</div><div class="act-desc">Maths — Classe 6e A</div></div>
+                <div class="act-time">15 mai</div>
+              </div>
+              <div class="activity-item">
+                <div class="act-icon act-a">⚠️</div>
+                <div><div class="act-title">Alerte de présence</div><div class="act-desc">12 absences signalées</div></div>
+                <div class="act-time">14 mai</div>
+              </div>
+              <div class="activity-item">
+                <div class="act-icon act-d">🔐</div>
+                <div><div class="act-title">Mot de passe changé</div><div class="act-desc">Depuis Firefox · Douala</div></div>
+                <div class="act-time">10 mai</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT FORMS -->
+        <div class="form-sections">
+          <div class="form-section">
+            <div class="fs-header">
+              <div><div class="fs-title">Informations personnelles</div><div class="fs-subtitle">Modifiez vos données de profil</div></div>
+              <button class="btn-save">💾 Sauvegarder</button>
+            </div>
+            <div class="form-grid" style="margin-bottom:14px;">
+              <div class="form-group"><label>Prénom</label><input class="form-input" value="Luke"></div>
+              <div class="form-group"><label>Nom</label><input class="form-input" value="Robert"></div>
+              <div class="form-group"><label>Email</label><input class="form-input" value="luke.robert@nebula.school"></div>
+              <div class="form-group"><label>Téléphone</label><input class="form-input" value="+237 699 123 456"></div>
+              <div class="form-group"><label>Ville</label><input class="form-input" value="Yaoundé"></div>
+              <div class="form-group"><label>Pays</label><input class="form-input" value="Cameroun"></div>
+            </div>
+            <div class="form-grid full">
+              <div class="form-group"><label>Biographie</label><textarea class="form-input" rows="3" style="resize:vertical;">Administrateur principal de Nebula School. Passionné d'éducation et de technologie.</textarea></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="fs-header">
+              <div><div class="fs-title">Paramètres du compte</div><div class="fs-subtitle">Langue, fuseau horaire et affichage</div></div>
+              <button class="btn-edit">✏️ Modifier</button>
+            </div>
+            <div class="form-grid">
+              <div class="form-group"><label>Langue</label>
+                <select class="form-select"><option>Français</option><option>English</option><option>Español</option></select>
+              </div>
+              <div class="form-group"><label>Fuseau horaire</label>
+                <select class="form-select"><option>UTC+1 (Afrique Centrale)</option><option>UTC+0 (Londres)</option><option>UTC-5 (New York)</option></select>
+              </div>
+              <div class="form-group"><label>Format de date</label>
+                <select class="form-select"><option>JJ/MM/AAAA</option><option>MM/DD/YYYY</option><option>AAAA-MM-JJ</option></select>
+              </div>
+              <div class="form-group"><label>Thème</label>
+                <select class="form-select"><option>Clair (défaut)</option><option>Sombre</option><option>Système</option></select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── SECURITE ─── -->
+    <div class="tab-panel" id="tab-securite">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div class="form-section">
+            <div class="fs-header"><div><div class="fs-title">🔐 Changer le mot de passe</div><div class="fs-subtitle">Utilisez un mot de passe fort et unique</div></div></div>
+            <div class="form-grid full" style="gap:12px;">
+              <div class="form-group"><label>Mot de passe actuel</label><input class="form-input" type="password" placeholder="••••••••"></div>
+              <div class="form-group"><label>Nouveau mot de passe</label><input class="form-input" type="password" placeholder="••••••••"></div>
+              <div class="form-group"><label>Confirmer</label><input class="form-input" type="password" placeholder="••••••••"></div>
+            </div>
+            <!-- Password strength -->
+            <div style="margin-top:12px;">
+              <div style="font-size:11px;color:var(--texte-sec);margin-bottom:6px;">Force du mot de passe</div>
+              <div style="display:flex;gap:4px;">
+                <div style="flex:1;height:4px;border-radius:2px;background:var(--danger);"></div>
+                <div style="flex:1;height:4px;border-radius:2px;background:var(--avertissement);"></div>
+                <div style="flex:1;height:4px;border-radius:2px;background:var(--bordure);"></div>
+                <div style="flex:1;height:4px;border-radius:2px;background:var(--bordure);"></div>
+              </div>
+              <div style="font-size:10px;color:var(--avertissement);margin-top:4px;font-weight:700;">Moyen — Ajoutez des caractères spéciaux</div>
+            </div>
+            <button class="btn-save" style="margin-top:16px;width:100%;justify-content:center;">🔐 Mettre à jour</button>
+          </div>
+
+          <div class="form-section" style="margin-top:16px;">
+            <div class="fs-header"><div><div class="fs-title">⚙️ Options de sécurité</div></div></div>
+            <div>
+              <div class="security-item">
+                <div class="sec-icon act-g">📱</div>
+                <div><div class="sec-title">Authentification 2 facteurs</div><div class="sec-desc">Via application ou SMS</div></div>
+                <div class="sec-action toggle-wrap"><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+              </div>
+              <div class="security-item">
+                <div class="sec-icon act-v">🔔</div>
+                <div><div class="sec-title">Alertes de connexion</div><div class="sec-desc">Notification à chaque nouvelle connexion</div></div>
+                <div class="sec-action toggle-wrap"><div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+              </div>
+              <div class="security-item">
+                <div class="sec-icon act-c">📍</div>
+                <div><div class="sec-title">Vérification de localisation</div><div class="sec-desc">Bloquer les connexions suspectes</div></div>
+                <div class="sec-action toggle-wrap"><div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div></div>
+              </div>
+              <div class="security-item">
+                <div class="sec-icon act-d">🗑️</div>
+                <div><div class="sec-title">Supprimer le compte</div><div class="sec-desc">Action irréversible</div></div>
+                <div class="sec-action"><button class="btn-danger">Supprimer</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="form-section">
+            <div class="fs-header"><div><div class="fs-title">💻 Sessions actives</div><div class="fs-subtitle">Appareils connectés à votre compte</div></div></div>
+            <div>
+              <div class="session-item"><span class="ses-icon">🖥️</span><div><div class="ses-name">Chrome — Windows 11</div><div class="ses-info">Yaoundé · Il y a 2 min</div></div><span class="ses-current">Actuelle</span></div>
+              <div class="session-item"><span class="ses-icon">📱</span><div><div class="ses-name">Safari — iPhone 15</div><div class="ses-info">Douala · Il y a 3h</div></div><span class="ses-revoke">Révoquer</span></div>
+              <div class="session-item"><span class="ses-icon">💻</span><div><div class="ses-name">Firefox — macOS</div><div class="ses-info">Bafoussam · Hier</div></div><span class="ses-revoke">Révoquer</span></div>
+              <div class="session-item"><span class="ses-icon">📱</span><div><div class="ses-name">Chrome — Android</div><div class="ses-info">Garoua · Il y a 3 jours</div></div><span class="ses-revoke">Révoquer</span></div>
+            </div>
+            <button class="btn-danger" style="width:100%;margin-top:14px;padding:10px;border-radius:10px;">🚫 Déconnecter toutes les sessions</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── NOTIFICATIONS ─── -->
+    <div class="tab-panel" id="tab-notifications">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-section">
+          <div class="fs-header"><div><div class="fs-title">📬 Canaux de notification</div><div class="fs-subtitle">Choisissez comment être notifié</div></div><button class="btn-save">💾 Sauvegarder</button></div>
+          <div class="notif-section">
+            <div class="notif-section-title">Académique</div>
+            <div class="notif-row"><div><div class="notif-label">Résultats d'examens</div><div class="notif-sub">Quand les notes sont publiées</div></div><div class="notif-channels"><div class="channel-btn active" title="Email">📧</div><div class="channel-btn active" title="App">📱</div><div class="channel-btn" title="SMS">💬</div></div></div>
+            <div class="notif-row"><div><div class="notif-label">Absences des étudiants</div><div class="notif-sub">Alertes de présence en temps réel</div></div><div class="notif-channels"><div class="channel-btn active" title="Email">📧</div><div class="channel-btn active" title="App">📱</div><div class="channel-btn active" title="SMS">💬</div></div></div>
+            <div class="notif-row"><div><div class="notif-label">Nouveaux étudiants inscrits</div><div class="notif-sub">À chaque nouvelle inscription</div></div><div class="notif-channels"><div class="channel-btn active" title="Email">📧</div><div class="channel-btn" title="App">📱</div><div class="channel-btn" title="SMS">💬</div></div></div>
+          </div>
+          <div class="notif-section">
+            <div class="notif-section-title">Système</div>
+            <div class="notif-row"><div><div class="notif-label">Mises à jour de la plateforme</div><div class="notif-sub">Nouvelles fonctionnalités</div></div><div class="notif-channels"><div class="channel-btn active" title="Email">📧</div><div class="channel-btn" title="App">📱</div><div class="channel-btn" title="SMS">💬</div></div></div>
+            <div class="notif-row"><div><div class="notif-label">Alertes de sécurité</div><div class="notif-sub">Connexions et modifications critiques</div></div><div class="notif-channels"><div class="channel-btn active" title="Email">📧</div><div class="channel-btn active" title="App">📱</div><div class="channel-btn active" title="SMS">💬</div></div></div>
+            <div class="notif-row"><div><div class="notif-label">Rapports hebdomadaires</div><div class="notif-sub">Résumé chaque lundi matin</div></div><div class="notif-channels"><div class="channel-btn active" title="Email">📧</div><div class="channel-btn" title="App">📱</div><div class="channel-btn" title="SMS">💬</div></div></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="fs-header"><div><div class="fs-title">⏰ Horaires de silence</div><div class="fs-subtitle">Ne pas déranger pendant ces plages</div></div></div>
+          <div class="form-grid" style="margin-bottom:16px;">
+            <div class="form-group"><label>Début</label><input class="form-input" type="time" value="22:00"></div>
+            <div class="form-group"><label>Fin</label><input class="form-input" type="time" value="07:00"></div>
+          </div>
+          <div style="background:var(--fond-page);border:1px solid var(--bordure);border-radius:12px;padding:14px;">
+            <div style="font-size:12px;font-weight:700;color:var(--texte-principal);margin-bottom:10px;">Jours actifs</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span id="d0" onclick="toggleDay(this)" class="day-chip active-day">Lun</span>
+              <span id="d1" onclick="toggleDay(this)" class="day-chip active-day">Mar</span>
+              <span id="d2" onclick="toggleDay(this)" class="day-chip active-day">Mer</span>
+              <span id="d3" onclick="toggleDay(this)" class="day-chip active-day">Jeu</span>
+              <span id="d4" onclick="toggleDay(this)" class="day-chip active-day">Ven</span>
+              <span id="d5" onclick="toggleDay(this)" class="day-chip">Sam</span>
+              <span id="d6" onclick="toggleDay(this)" class="day-chip">Dim</span>
+            </div>
+          </div>
+          <style>
+            .day-chip{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);transition:all .2s;}
+            .day-chip.active-day{background:var(--violet-profond);color:#fff;border-color:var(--violet-profond);}
+          </style>
+          <div style="margin-top:16px;">
+            <div style="font-size:12px;font-weight:700;color:var(--texte-principal);margin-bottom:10px;">Résumé par email</div>
+            <div class="notif-row"><div><div class="notif-label">Fréquence</div></div>
+              <select class="form-select"><option>Quotidien</option><option selected>Hebdomadaire</option><option>Mensuel</option></select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ABONNEMENT ─── -->
+    <div class="tab-panel" id="tab-abonnement">
+      <div class="plan-layout">
+        <div class="plan-card">
+          <div class="plan-current-badge">✓ Actuel</div>
+          <div class="plan-icon">🌱</div>
+          <div class="plan-name">Gratuit</div>
+          <div class="plan-price">0 <span>FCFA/mois</span></div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Jusqu'à 100 étudiants</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>2 enseignants</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Tableau de bord basique</div>
+          <div class="plan-feature"><div class="feat-dot feat-no">—</div>Rapports avancés</div>
+          <div class="plan-feature"><div class="feat-dot feat-no">—</div>Export CSV/PDF</div>
+          <div class="plan-feature"><div class="feat-dot feat-no">—</div>Support prioritaire</div>
+          <button class="btn-plan btn-plan-outline">Plan actuel</button>
+        </div>
+        <div class="plan-card popular">
+          <div class="plan-popular-badge">⚡ Populaire</div>
+          <div class="plan-icon">🚀</div>
+          <div class="plan-name">Pro</div>
+          <div class="plan-price" style="color:var(--cyan);">15 000 <span>FCFA/mois</span></div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Jusqu'à 5 000 étudiants</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>50 enseignants</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Tableaux de bord avancés</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Rapports & exports</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Notifications SMS</div>
+          <div class="plan-feature"><div class="feat-dot feat-no">—</div>Support dédié 24h/7j</div>
+          <button class="btn-plan btn-plan-cyan">Passer à Pro</button>
+        </div>
+        <div class="plan-card">
+          <div class="plan-icon">🏛️</div>
+          <div class="plan-name">Établissement</div>
+          <div class="plan-price">Sur devis <span></span></div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Étudiants illimités</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Enseignants illimités</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Multi-établissements</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>API personnalisée</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>SSO & Active Directory</div>
+          <div class="plan-feature yes"><div class="feat-dot feat-yes">✓</div>Support dédié 24h/7j</div>
+          <button class="btn-plan btn-plan-solid">Nous contacter</button>
+        </div>
+      </div>
+
+      <div class="usage-bar-section">
+        <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;margin-bottom:16px;">📊 Utilisation actuelle (Plan Gratuit)</div>
+        <div class="usage-row"><span class="usage-label">Étudiants</span><div class="usage-track"><div class="usage-fill uf-a" style="width:100%"></div></div><span class="usage-pct">100/100</span></div>
+        <div class="usage-row"><span class="usage-label">Enseignants</span><div class="usage-track"><div class="usage-fill uf-v" style="width:100%"></div></div><span class="usage-pct">2/2</span></div>
+        <div class="usage-row"><span class="usage-label">Stockage</span><div class="usage-track"><div class="usage-fill uf-c" style="width:62%"></div></div><span class="usage-pct">62%</span></div>
+        <div class="usage-row"><span class="usage-label">Exports ce mois</span><div class="usage-track"><div class="usage-fill uf-g" style="width:30%"></div></div><span class="usage-pct">3/10</span></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function switchTab(name, el){
+  document.querySelectorAll('.atab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+function toggleDay(el){el.classList.toggle('active-day');}
+</script>
+</body>
+</html>

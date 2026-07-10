@@ -1,0 +1,13 @@
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--purple-light);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}

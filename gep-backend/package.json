@@ -1,0 +1,42 @@
+{
+  "name": "gep-api-server",
+  "version": "1.1.0",
+  "description": "GEP — API REST de gestion d'établissement scolaire",
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env --watch --experimental-strip-types src/index.ts",
+    "build": "node build.mjs",
+    "start": "node --env-file-if-exists=.env dist/index.mjs",
+    "seed": "node --env-file-if-exists=.env --experimental-strip-types src/seed.ts",
+    "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@workspace/db": "file:./db",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.22.5",
+    "pdfkit": "^0.15.2",
+    "pino": "^9.7.0",
+    "pino-http": "^10.5.0",
+    "pino-pretty": "^13.0.0",
+    "zod": "^3.25.64"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^24.0.3",
+    "@types/pdfkit": "^0.13.9",
+    "drizzle-kit": "^0.31.10",
+    "esbuild": "^0.25.5",
+    "esbuild-plugin-pino": "^2.2.0",
+    "typescript": "^5.7.3"
+  }
+}

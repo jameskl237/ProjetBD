@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Détail inscription</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --violet-profond: #4C1D95;
+  --violet-hover:   #6D28D9;
+  --violet-nuit:    #1E0B3B;
+  --cyan:           #06B6D4;
+  --cyan-hover:     #22D3EE;
+  --fond-page:      #F8FAFF;
+  --fond-carte:     #FFFFFF;
+  --bordure:        #EDE9FE;
+  --texte-principal:#1E1B4B;
+  --texte-sec:      #6B7280;
+  --succes:         #059669;
+  --danger:         #E11D48;
+  --avertissement:  #D97706;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--fond-page);color:var(--texte-principal);display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:200px;min-width:200px;background:var(--violet-nuit);display:flex;flex-direction:column;padding-bottom:16px;position:relative;overflow-y:auto;}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(6,182,212,.25),transparent);}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;padding:22px 20px 26px;display:flex;align-items:center;gap:8px;letter-spacing:2px;}
+.logo-dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 9px var(--cyan);}
+.logo span{color:var(--cyan);}
+.nav-section{padding:0 12px;}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.52);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(109,40,217,.3);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.4);}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 24px;height:60px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.back-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.back-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.breadcrumb{font-size:12px;color:var(--texte-sec);}
+.breadcrumb strong{color:var(--texte-principal);}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.btn-sec{display:flex;align-items:center;gap:5px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-principal);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-sec:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.btn-warn{display:flex;align-items:center;gap:5px;border:1.5px solid rgba(217,119,6,.3);background:rgba(217,119,6,.07);color:var(--avertissement);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-warn:hover{background:rgba(217,119,6,.15);border-color:var(--avertissement);}
+.btn-prim{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 14px rgba(76,29,149,.3);transition:all .2s;}
+.btn-prim:hover{background:linear-gradient(135deg,var(--violet-hover),var(--cyan));}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);cursor:pointer;}
+.ava{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;font-family:'Sora',sans-serif;}
+.uname{font-size:12px;font-weight:600;color:var(--texte-principal);}
+.urole{font-size:10px;color:var(--texte-sec);}
+.content{flex:1;overflow-y:auto;padding:0;}
+.hero{background:var(--violet-nuit);position:relative;overflow:hidden;padding:28px 32px 0;}
+.hero::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 80% 50%,rgba(6,182,212,.18) 0%,transparent 60%),radial-gradient(circle at 10% 80%,rgba(76,29,149,.4) 0%,transparent 50%);pointer-events:none;}
+.hero::after{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.06) 1px,transparent 1px);background-size:28px 28px;pointer-events:none;}
+.hero-top{display:flex;align-items:flex-start;gap:20px;position:relative;z-index:2;margin-bottom:20px;}
+.hero-av{width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,#0E7490,#06B6D4);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:24px;color:#fff;border:3px solid rgba(255,255,255,.15);flex-shrink:0;box-shadow:0 8px 24px rgba(0,0,0,.25);}
+.hero-info{flex:1;}
+.hero-name{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;}
+.hero-sub{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:10px;font-family:monospace;}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap;}
+.htag{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;}
+.htag-v{background:rgba(76,29,149,.5);color:#C4B5FD;border:1px solid rgba(109,40,217,.4);}
+.htag-c{background:rgba(6,182,212,.15);color:var(--cyan);border:1px solid rgba(6,182,212,.3);}
+.htag-g{background:rgba(5,150,105,.15);color:#34D399;border:1px solid rgba(5,150,105,.3);}
+.htag-a{background:rgba(217,119,6,.15);color:#FBBF24;border:1px solid rgba(217,119,6,.3);}
+.hero-stats{display:flex;gap:0;position:relative;z-index:2;border-top:1px solid rgba(255,255,255,.08);}
+.hstat{flex:1;padding:14px 0;text-align:center;border-right:1px solid rgba(255,255,255,.07);}
+.hstat:last-child{border-right:none;}
+.hstat-val{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:#fff;}
+.hstat-val .accent{color:var(--cyan);}
+.hstat-lbl{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;}
+.tabs-bar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 32px;display:flex;gap:0;flex-shrink:0;}
+.tab-item{padding:13px 18px;font-size:13px;font-weight:600;color:var(--texte-sec);cursor:pointer;border-bottom:2.5px solid transparent;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.tab-item:hover{color:var(--violet-profond);}
+.tab-item.active{color:var(--violet-profond);border-bottom-color:var(--violet-profond);}
+.tab-badge{background:rgba(76,29,149,.1);color:var(--violet-profond);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;}
+.panels{padding:24px 32px;}
+.panel{display:none;}
+.panel.active{display:block;}
+.card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:14px;overflow:hidden;margin-bottom:16px;}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--bordure);display:flex;align-items:center;justify-content:space-between;}
+.card-title-row{display:flex;align-items:center;gap:8px;}
+.card-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.ci-v{background:rgba(76,29,149,.1);}
+.ci-c{background:rgba(6,182,212,.1);}
+.ci-g{background:rgba(5,150,105,.1);}
+.ci-a{background:rgba(217,119,6,.1);}
+.card-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--texte-principal);}
+.card-body{padding:18px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.info-item{padding:10px 12px;background:var(--fond-page);border:1px solid var(--bordure);border-radius:10px;}
+.info-lbl{font-size:10px;color:var(--texte-sec);font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-bottom:3px;}
+.info-val{font-size:13px;font-weight:600;color:var(--texte-principal);}
+.info-val.mono{font-family:monospace;color:var(--violet-profond);}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.bdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.b-active{background:rgba(5,150,105,.1);color:var(--succes);}
+.b-active .bdot{background:var(--succes);}
+.b-cloture{background:rgba(107,114,128,.1);color:#4B5563;}
+.b-cloture .bdot{background:#9CA3AF;}
+.section-tag{display:inline-block;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:700;}
+.sec-fr{background:rgba(6,182,212,.1);color:#0E7490;}
+.class-tag{display:inline-block;background:rgba(76,29,149,.08);color:var(--violet-profond);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;font-family:'Sora',sans-serif;}
+.note-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--bordure);}
+.note-item:last-child{border-bottom:none;}
+.note-mat{font-size:13px;font-weight:600;color:var(--texte-principal);}
+.note-trim{font-size:11px;color:var(--texte-sec);margin-top:1px;}
+.note-val{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;}
+.note-val.good{color:var(--succes);}
+.note-val.moy{color:var(--avertissement);}
+.note-val.bad{color:var(--danger);}
+.timeline{position:relative;padding-left:24px;}
+.timeline::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:var(--bordure);}
+.tl-item{position:relative;margin-bottom:20px;}
+.tl-dot{position:absolute;left:-21px;top:3px;width:12px;height:12px;border-radius:50%;border:2px solid var(--fond-carte);}
+.tl-dot.done{background:var(--succes);box-shadow:0 0 0 2px rgba(5,150,105,.2);}
+.tl-dot.active{background:var(--violet-profond);box-shadow:0 0 0 2px rgba(76,29,149,.2);}
+.tl-dot.pending{background:var(--bordure);}
+.tl-date{font-size:10px;color:var(--texte-sec);margin-bottom:3px;font-weight:600;letter-spacing:.3px;}
+.tl-title{font-size:13px;font-weight:700;color:var(--texte-principal);}
+.tl-desc{font-size:12px;color:var(--texte-sec);margin-top:2px;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bordure);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:#C4B5FD;}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo"><div class="logo-dot"></div>SCHOOL<span>i</span></div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item">⊞ Tableau de bord</div>
+    <div class="nav-item">👦 Élèves</div>
+    <div class="nav-item active">📋 Inscriptions</div>
+    <div class="nav-item">🏫 Classes</div>
+    <div class="nav-item">💳 Paiements</div>
+    <div class="nav-label">Pédagogie</div>
+    <div class="nav-item">📝 Notes</div>
+    <div class="nav-item">🚨 Discipline</div>
+    <div class="nav-item">🚌 Transport</div>
+    <div class="nav-label">Système</div>
+    <div class="nav-item">👥 Utilisateurs</div>
+    <div class="nav-item">⚙️ Paramètres</div>
+    <div class="nav-item">🖨️ Impressions</div>
+  </div>
+</aside>
+<div class="main">
+  <header class="topbar">
+    <button class="back-btn" onclick="history.back()">← Retour</button>
+    <span class="breadcrumb">Inscriptions &rsaquo; <strong>INS-2025-0047</strong></span>
+    <div class="topbar-right">
+      <button class="btn-sec">🖨️ Imprimer</button>
+      <button class="btn-sec">✏️ Modifier</button>
+      <button class="btn-warn" onclick="window.location='inscriptions-cloturer.html'">🏁 Clôturer</button>
+      <div class="user-pill">
+        <div class="ava">SM</div>
+        <div><div class="uname">Sophie M.</div><div class="urole">Secrétaire</div></div>
+      </div>
+    </div>
+  </header>
+  <div class="content">
+    <div class="hero">
+      <div class="hero-top">
+        <div class="hero-av">EF</div>
+        <div class="hero-info">
+          <div class="hero-name">Emile Fouda</div>
+          <div class="hero-sub">ELV10047 &nbsp;·&nbsp; INS-2025-0047</div>
+          <div class="hero-tags">
+            <span class="htag htag-v">📋 Active</span>
+            <span class="htag htag-c">🇫🇷 Francophone</span>
+            <span class="htag htag-g">CM1</span>
+            <span class="htag htag-a">📅 2025 – 2026</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><div class="hstat-val">15.<span class="accent">4</span></div><div class="hstat-lbl">Moyenne T1</div></div>
+        <div class="hstat"><div class="hstat-val">2</div><div class="hstat-lbl">Absences</div></div>
+        <div class="hstat"><div class="hstat-val">0</div><div class="hstat-lbl">Incidents</div></div>
+        <div class="hstat"><div class="hstat-val"><span class="accent">75%</span></div><div class="hstat-lbl">Paiements</div></div>
+      </div>
+    </div>
+    <div class="tabs-bar">
+      <div class="tab-item active" onclick="switchTab('infos',this)">📋 Informations</div>
+      <div class="tab-item" onclick="switchTab('eleve',this)">👦 Fiche élève</div>
+      <div class="tab-item" onclick="switchTab('notes',this)">📝 Notes <span class="tab-badge">T1</span></div>
+      <div class="tab-item" onclick="switchTab('paiements',this)">💳 Paiements</div>
+      <div class="tab-item" onclick="switchTab('historique',this)">🕓 Historique</div>
+    </div>
+    <div class="panels">
+
+      <!-- INFOS -->
+      <div class="panel active" id="panel-infos">
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title-row"><div class="card-icon ci-v">📋</div><div class="card-title">Détails de l'inscription</div></div>
+                <span class="badge b-active"><span class="bdot"></span>Active</span>
+              </div>
+              <div class="card-body">
+                <div class="info-grid">
+                  <div class="info-item"><div class="info-lbl">N° inscription</div><div class="info-val mono">INS-2025-0047</div></div>
+                  <div class="info-item"><div class="info-lbl">Matricule élève</div><div class="info-val mono">ELV10047</div></div>
+                  <div class="info-item"><div class="info-lbl">Année scolaire</div><div class="info-val">2025 – 2026</div></div>
+                  <div class="info-item"><div class="info-lbl">Date d'inscription</div><div class="info-val">08/09/2025</div></div>
+                  <div class="info-item"><div class="info-lbl">Section</div><div class="info-val"><span class="section-tag sec-fr">🇫🇷 Francophone</span></div></div>
+                  <div class="info-item"><div class="info-lbl">Classe</div><div class="info-val"><span class="class-tag">CM1</span></div></div>
+                  <div class="info-item"><div class="info-lbl">Statut</div><div class="info-val"><span class="badge b-active"><span class="bdot"></span>Active</span></div></div>
+                  <div class="info-item"><div class="info-lbl">Enregistrée par</div><div class="info-val">Sophie Mendo</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title-row"><div class="card-icon ci-a">📝</div><div class="card-title">Observations</div></div></div>
+              <div class="card-body"><p style="font-size:13px;color:var(--texte-sec);line-height:1.6;">Élève redoublant de CM1. Dossier médical complet. Aucune allergie signalée. Suit les cours normalement.</p></div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-title-row"><div class="card-icon ci-c">🏫</div><div class="card-title">Classe affectée</div></div></div>
+              <div class="card-body">
+                <div style="background:linear-gradient(135deg,rgba(76,29,149,.07),rgba(6,182,212,.05));border:1.5px solid var(--bordure);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px;">
+                  <div style="font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--violet-profond);">CM1</div>
+                  <div style="font-size:11px;color:var(--texte-sec);margin-top:2px;">Cours Moyen 1 — Section Francophone</div>
+                </div>
+                <div class="info-grid">
+                  <div class="info-item"><div class="info-lbl">Enseignant principal</div><div class="info-val">M. Nkomo Alain</div></div>
+                  <div class="info-item"><div class="info-lbl">Effectif classe</div><div class="info-val">42 élèves</div></div>
+                  <div class="info-item"><div class="info-lbl">Salle</div><div class="info-val">Bâtiment B — S04</div></div>
+                  <div class="info-item"><div class="info-lbl">Rang actuel</div><div class="info-val">7ème / 42</div></div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title-row"><div class="card-icon ci-g">💳</div><div class="card-title">Situation paiements</div></div></div>
+              <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                  <div style="text-align:center;padding:12px;background:rgba(5,150,105,.05);border:1px solid rgba(5,150,105,.15);border-radius:10px;">
+                    <div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--succes);">75 000</div>
+                    <div style="font-size:10px;color:var(--texte-sec);margin-top:2px;">FCFA payés</div>
+                  </div>
+                  <div style="text-align:center;padding:12px;background:rgba(217,119,6,.05);border:1px solid rgba(217,119,6,.15);border-radius:10px;">
+                    <div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--avertissement);">25 000</div>
+                    <div style="font-size:10px;color:var(--texte-sec);margin-top:2px;">FCFA restants</div>
+                  </div>
+                </div>
+                <div style="background:var(--fond-page);border-radius:8px;height:8px;overflow:hidden;margin-bottom:8px;">
+                  <div style="height:100%;width:75%;background:linear-gradient(90deg,var(--succes),#34D399);border-radius:8px;"></div>
+                </div>
+                <div style="font-size:11px;color:var(--texte-sec);text-align:center;">75% du total réglé — T3 en attente</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ELEVE -->
+      <div class="panel" id="panel-eleve">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title-row"><div class="card-icon ci-v">👦</div><div class="card-title">Identité de l'élève</div></div></div>
+            <div class="card-body">
+              <div class="info-grid">
+                <div class="info-item"><div class="info-lbl">Nom complet</div><div class="info-val">Emile Fouda</div></div>
+                <div class="info-item"><div class="info-lbl">Matricule</div><div class="info-val mono">ELV10047</div></div>
+                <div class="info-item"><div class="info-lbl">Date de naissance</div><div class="info-val">14/03/2016</div></div>
+                <div class="info-item"><div class="info-lbl">Lieu de naissance</div><div class="info-val">Yaoundé</div></div>
+                <div class="info-item"><div class="info-lbl">Sexe</div><div class="info-val">♂ Masculin</div></div>
+                <div class="info-item"><div class="info-lbl">Nationalité</div><div class="info-val">Camerounaise</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title-row"><div class="card-icon ci-c">👨‍👩‍👧</div><div class="card-title">Tuteur / Parent</div></div></div>
+            <div class="card-body">
+              <div class="info-grid">
+                <div class="info-item"><div class="info-lbl">Nom du tuteur</div><div class="info-val">M. Fouda Martin</div></div>
+                <div class="info-item"><div class="info-lbl">Lien de parenté</div><div class="info-val">Père</div></div>
+                <div class="info-item"><div class="info-lbl">Téléphone</div><div class="info-val mono">+237 677 123 456</div></div>
+                <div class="info-item"><div class="info-lbl">Profession</div><div class="info-val">Enseignant</div></div>
+                <div class="info-item" style="grid-column:span 2;"><div class="info-lbl">Adresse</div><div class="info-val">Quartier Melen, Yaoundé III</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOTES -->
+      <div class="panel" id="panel-notes">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title-row"><div class="card-icon ci-v">📝</div><div class="card-title">Notes du Trimestre 1</div></div></div>
+            <div class="card-body">
+              <div class="note-item"><div><div class="note-mat">Mathématiques</div><div class="note-trim">T1 · Coeff. 3</div></div><div class="note-val good">17/20</div></div>
+              <div class="note-item"><div><div class="note-mat">Français</div><div class="note-trim">T1 · Coeff. 3</div></div><div class="note-val good">15/20</div></div>
+              <div class="note-item"><div><div class="note-mat">Sciences</div><div class="note-trim">T1 · Coeff. 2</div></div><div class="note-val moy">13/20</div></div>
+              <div class="note-item"><div><div class="note-mat">Histoire-Géo</div><div class="note-trim">T1 · Coeff. 2</div></div><div class="note-val good">16/20</div></div>
+              <div class="note-item"><div><div class="note-mat">Éducation Physique</div><div class="note-trim">T1 · Coeff. 1</div></div><div class="note-val good">18/20</div></div>
+              <div class="note-item"><div><div class="note-mat">Anglais</div><div class="note-trim">T1 · Coeff. 2</div></div><div class="note-val moy">12/20</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title-row"><div class="card-icon ci-g">📊</div><div class="card-title">Récapitulatif</div></div></div>
+            <div class="card-body">
+              <div style="text-align:center;padding:20px 0 16px;">
+                <div style="font-family:'Sora',sans-serif;font-size:48px;font-weight:800;color:var(--succes);">15.4</div>
+                <div style="font-size:12px;color:var(--texte-sec);margin-top:4px;">Moyenne générale T1 / 20</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div style="text-align:center;padding:10px;background:var(--fond-page);border:1px solid var(--bordure);border-radius:10px;">
+                  <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--violet-profond);">7ème</div>
+                  <div style="font-size:10px;color:var(--texte-sec);margin-top:2px;">Rang / 42 élèves</div>
+                </div>
+                <div style="text-align:center;padding:10px;background:rgba(5,150,105,.05);border:1px solid rgba(5,150,105,.15);border-radius:10px;">
+                  <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--succes);">Bien</div>
+                  <div style="font-size:10px;color:var(--texte-sec);margin-top:2px;">Appréciation</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAIEMENTS -->
+      <div class="panel" id="panel-paiements">
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-title-row"><div class="card-icon ci-v">💳</div><div class="card-title">Historique des paiements</div></div></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(5,150,105,.05);border:1px solid rgba(5,150,105,.15);border-radius:10px;">
+                  <div style="width:32px;height:32px;border-radius:8px;background:rgba(5,150,105,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">✅</div>
+                  <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Frais d'inscription</div><div style="font-size:11px;color:var(--texte-sec);">08/09/2025 · Reçu #REC-2025-0098</div></div>
+                  <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--succes);">25 000 FCFA</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(5,150,105,.05);border:1px solid rgba(5,150,105,.15);border-radius:10px;">
+                  <div style="width:32px;height:32px;border-radius:8px;background:rgba(5,150,105,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">✅</div>
+                  <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Frais de scolarité T1</div><div style="font-size:11px;color:var(--texte-sec);">15/09/2025 · Reçu #REC-2025-0112</div></div>
+                  <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--succes);">25 000 FCFA</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(5,150,105,.05);border:1px solid rgba(5,150,105,.15);border-radius:10px;">
+                  <div style="width:32px;height:32px;border-radius:8px;background:rgba(5,150,105,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">✅</div>
+                  <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Frais de scolarité T2</div><div style="font-size:11px;color:var(--texte-sec);">10/01/2026 · Reçu #REC-2026-0034</div></div>
+                  <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--succes);">25 000 FCFA</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:rgba(225,29,72,.05);border:1px solid rgba(225,29,72,.15);border-radius:10px;">
+                  <div style="width:32px;height:32px;border-radius:8px;background:rgba(225,29,72,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">⏳</div>
+                  <div style="flex:1;"><div style="font-size:13px;font-weight:600;">Frais de scolarité T3</div><div style="font-size:11px;color:var(--danger);">Échéance : 01/04/2026 — Non payé</div></div>
+                  <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--danger);">25 000 FCFA</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title-row"><div class="card-icon ci-g">📊</div><div class="card-title">Bilan financier</div></div></div>
+            <div class="card-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+                <div style="text-align:center;padding:14px;background:rgba(5,150,105,.05);border:1px solid rgba(5,150,105,.15);border-radius:10px;">
+                  <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--succes);">75 000</div>
+                  <div style="font-size:10px;color:var(--texte-sec);margin-top:2px;">FCFA payés</div>
+                </div>
+                <div style="text-align:center;padding:14px;background:rgba(225,29,72,.05);border:1px solid rgba(225,29,72,.15);border-radius:10px;">
+                  <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--danger);">25 000</div>
+                  <div style="font-size:10px;color:var(--texte-sec);margin-top:2px;">FCFA en attente</div>
+                </div>
+              </div>
+              <div style="background:var(--fond-page);border-radius:8px;height:10px;overflow:hidden;margin-bottom:8px;">
+                <div style="height:100%;width:75%;background:linear-gradient(90deg,var(--succes),#34D399);border-radius:8px;"></div>
+              </div>
+              <div style="font-size:11px;color:var(--texte-sec);text-align:center;margin-bottom:14px;">75% du total réglé (100 000 FCFA)</div>
+              <button class="btn-prim" style="width:100%;justify-content:center;">💳 Enregistrer un paiement</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIQUE -->
+      <div class="panel" id="panel-historique">
+        <div style="max-width:600px;">
+          <div class="card">
+            <div class="card-header"><div class="card-title-row"><div class="card-icon ci-c">🕓</div><div class="card-title">Journal des événements</div></div></div>
+            <div class="card-body">
+              <div class="timeline">
+                <div class="tl-item"><div class="tl-dot done"></div><div class="tl-date">08/09/2025 à 09h14</div><div class="tl-title">Inscription créée</div><div class="tl-desc">Inscription en CM1 — Section Francophone enregistrée par Sophie Mendo.</div></div>
+                <div class="tl-item"><div class="tl-dot done"></div><div class="tl-date">08/09/2025 à 09h22</div><div class="tl-title">Paiement des frais d'inscription</div><div class="tl-desc">25 000 FCFA reçus. Reçu #REC-2025-0098 généré.</div></div>
+                <div class="tl-item"><div class="tl-dot done"></div><div class="tl-date">15/09/2025 à 14h05</div><div class="tl-title">Paiement T1 enregistré</div><div class="tl-desc">25 000 FCFA reçus. Reçu #REC-2025-0112 généré.</div></div>
+                <div class="tl-item"><div class="tl-dot done"></div><div class="tl-date">10/01/2026 à 11h30</div><div class="tl-title">Paiement T2 enregistré</div><div class="tl-desc">25 000 FCFA reçus. Reçu #REC-2026-0034 généré.</div></div>
+                <div class="tl-item"><div class="tl-dot active"></div><div class="tl-date">01/04/2026 — Échéance T3</div><div class="tl-title" style="color:var(--danger);">⏳ Paiement T3 en attente</div><div class="tl-desc">25 000 FCFA non encore réglés.</div></div>
+                <div class="tl-item"><div class="tl-dot pending"></div><div class="tl-date">Juin 2026 — Prévu</div><div class="tl-title" style="color:var(--texte-sec);">Clôture de fin d'année</div><div class="tl-desc" style="color:var(--texte-sec);">Clôture automatique prévue à la fin de l'année scolaire.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+function switchTab(id,el){
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+}
+</script>
+</body>
+</html>

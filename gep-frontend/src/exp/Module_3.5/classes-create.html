@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Nouvelle classe</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --violet-profond: #4C1D95;
+  --violet-hover:   #6D28D9;
+  --violet-nuit:    #1E0B3B;
+  --cyan:           #06B6D4;
+  --cyan-hover:     #22D3EE;
+  --fond-page:      #F8FAFF;
+  --fond-carte:     #FFFFFF;
+  --bordure:        #EDE9FE;
+  --texte-principal:#1E1B4B;
+  --texte-sec:      #6B7280;
+  --succes:         #059669;
+  --danger:         #E11D48;
+  --avertissement:  #D97706;
+  --francophone:    #7C3AED;
+  --anglophone:     #0284C7;
+  --bilingue:       #059669;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--fond-page);color:var(--texte-principal);display:flex;height:100vh;overflow:hidden;}
+
+/* ══ SIDEBAR ══ */
+.sidebar{width:200px;min-width:200px;background:var(--violet-nuit);display:flex;flex-direction:column;padding-bottom:16px;position:relative;overflow-y:auto;}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(6,182,212,.25),transparent);}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;padding:22px 20px 26px;display:flex;align-items:center;gap:8px;letter-spacing:2px;}
+.logo-dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 9px var(--cyan);}
+.logo span{color:var(--cyan);}
+.nav-section{padding:0 12px;}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.52);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(109,40,217,.3);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.4);}
+.na{margin-left:auto;font-size:10px;opacity:.45;}
+
+/* ══ MAIN ══ */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 24px;height:60px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.back-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;text-decoration:none;}
+.back-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.breadcrumb{font-size:12px;color:var(--texte-sec);}
+.breadcrumb strong{color:var(--texte-principal);}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);cursor:pointer;}
+.ava{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;font-family:'Sora',sans-serif;}
+.uname{font-size:12px;font-weight:600;color:var(--texte-principal);}
+.urole{font-size:10px;color:var(--texte-sec);}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:28px 32px;}
+
+/* LAYOUT */
+.form-layout{display:grid;grid-template-columns:1fr 340px;gap:20px;max-width:1000px;margin:0 auto;}
+
+/* PAGE TITLE */
+.page-title{font-family:'Sora',sans-serif;font-size:21px;font-weight:800;color:var(--texte-principal);margin-bottom:4px;}
+.page-sub{font-size:13px;color:var(--texte-sec);margin-bottom:22px;}
+
+/* CARDS */
+.fcard{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;margin-bottom:16px;}
+.fcard-head{padding:16px 20px;border-bottom:1px solid var(--bordure);display:flex;align-items:center;gap:10px;}
+.fcard-head-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:rgba(76,29,149,.08);}
+.fcard-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;color:var(--texte-principal);}
+.fcard-desc{font-size:11px;color:var(--texte-sec);margin-top:1px;}
+.fcard-body{padding:20px;}
+
+/* FORM ELEMENTS */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-group{margin-bottom:14px;}
+.form-group:last-child{margin-bottom:0;}
+label{display:block;font-size:12px;font-weight:700;color:var(--texte-principal);margin-bottom:6px;letter-spacing:.2px;}
+label .req{color:var(--danger);margin-left:2px;}
+label .hint{font-weight:400;color:var(--texte-sec);font-size:11px;margin-left:4px;}
+input[type=text], input[type=number], select, textarea{width:100%;border:1.5px solid var(--bordure);border-radius:10px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--texte-principal);background:var(--fond-page);outline:none;transition:border-color .2s,box-shadow .2s;}
+input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus{border-color:var(--violet-profond);box-shadow:0 0 0 3px rgba(76,29,149,.08);background:#fff;}
+input[type=text]::placeholder, textarea::placeholder{color:var(--texte-sec);}
+textarea{resize:vertical;min-height:80px;}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.input-error{border-color:var(--danger) !important;}
+.error-msg{font-size:11px;color:var(--danger);margin-top:4px;display:none;}
+.error-msg.show{display:block;}
+
+/* SECTION PICKER */
+.section-picker{display:flex;gap:10px;}
+.sec-opt{flex:1;border:2px solid var(--bordure);border-radius:12px;padding:12px 10px;cursor:pointer;transition:all .2s;text-align:center;position:relative;background:var(--fond-page);}
+.sec-opt:hover{border-color:rgba(109,40,217,.3);}
+.sec-opt.selected-fr{border-color:var(--francophone);background:rgba(124,58,237,.06);}
+.sec-opt.selected-en{border-color:var(--anglophone);background:rgba(2,132,199,.06);}
+.sec-opt.selected-bi{border-color:var(--bilingue);background:rgba(5,150,105,.06);}
+.sec-opt input[type=radio]{position:absolute;opacity:0;width:0;height:0;}
+.sec-icon{font-size:22px;margin-bottom:6px;}
+.sec-name{font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:var(--texte-principal);}
+.sec-lang{font-size:10px;color:var(--texte-sec);margin-top:2px;}
+.sec-check{width:16px;height:16px;border-radius:50%;border:2px solid var(--bordure);margin:6px auto 0;transition:all .2s;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.sec-opt.selected-fr .sec-check{background:var(--francophone);border-color:var(--francophone);color:#fff;}
+.sec-opt.selected-en .sec-check{background:var(--anglophone);border-color:var(--anglophone);color:#fff;}
+.sec-opt.selected-bi .sec-check{background:var(--bilingue);border-color:var(--bilingue);color:#fff;}
+
+/* NIVEAU PICKER */
+.niveau-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.niv-btn{border:2px solid var(--bordure);border-radius:10px;padding:10px 6px;cursor:pointer;transition:all .2s;text-align:center;background:var(--fond-page);font-family:'Sora',sans-serif;font-size:13px;font-weight:800;color:var(--texte-sec);}
+.niv-btn:hover{border-color:rgba(109,40,217,.3);color:var(--violet-profond);}
+.niv-btn.selected{border-color:var(--violet-profond);background:rgba(76,29,149,.08);color:var(--violet-profond);}
+.niv-sub{font-size:9px;font-weight:500;font-family:'DM Sans',sans-serif;color:inherit;margin-top:2px;opacity:.7;}
+
+/* PREVIEW CARD */
+.preview-card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;position:sticky;top:0;}
+.preview-head{padding:14px 18px;border-bottom:1px solid var(--bordure);}
+.preview-head-title{font-family:'Sora',sans-serif;font-size:12px;font-weight:800;color:var(--texte-principal);}
+.preview-body{padding:18px;}
+.preview-badge{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px;background:linear-gradient(135deg,rgba(76,29,149,.1),rgba(6,182,212,.1));border:2px solid var(--bordure);transition:all .3s;}
+.preview-name{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:var(--texte-principal);text-align:center;min-height:22px;}
+.preview-code{font-size:11px;color:var(--texte-sec);text-align:center;margin-top:4px;font-family:monospace;min-height:16px;}
+.preview-section-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:8px auto;display:flex;justify-content:center;width:fit-content;margin:8px auto;}
+.psb-fr{background:rgba(124,58,237,.1);color:#7C3AED;border:1px solid rgba(124,58,237,.2);}
+.psb-en{background:rgba(2,132,199,.1);color:var(--anglophone);border:1px solid rgba(2,132,199,.2);}
+.psb-bi{background:rgba(5,150,105,.1);color:var(--bilingue);border:1px solid rgba(5,150,105,.2);}
+.psb-none{background:rgba(107,114,128,.1);color:var(--texte-sec);border:1px solid var(--bordure);}
+.preview-divider{height:1px;background:var(--bordure);margin:14px 0;}
+.preview-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.preview-row:last-child{margin-bottom:0;}
+.pr-label{font-size:11px;color:var(--texte-sec);}
+.pr-val{font-size:12px;font-weight:700;color:var(--texte-principal);}
+
+/* ANNEE ACTIVE */
+.annee-info{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);border-radius:10px;margin-bottom:14px;}
+.annee-info .ai-dot{width:8px;height:8px;border-radius:50%;background:var(--succes);flex-shrink:0;}
+.annee-info span{font-size:12px;color:var(--succes);font-weight:600;}
+
+/* BUTTONS */
+.form-actions{display:flex;gap:10px;align-items:center;padding-top:14px;border-top:1px solid var(--bordure);margin-top:14px;}
+.btn-cancel{display:flex;align-items:center;gap:5px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-principal);border-radius:10px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-cancel:hover{border-color:var(--danger);color:var(--danger);}
+.btn-submit{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;border:none;border-radius:10px;padding:10px 22px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 14px rgba(76,29,149,.3);transition:all .2s;margin-left:auto;}
+.btn-submit:hover{background:linear-gradient(135deg,var(--violet-hover),var(--cyan));}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;}
+
+/* SUCCESS TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--violet-nuit);color:#fff;padding:14px 20px;border-radius:14px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translateY(80px);opacity:0;transition:all .35s;z-index:999;border:1px solid rgba(6,182,212,.3);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-dot{width:8px;height:8px;border-radius:50%;background:var(--succes);}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo"><div class="logo-dot"></div>SCHOOL<span>i</span></div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item">🏠 <span>Tableau de bord</span></div>
+    <div class="nav-item">🎓 <span>Élèves</span><span class="na">312</span></div>
+    <div class="nav-item">📋 <span>Inscriptions</span></div>
+    <div class="nav-item active">🏫 <span>Classes</span><span class="na">15</span></div>
+    <div class="nav-item">💰 <span>Paiements</span></div>
+    <div class="nav-label">Pédagogie</div>
+    <div class="nav-item">📝 <span>Notes</span></div>
+    <div class="nav-item">⚠️ <span>Discipline</span></div>
+    <div class="nav-item">🚌 <span>Transport</span></div>
+    <div class="nav-label">Administration</div>
+    <div class="nav-item">🖨️ <span>Impressions</span></div>
+    <div class="nav-item">⚙️ <span>Paramètres</span></div>
+    <div class="nav-item">👥 <span>Utilisateurs</span></div>
+  </div>
+</nav>
+
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <a class="back-btn" href="classes-index.html">← Retour</a>
+    <div class="breadcrumb">Classes &nbsp;›&nbsp; <strong>Nouvelle classe</strong></div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="ava">AD</div>
+        <div><div class="uname">Admin</div><div class="urole">Administrateur</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="page-title">🏫 Créer une nouvelle classe</div>
+    <div class="page-sub">Renseignez les informations de la classe. Les champs marqués <span style="color:var(--danger)">*</span> sont obligatoires.</div>
+
+    <div class="form-layout">
+      <!-- COLONNE FORMULAIRE -->
+      <div>
+
+        <!-- IDENTIFICATION -->
+        <div class="fcard">
+          <div class="fcard-head">
+            <div class="fcard-head-icon">🏷️</div>
+            <div><div class="fcard-title">Identification de la classe</div><div class="fcard-desc">Niveau et section pédagogique</div></div>
+          </div>
+          <div class="fcard-body">
+
+            <!-- NIVEAU -->
+            <div class="form-group">
+              <label>Niveau scolaire <span class="req">*</span></label>
+              <div class="niveau-grid" id="niveauGrid">
+                <div class="niv-btn" data-niv="CP" onclick="selectNiveau('CP')">CP<div class="niv-sub">Cours<br>Prépa.</div></div>
+                <div class="niv-btn" data-niv="CE1" onclick="selectNiveau('CE1')">CE1<div class="niv-sub">Cours<br>Élémentaire</div></div>
+                <div class="niv-btn" data-niv="CE2" onclick="selectNiveau('CE2')">CE2<div class="niv-sub">Cours<br>Élémentaire</div></div>
+                <div class="niv-btn" data-niv="CM1" onclick="selectNiveau('CM1')">CM1<div class="niv-sub">Cours<br>Moyen</div></div>
+                <div class="niv-btn" data-niv="CM2" onclick="selectNiveau('CM2')">CM2<div class="niv-sub">Cours<br>Moyen</div></div>
+              </div>
+              <div class="error-msg" id="err-niveau">Veuillez sélectionner un niveau.</div>
+            </div>
+
+            <!-- SECTION -->
+            <div class="form-group">
+              <label>Section de l'école <span class="req">*</span></label>
+              <div class="section-picker" id="sectionPicker">
+                <label class="sec-opt" id="opt-fr" onclick="selectSection('fr')">
+                  <input type="radio" name="section" value="fr">
+                  <div class="sec-icon">🇫🇷</div>
+                  <div class="sec-name">Francophone</div>
+                  <div class="sec-lang">Français</div>
+                  <div class="sec-check" id="chk-fr"></div>
+                </label>
+                <label class="sec-opt" id="opt-en" onclick="selectSection('en')">
+                  <input type="radio" name="section" value="en">
+                  <div class="sec-icon">🇬🇧</div>
+                  <div class="sec-name">Anglophone</div>
+                  <div class="sec-lang">English</div>
+                  <div class="sec-check" id="chk-en"></div>
+                </label>
+                <label class="sec-opt" id="opt-bi" onclick="selectSection('bi')">
+                  <input type="radio" name="section" value="bi">
+                  <div class="sec-icon">🌐</div>
+                  <div class="sec-name">Bilingue</div>
+                  <div class="sec-lang">Fr / En</div>
+                  <div class="sec-check" id="chk-bi"></div>
+                </label>
+              </div>
+              <div class="error-msg" id="err-section">Veuillez sélectionner une section.</div>
+            </div>
+
+            <!-- CODE + INTITULE -->
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0">
+                <label>Code de la classe <span class="req">*</span><span class="hint">(auto-généré)</span></label>
+                <input type="text" id="codeClasse" placeholder="CP/FR" readonly style="background:rgba(76,29,149,.04);cursor:default;color:var(--violet-profond);font-weight:700;font-family:'Sora',sans-serif;">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label>Intitulé personnalisé <span class="hint">(optionnel)</span></label>
+                <input type="text" id="intitule" placeholder="ex: CP-A Francophone">
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- CONFIGURATION -->
+        <div class="fcard">
+          <div class="fcard-head">
+            <div class="fcard-head-icon">⚙️</div>
+            <div><div class="fcard-title">Configuration</div><div class="fcard-desc">Capacité, année scolaire et salle</div></div>
+          </div>
+          <div class="fcard-body">
+            <div class="annee-info">
+              <div class="ai-dot"></div>
+              <span>Année scolaire active : 2025–2026</span>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0">
+                <label>Capacité maximale <span class="req">*</span></label>
+                <input type="number" id="capacite" min="1" max="60" value="45" placeholder="45">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label>Salle de classe <span class="hint">(optionnel)</span></label>
+                <input type="text" id="salle" placeholder="ex: Salle B2, Bloc C">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ENSEIGNANT PRINCIPAL -->
+        <div class="fcard">
+          <div class="fcard-head">
+            <div class="fcard-head-icon">👨‍🏫</div>
+            <div><div class="fcard-title">Enseignant principal</div><div class="fcard-desc">Peut être affecté plus tard</div></div>
+          </div>
+          <div class="fcard-body">
+            <div class="form-group">
+              <label>Enseignant titulaire <span class="hint">(optionnel)</span></label>
+              <select id="enseignant">
+                <option value="">— Aucun pour l'instant —</option>
+                <option>M. Mbarga Jean</option>
+                <option>Mme Fotso Claire</option>
+                <option>M. Ateba Pierre</option>
+                <option>Mme Bella Rose</option>
+                <option>M. Kotto André</option>
+                <option>Mme Mongo Hélène</option>
+                <option>M. Soppo Luc</option>
+                <option>Mme Nganou Anne</option>
+                <option>M. Tagne Paul</option>
+                <option>Mme Ekotto Sylvie</option>
+                <option>M. Feudjio Marc</option>
+                <option>Mme Ndoumbe Sara</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Observations <span class="hint">(optionnel)</span></label>
+              <textarea id="observations" placeholder="Notes internes sur cette classe…"></textarea>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="form-actions">
+              <button class="btn-cancel" onclick="history.back()">✕ Annuler</button>
+              <button class="btn-submit" id="btnSubmit" onclick="submitForm()">✓ Créer la classe</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- COLONNE APERÇU -->
+      <div>
+        <div class="preview-card">
+          <div class="preview-head">
+            <div class="preview-head-title">👁 Aperçu de la classe</div>
+          </div>
+          <div class="preview-body">
+            <div class="preview-badge" id="prevIcon">🏫</div>
+            <div class="preview-name" id="prevName" style="color:var(--texte-sec);font-style:italic;font-size:13px;">Sélectionnez un niveau et une section</div>
+            <div class="preview-code" id="prevCode"></div>
+            <div style="display:flex;justify-content:center;">
+              <div class="preview-section-badge psb-none" id="prevSectionBadge">Section non définie</div>
+            </div>
+            <div class="preview-divider"></div>
+            <div class="preview-row"><span class="pr-label">Année scolaire</span><span class="pr-val">2025 – 2026</span></div>
+            <div class="preview-row"><span class="pr-label">Capacité max.</span><span class="pr-val" id="prevCap">45 élèves</span></div>
+            <div class="preview-row"><span class="pr-label">Salle</span><span class="pr-val" id="prevSalle">—</span></div>
+            <div class="preview-row"><span class="pr-label">Enseignant</span><span class="pr-val" id="prevEns" style="font-size:11px;text-align:right;max-width:160px;">Non affecté</span></div>
+            <div class="preview-divider"></div>
+            <div style="background:rgba(76,29,149,.04);border-radius:10px;padding:12px;text-align:center;">
+              <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--violet-profond);">0</div>
+              <div style="font-size:11px;color:var(--texte-sec);">Élève(s) inscrits à la création</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><div class="toast-dot"></div> <span id="toastMsg">Classe créée avec succès !</span></div>
+
+<script>
+let selectedNiveau = '';
+let selectedSection = '';
+
+const sectionLabels = {fr:'Francophone', en:'Anglophone', bi:'Bilingue'};
+const sectionIcons  = {fr:'🇫🇷', en:'🇬🇧', bi:'🌐'};
+const sectionColors = {fr:'psb-fr', en:'psb-en', bi:'psb-bi'};
+const sectionBgCls  = {fr:'selected-fr', en:'selected-en', bi:'selected-bi'};
+
+function selectNiveau(niv){
+  selectedNiveau = niv;
+  document.querySelectorAll('.niv-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.niv === niv);
+  });
+  document.getElementById('err-niveau').classList.remove('show');
+  updateCode();
+  updatePreview();
+}
+
+function selectSection(sec){
+  selectedSection = sec;
+  ['fr','en','bi'].forEach(s => {
+    const opt = document.getElementById('opt-'+s);
+    opt.className = 'sec-opt';
+    if(s === sec) opt.classList.add(sectionBgCls[s]);
+    const chk = document.getElementById('chk-'+s);
+    chk.textContent = s === sec ? '✓' : '';
+  });
+  document.getElementById('err-section').classList.remove('show');
+  updateCode();
+  updatePreview();
+}
+
+function updateCode(){
+  const code = selectedNiveau && selectedSection
+    ? selectedNiveau + '/' + selectedSection.toUpperCase()
+    : '';
+  document.getElementById('codeClasse').value = code;
+  if(!document.getElementById('intitule').value && selectedNiveau && selectedSection){
+    document.getElementById('intitule').placeholder = selectedNiveau + ' ' + sectionLabels[selectedSection];
+  }
+}
+
+function updatePreview(){
+  const niv = selectedNiveau;
+  const sec = selectedSection;
+  const cap = document.getElementById('capacite')?.value || '45';
+  const salle = document.getElementById('salle')?.value || '';
+  const ens = document.getElementById('enseignant')?.value || '';
+
+  const nameEl = document.getElementById('prevName');
+  const codeEl = document.getElementById('prevCode');
+  const iconEl = document.getElementById('prevIcon');
+  const sbEl   = document.getElementById('prevSectionBadge');
+
+  if(niv && sec){
+    nameEl.textContent = niv + ' – ' + sectionLabels[sec];
+    nameEl.style.color = 'var(--texte-principal)';
+    nameEl.style.fontStyle = 'normal';
+    nameEl.style.fontSize = '16px';
+    codeEl.textContent = niv + '/' + sec.toUpperCase();
+    iconEl.textContent = sectionIcons[sec];
+    iconEl.style.background = '';
+    sbEl.className = 'preview-section-badge ' + sectionColors[sec];
+    sbEl.textContent = sectionIcons[sec] + ' Section ' + sectionLabels[sec];
+  } else {
+    nameEl.textContent = 'Sélectionnez un niveau et une section';
+    nameEl.style.color = 'var(--texte-sec)';
+    nameEl.style.fontStyle = 'italic';
+    nameEl.style.fontSize = '13px';
+    codeEl.textContent = '';
+    iconEl.textContent = '🏫';
+    sbEl.className = 'preview-section-badge psb-none';
+    sbEl.textContent = 'Section non définie';
+  }
+
+  document.getElementById('prevCap').textContent = (cap || '45') + ' élèves';
+  document.getElementById('prevSalle').textContent = salle || '—';
+  document.getElementById('prevEns').textContent = ens || 'Non affecté';
+}
+
+// Live preview on other fields
+['capacite','salle','enseignant'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', updatePreview);
+  document.getElementById(id)?.addEventListener('change', updatePreview);
+});
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+function submitForm(){
+  let valid = true;
+  if(!selectedNiveau){
+    document.getElementById('err-niveau').classList.add('show');
+    valid = false;
+  }
+  if(!selectedSection){
+    document.getElementById('err-section').classList.add('show');
+    valid = false;
+  }
+  if(!valid) return;
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enregistrement…';
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.innerHTML = '✓ Créer la classe';
+    showToast('✅ Classe ' + selectedNiveau + ' ' + sectionLabels[selectedSection] + ' créée avec succès !');
+  }, 1200);
+}
+</script>
+</body>
+</html>

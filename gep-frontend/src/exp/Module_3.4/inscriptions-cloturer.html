@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Clôturer une inscription</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --violet-profond: #4C1D95;
+  --violet-hover:   #6D28D9;
+  --violet-nuit:    #1E0B3B;
+  --cyan:           #06B6D4;
+  --cyan-hover:     #22D3EE;
+  --fond-page:      #F8FAFF;
+  --fond-carte:     #FFFFFF;
+  --bordure:        #EDE9FE;
+  --texte-principal:#1E1B4B;
+  --texte-sec:      #6B7280;
+  --succes:         #059669;
+  --danger:         #E11D48;
+  --avertissement:  #D97706;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--fond-page);color:var(--texte-principal);display:flex;height:100vh;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:200px;min-width:200px;background:var(--violet-nuit);display:flex;flex-direction:column;padding-bottom:16px;position:relative;overflow-y:auto;}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(6,182,212,.25),transparent);}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;padding:22px 20px 26px;display:flex;align-items:center;gap:8px;letter-spacing:2px;}
+.logo-dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 9px var(--cyan);}
+.logo span{color:var(--cyan);}
+.nav-section{padding:0 12px;}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.52);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(109,40,217,.3);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.4);}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 24px;height:60px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.back-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.back-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.breadcrumb{font-size:12px;color:var(--texte-sec);}
+.breadcrumb strong{color:var(--texte-principal);}
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);cursor:pointer;}
+.ava{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;font-family:'Sora',sans-serif;}
+.uname{font-size:12px;font-weight:600;color:var(--texte-principal);}
+.urole{font-size:10px;color:var(--texte-sec);}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:28px 32px;}
+
+/* Page header */
+.page-header{margin-bottom:24px;}
+.page-header h1{font-family:'Sora',sans-serif;font-size:21px;font-weight:800;color:var(--texte-principal);}
+.page-header p{font-size:13px;color:var(--texte-sec);margin-top:3px;}
+
+/* ALERT BANNER */
+.alert-banner{background:rgba(217,119,6,.07);border:1.5px solid rgba(217,119,6,.25);border-radius:14px;padding:16px 20px;display:flex;align-items:flex-start;gap:14px;margin-bottom:24px;}
+.ab-icon{font-size:24px;flex-shrink:0;margin-top:1px;}
+.ab-title{font-size:14px;font-weight:700;color:var(--avertissement);margin-bottom:3px;}
+.ab-desc{font-size:12px;color:var(--texte-sec);line-height:1.6;}
+
+/* GRID */
+.form-grid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;}
+
+/* CARDS */
+.card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;margin-bottom:16px;}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--bordure);display:flex;align-items:center;gap:10px;}
+.card-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.ci-v{background:rgba(76,29,149,.1);}
+.ci-c{background:rgba(6,182,212,.1);}
+.ci-g{background:rgba(5,150,105,.1);}
+.ci-a{background:rgba(217,119,6,.1);}
+.ci-r{background:rgba(225,29,72,.1);}
+.card-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--texte-principal);}
+.card-sub{font-size:11px;color:var(--texte-sec);margin-top:1px;}
+.card-body{padding:20px;}
+
+/* FORM FIELDS */
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.form-group:last-child{margin-bottom:0;}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-label{font-size:11px;font-weight:700;color:var(--texte-sec);letter-spacing:.4px;text-transform:uppercase;}
+.required{color:var(--danger);}
+.form-input,.form-select,.form-textarea{border:1.5px solid var(--bordure);border-radius:10px;padding:9px 13px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--texte-principal);background:var(--fond-page);outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--texte-sec);font-size:12px;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--violet-profond);box-shadow:0 0 0 3px rgba(76,29,149,.07);background:#fff;}
+.form-textarea{resize:vertical;min-height:80px;}
+.form-hint{font-size:11px;color:var(--texte-sec);margin-top:2px;}
+
+/* MOTIF RADIO */
+.motif-group{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.motif-opt{border:1.5px solid var(--bordure);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.motif-opt:hover{border-color:var(--violet-profond);}
+.motif-opt.selected{border-color:var(--avertissement);background:rgba(217,119,6,.05);}
+.motif-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--bordure);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.motif-opt.selected .motif-dot{border-color:var(--avertissement);background:var(--avertissement);}
+.motif-dot::after{content:'';width:6px;height:6px;border-radius:50%;background:#fff;}
+.motif-opt:not(.selected) .motif-dot::after{display:none;}
+.motif-icon{font-size:18px;}
+.motif-label{font-size:12px;font-weight:600;color:var(--texte-principal);}
+.motif-desc{font-size:10px;color:var(--texte-sec);margin-top:1px;}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:8px;}
+.check-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--fond-page);border:1px solid var(--bordure);cursor:pointer;transition:all .2s;}
+.check-item:hover{border-color:var(--violet-profond);}
+.check-item.checked{background:rgba(5,150,105,.04);border-color:rgba(5,150,105,.25);}
+.check-box{width:18px;height:18px;border-radius:5px;border:2px solid var(--bordure);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-size:11px;}
+.check-item.checked .check-box{background:var(--succes);border-color:var(--succes);color:#fff;}
+.check-lbl{font-size:12px;font-weight:600;color:var(--texte-principal);}
+.check-sub{font-size:11px;color:var(--texte-sec);margin-top:1px;}
+.check-status{margin-left:auto;font-size:11px;font-weight:600;}
+.check-item.checked .check-status{color:var(--succes);}
+.check-item:not(.checked) .check-status{color:var(--danger);}
+
+/* RECAP CARD */
+.recap-card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;position:sticky;top:0;}
+.recap-header{background:linear-gradient(135deg,rgba(217,119,6,.15),rgba(217,119,6,.05));border-bottom:1px solid rgba(217,119,6,.2);padding:16px 18px;display:flex;align-items:center;gap:10px;}
+.recap-icon{width:36px;height:36px;background:rgba(217,119,6,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.recap-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;color:var(--avertissement);}
+.recap-sub{font-size:11px;color:var(--texte-sec);margin-top:1px;}
+.recap-body{padding:16px;}
+.recap-eleve{display:flex;align-items:center;gap:10px;padding:12px;background:var(--fond-page);border:1px solid var(--bordure);border-radius:10px;margin-bottom:14px;}
+.recap-av{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#0E7490,#06B6D4);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:14px;color:#fff;flex-shrink:0;}
+.recap-name{font-size:13px;font-weight:700;color:var(--texte-principal);}
+.recap-id{font-size:10px;color:var(--texte-sec);font-family:monospace;margin-top:1px;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.sum-lbl{font-size:11px;color:var(--texte-sec);}
+.sum-val{font-size:12px;font-weight:700;color:var(--texte-principal);}
+.sum-val.warn{color:var(--avertissement);}
+.sum-divider{height:1px;background:var(--bordure);margin:12px 0;}
+
+/* IMPAYE ALERT */
+.impaye-block{background:rgba(225,29,72,.05);border:1.5px solid rgba(225,29,72,.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.impaye-title{font-size:12px;font-weight:700;color:var(--danger);margin-bottom:4px;}
+.impaye-val{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--danger);}
+.impaye-sub{font-size:11px;color:var(--texte-sec);margin-top:2px;}
+
+/* FORM FOOTER */
+.form-footer{display:flex;gap:10px;padding:16px 20px;border-top:1px solid var(--bordure);background:var(--fond-carte);}
+.btn-cancel{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:transparent;color:var(--texte-sec);border:1.5px solid var(--bordure);transition:all .2s;}
+.btn-cancel:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.btn-cloture{flex:2;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:linear-gradient(135deg,var(--avertissement),#F59E0B);color:#fff;border:none;box-shadow:0 4px 14px rgba(217,119,6,.3);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-cloture:hover{background:linear-gradient(135deg,#F59E0B,var(--avertissement));box-shadow:0 6px 20px rgba(217,119,6,.4);}
+.btn-cloture:disabled{opacity:.5;cursor:not-allowed;}
+
+/* CONFIRMATION MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--fond-carte);border-radius:20px;padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);transform:scale(.95);transition:transform .2s;}
+.modal-overlay.open .modal{transform:scale(1);}
+.modal-icon{width:56px;height:56px;border-radius:14px;background:rgba(217,119,6,.1);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;}
+.modal-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--texte-principal);text-align:center;margin-bottom:8px;}
+.modal-desc{font-size:13px;color:var(--texte-sec);text-align:center;line-height:1.6;margin-bottom:24px;}
+.modal-btns{display:flex;gap:10px;}
+.modal-cancel{flex:1;padding:11px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:transparent;color:var(--texte-sec);border:1.5px solid var(--bordure);transition:all .2s;}
+.modal-cancel:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.modal-confirm{flex:2;padding:11px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;background:linear-gradient(135deg,var(--avertissement),#F59E0B);color:#fff;border:none;box-shadow:0 4px 14px rgba(217,119,6,.3);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.modal-confirm:hover{background:linear-gradient(135deg,#F59E0B,var(--avertissement));}
+
+/* SUCCESS SCREEN */
+.success-screen{display:none;flex-direction:column;align-items:center;justify-content:center;padding:48px 32px;text-align:center;}
+.success-screen.show{display:flex;}
+.success-anim{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--succes),#34D399);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:20px;box-shadow:0 8px 24px rgba(5,150,105,.3);}
+.success-title{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--texte-principal);margin-bottom:8px;}
+.success-desc{font-size:13px;color:var(--texte-sec);line-height:1.6;max-width:360px;margin-bottom:24px;}
+.btn-retour{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;border:none;border-radius:10px;padding:11px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 14px rgba(76,29,149,.3);}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bordure);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:#C4B5FD;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo"><div class="logo-dot"></div>SCHOOL<span>i</span></div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item">⊞ Tableau de bord</div>
+    <div class="nav-item">👦 Élèves</div>
+    <div class="nav-item active">📋 Inscriptions</div>
+    <div class="nav-item">🏫 Classes</div>
+    <div class="nav-item">💳 Paiements</div>
+    <div class="nav-label">Pédagogie</div>
+    <div class="nav-item">📝 Notes</div>
+    <div class="nav-item">🚨 Discipline</div>
+    <div class="nav-item">🚌 Transport</div>
+    <div class="nav-label">Système</div>
+    <div class="nav-item">👥 Utilisateurs</div>
+    <div class="nav-item">⚙️ Paramètres</div>
+    <div class="nav-item">🖨️ Impressions</div>
+  </div>
+</aside>
+
+<div class="main">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" onclick="history.back()">← Retour</button>
+      <span class="breadcrumb">Inscriptions &rsaquo; INS-2025-0047 &rsaquo; <strong>Clôturer</strong></span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="ava">SM</div>
+        <div><div class="uname">Sophie M.</div><div class="urole">Secrétaire</div></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="content" id="mainContent">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <h1>🏁 Clôturer une inscription</h1>
+      <p>Cette action mettra fin à l'inscription active de l'élève pour l'année scolaire en cours.</p>
+    </div>
+
+    <!-- ALERT -->
+    <div class="alert-banner">
+      <div class="ab-icon">⚠️</div>
+      <div>
+        <div class="ab-title">Action irréversible</div>
+        <div class="ab-desc">La clôture d'une inscription est définitive pour cette année scolaire. L'élève ne sera plus comptabilisé dans les effectifs actifs. Vérifiez que tous les paiements sont soldés avant de procéder.</div>
+      </div>
+    </div>
+
+    <!-- FORM GRID -->
+    <div class="form-grid">
+      <div>
+
+        <!-- MOTIF -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-a">📋</div>
+            <div>
+              <div class="card-title">Motif de clôture <span style="color:var(--danger);font-size:11px;">*</span></div>
+              <div class="card-sub">Sélectionnez la raison de cette clôture</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="motif-group" id="motifGroup">
+              <div class="motif-opt" onclick="selectMotif('fin_annee',this)">
+                <div class="motif-dot"></div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:6px;"><span class="motif-icon">🎓</span><div class="motif-label">Fin d'année scolaire</div></div>
+                  <div class="motif-desc">Clôture normale en fin d'année</div>
+                </div>
+              </div>
+              <div class="motif-opt" onclick="selectMotif('depart',this)">
+                <div class="motif-dot"></div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:6px;"><span class="motif-icon">🚪</span><div class="motif-label">Départ de l'école</div></div>
+                  <div class="motif-desc">L'élève quitte l'établissement</div>
+                </div>
+              </div>
+              <div class="motif-opt" onclick="selectMotif('transfert',this)">
+                <div class="motif-dot"></div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:6px;"><span class="motif-icon">🔄</span><div class="motif-label">Transfert</div></div>
+                  <div class="motif-desc">Transfert vers un autre établissement</div>
+                </div>
+              </div>
+              <div class="motif-opt" onclick="selectMotif('exclusion',this)">
+                <div class="motif-dot"></div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:6px;"><span class="motif-icon">🚫</span><div class="motif-label">Exclusion</div></div>
+                  <div class="motif-desc">Décision disciplinaire</div>
+                </div>
+              </div>
+              <div class="motif-opt" onclick="selectMotif('deces',this)">
+                <div class="motif-dot"></div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:6px;"><span class="motif-icon">🕊️</span><div class="motif-label">Décès</div></div>
+                  <div class="motif-desc">Décès de l'élève</div>
+                </div>
+              </div>
+              <div class="motif-opt" onclick="selectMotif('autre',this)">
+                <div class="motif-dot"></div>
+                <div>
+                  <div style="display:flex;align-items:center;gap:6px;"><span class="motif-icon">📝</span><div class="motif-label">Autre</div></div>
+                  <div class="motif-desc">Autre raison (à préciser)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DATE & DETAILS -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-c">📅</div>
+            <div><div class="card-title">Date et informations complémentaires</div><div class="card-sub">Précisez la date effective de clôture</div></div>
+          </div>
+          <div class="card-body">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label">Date de clôture <span class="required">*</span></label>
+                <input class="form-input" type="date" id="dateCloture" onchange="updateRecap()" value="">
+              </div>
+              <div class="form-group">
+                <label class="form-label">École de destination <span style="font-size:10px;color:var(--texte-sec);font-weight:400;">(si transfert)</span></label>
+                <input class="form-input" type="text" id="ecoleDestination" placeholder="Ex : École Saint-Joseph" oninput="updateRecap()">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Observations / Remarques</label>
+              <textarea class="form-textarea" placeholder="Informations complémentaires sur la clôture..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHECKLIST PRÉALABLE -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon ci-g">✅</div>
+            <div><div class="card-title">Vérifications préalables</div><div class="card-sub">Confirmer que ces points ont été traités avant la clôture</div></div>
+          </div>
+          <div class="card-body">
+            <div class="checklist">
+              <div class="check-item" id="chk1" onclick="toggleCheck('chk1')">
+                <div class="check-box" id="box1"></div>
+                <div>
+                  <div class="check-lbl">Bulletin de notes imprimé</div>
+                  <div class="check-sub">Le relevé de notes du dernier trimestre a été généré</div>
+                </div>
+                <div class="check-status" id="st1">⬜ Non fait</div>
+              </div>
+              <div class="check-item" id="chk2" onclick="toggleCheck('chk2')">
+                <div class="check-box" id="box2"></div>
+                <div>
+                  <div class="check-lbl">Paiements soldés ou accord de report</div>
+                  <div class="check-sub">Tous les frais sont réglés ou un arrangement a été convenu</div>
+                </div>
+                <div class="check-status" id="st2">⬜ Non fait</div>
+              </div>
+              <div class="check-item" id="chk3" onclick="toggleCheck('chk3')">
+                <div class="check-box" id="box3"></div>
+                <div>
+                  <div class="check-lbl">Documents remis au tuteur</div>
+                  <div class="check-sub">Acte de naissance, livret scolaire, certificat de scolarité</div>
+                </div>
+                <div class="check-status" id="st3">⬜ Non fait</div>
+              </div>
+              <div class="check-item" id="chk4" onclick="toggleCheck('chk4')">
+                <div class="check-box" id="box4"></div>
+                <div>
+                  <div class="check-lbl">Enseignant informé</div>
+                  <div class="check-sub">Le professeur principal a été notifié du départ de l'élève</div>
+                </div>
+                <div class="check-status" id="st4">⬜ Non fait</div>
+              </div>
+            </div>
+          </div>
+          <div class="form-footer">
+            <button class="btn-cancel" onclick="history.back()">Annuler</button>
+            <button class="btn-cloture" id="btnCloture" onclick="openModal()">🏁 Procéder à la clôture</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RECAP SIDEBAR -->
+      <div>
+        <div class="recap-card">
+          <div class="recap-header">
+            <div class="recap-icon">🏁</div>
+            <div>
+              <div class="recap-title">Récapitulatif de clôture</div>
+              <div class="recap-sub">Vérifiez les informations avant de confirmer</div>
+            </div>
+          </div>
+          <div class="recap-body">
+
+            <!-- ELEVE -->
+            <div class="recap-eleve">
+              <div class="recap-av">EF</div>
+              <div>
+                <div class="recap-name">Emile Fouda</div>
+                <div class="recap-id">ELV10047 · INS-2025-0047</div>
+              </div>
+            </div>
+
+            <div class="sum-row"><span class="sum-lbl">Section</span><span class="sum-val">🇫🇷 Francophone</span></div>
+            <div class="sum-row"><span class="sum-lbl">Classe</span><span class="sum-val">CM1</span></div>
+            <div class="sum-row"><span class="sum-lbl">Année scolaire</span><span class="sum-val">2025 – 2026</span></div>
+            <div class="sum-row"><span class="sum-lbl">Motif</span><span class="sum-val warn" id="recapMotif">— Non sélectionné</span></div>
+            <div class="sum-row"><span class="sum-lbl">Date de clôture</span><span class="sum-val" id="recapDate">—</span></div>
+            <div class="sum-row"><span class="sum-lbl">École destination</span><span class="sum-val" id="recapEcole">—</span></div>
+
+            <div class="sum-divider"></div>
+
+            <!-- IMPAYE -->
+            <div class="impaye-block">
+              <div class="impaye-title">⚠️ Montant impayé</div>
+              <div class="impaye-val">25 000 FCFA</div>
+              <div class="impaye-sub">T3 de scolarité non réglé — à solder avant clôture</div>
+            </div>
+
+            <!-- CHECKLIST PROGRESS -->
+            <div style="margin-bottom:10px;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+                <span style="font-size:11px;color:var(--texte-sec);">Vérifications</span>
+                <span style="font-size:11px;font-weight:700;color:var(--texte-principal);" id="checkProgress">0 / 4</span>
+              </div>
+              <div style="background:var(--fond-page);border-radius:6px;height:6px;overflow:hidden;">
+                <div id="checkBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--succes),#34D399);border-radius:6px;transition:width .3s;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- SUCCESS SCREEN (hidden by default) -->
+  <div class="content success-screen" id="successScreen">
+    <div class="success-anim">🏁</div>
+    <div class="success-title">Inscription clôturée avec succès</div>
+    <div class="success-desc">L'inscription <strong>INS-2025-0047</strong> d'Emile Fouda a été clôturée. Un récapitulatif a été enregistré dans le journal des événements. L'élève n'est plus comptabilisé dans les effectifs actifs.</div>
+    <button class="btn-retour" onclick="window.location='inscriptions-index.html'">← Retour à la liste des inscriptions</button>
+  </div>
+</div>
+
+<!-- CONFIRMATION MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-icon">🏁</div>
+    <div class="modal-title">Confirmer la clôture</div>
+    <div class="modal-desc">Vous êtes sur le point de clôturer l'inscription de <strong>Emile Fouda (INS-2025-0047)</strong>. Cette action est irréversible. Confirmez-vous ?</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Annuler</button>
+      <button class="modal-confirm" onclick="confirmerCloture()">🏁 Confirmer la clôture</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedMotif = null;
+let checks = {chk1:false, chk2:false, chk3:false, chk4:false};
+
+// set today
+document.getElementById('dateCloture').value = new Date().toISOString().split('T')[0];
+updateRecap();
+
+const motifLabels = {
+  fin_annee:'🎓 Fin d\'année scolaire',
+  depart:'🚪 Départ de l\'école',
+  transfert:'🔄 Transfert',
+  exclusion:'🚫 Exclusion',
+  deces:'🕊️ Décès',
+  autre:'📝 Autre'
+};
+
+function selectMotif(val, el){
+  selectedMotif = val;
+  document.querySelectorAll('.motif-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  updateRecap();
+}
+
+function toggleCheck(id){
+  checks[id] = !checks[id];
+  const item = document.getElementById(id);
+  const box = document.getElementById('box'+id.slice(3));
+  const st = document.getElementById('st'+id.slice(3));
+  if(checks[id]){
+    item.classList.add('checked');
+    box.textContent = '✓';
+    st.textContent = '✅ Fait';
+  } else {
+    item.classList.remove('checked');
+    box.textContent = '';
+    st.textContent = '⬜ Non fait';
+  }
+  updateCheckProgress();
+}
+
+function updateCheckProgress(){
+  const done = Object.values(checks).filter(Boolean).length;
+  document.getElementById('checkProgress').textContent = done + ' / 4';
+  document.getElementById('checkBar').style.width = (done/4*100)+'%';
+}
+
+function updateRecap(){
+  const motifEl = document.getElementById('recapMotif');
+  const dateEl = document.getElementById('recapDate');
+  const ecoleEl = document.getElementById('recapEcole');
+  const dateVal = document.getElementById('dateCloture').value;
+  const ecoleVal = document.getElementById('ecoleDestination').value;
+
+  motifEl.textContent = selectedMotif ? motifLabels[selectedMotif] : '— Non sélectionné';
+  motifEl.className = 'sum-val' + (selectedMotif ? '' : ' warn');
+  dateEl.textContent = dateVal ? new Date(dateVal+' ').toLocaleDateString('fr-FR') : '—';
+  ecoleEl.textContent = ecoleVal || '—';
+}
+
+function openModal(){
+  if(!selectedMotif){ alert('Veuillez sélectionner un motif de clôture.'); return; }
+  if(!document.getElementById('dateCloture').value){ alert('Veuillez indiquer la date de clôture.'); return; }
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function confirmerCloture(){
+  closeModal();
+  const btn = document.querySelector('.modal-confirm');
+  // Afficher l'écran de succès
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('successScreen').classList.add('show');
+}
+</script>
+</body>
+</html>

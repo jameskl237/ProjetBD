@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schooli — Affecter un enseignant</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --violet-profond:#4C1D95;--violet-hover:#6D28D9;--violet-nuit:#1E0B3B;
+  --cyan:#06B6D4;--fond-page:#F8FAFF;--fond-carte:#FFFFFF;--bordure:#EDE9FE;
+  --texte-principal:#1E1B4B;--texte-sec:#6B7280;
+  --succes:#059669;--danger:#E11D48;--avertissement:#D97706;
+  --francophone:#7C3AED;--anglophone:#0284C7;--bilingue:#059669;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--fond-page);color:var(--texte-principal);display:flex;height:100vh;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:200px;min-width:200px;background:var(--violet-nuit);display:flex;flex-direction:column;padding-bottom:16px;position:relative;overflow-y:auto;}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,rgba(6,182,212,.25),transparent);}
+.logo{font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;padding:22px 20px 26px;display:flex;align-items:center;gap:8px;letter-spacing:2px;}
+.logo-dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 9px var(--cyan);}
+.logo span{color:var(--cyan);}
+.nav-section{padding:0 12px;}
+.nav-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:14px 12px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.52);font-size:13px;font-weight:500;margin-bottom:2px;}
+.nav-item:hover{background:rgba(109,40,217,.3);color:#fff;}
+.nav-item.active{background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;box-shadow:0 4px 14px rgba(76,29,149,.4);}
+.na{margin-left:auto;font-size:10px;opacity:.45;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:var(--fond-carte);border-bottom:1px solid var(--bordure);padding:0 24px;height:60px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.back-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.back-btn:hover{border-color:var(--violet-profond);color:var(--violet-profond);}
+.breadcrumb{font-size:12px;color:var(--texte-sec);}
+.breadcrumb strong{color:var(--texte-principal);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:10px;background:var(--fond-page);border:1.5px solid var(--bordure);cursor:pointer;}
+.ava{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--violet-profond),var(--cyan));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;font-family:'Sora',sans-serif;}
+.uname{font-size:12px;font-weight:600;}
+.urole{font-size:10px;color:var(--texte-sec);}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:26px 32px;}
+.page-header{margin-bottom:22px;}
+.page-header h1{font-family:'Sora',sans-serif;font-size:21px;font-weight:800;}
+.page-header p{font-size:13px;color:var(--texte-sec);margin-top:3px;}
+
+/* TARGET CLASS BAR */
+.target-bar{display:flex;align-items:center;gap:16px;background:rgba(76,29,149,.04);border:1.5px solid rgba(76,29,149,.15);border-radius:14px;padding:16px 20px;margin-bottom:24px;}
+.tb-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.tb-main{flex:1;}
+.tb-name{font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:var(--texte-principal);}
+.tb-sub{font-size:12px;color:var(--texte-sec);margin-top:4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.tb-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:10px;font-weight:700;text-transform:uppercase;}
+.b-bi{background:rgba(5,150,105,.1);color:#059669;border:1px solid rgba(5,150,105,.2);}
+.tb-current{display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(217,119,6,.06);border:1px solid rgba(217,119,6,.2);border-radius:10px;flex-shrink:0;}
+.tc-label{font-size:11px;color:var(--avertissement);font-weight:600;}
+.tc-name{font-family:'Sora',sans-serif;font-size:13px;font-weight:800;color:var(--texte-principal);}
+
+/* LAYOUT */
+.page-layout{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;}
+
+/* CARDS */
+.card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;margin-bottom:16px;}
+.card-header{padding:14px 20px;border-bottom:1px solid var(--bordure);display:flex;align-items:center;justify-content:space-between;}
+.card-title-row{display:flex;align-items:center;gap:9px;}
+.card-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.ci-v{background:rgba(76,29,149,.1);}
+.ci-c{background:rgba(6,182,212,.1);}
+.ci-g{background:rgba(5,150,105,.1);}
+.ci-a{background:rgba(217,119,6,.1);}
+.card-title{font-family:'Sora',sans-serif;font-size:13px;font-weight:700;color:var(--texte-principal);}
+.card-sub{font-size:11px;color:var(--texte-sec);margin-top:1px;}
+.card-body{padding:18px 20px;}
+
+/* SEARCH */
+.search-box{position:relative;margin-bottom:14px;}
+.search-box input{width:100%;border:1.5px solid var(--bordure);border-radius:12px;padding:11px 14px 11px 40px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--texte-principal);background:var(--fond-carte);outline:none;transition:border-color .2s,box-shadow .2s;}
+.search-box input:focus{border-color:var(--violet-profond);box-shadow:0 0 0 3px rgba(76,29,149,.07);}
+.search-box input::placeholder{color:var(--texte-sec);}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--texte-sec);pointer-events:none;}
+
+/* FILTRES DISPONIBILITÉ */
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.filt-btn{display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-sec);}
+.filt-btn:hover{border-color:rgba(109,40,217,.3);color:var(--violet-profond);}
+.filt-btn.active{background:var(--violet-profond);color:#fff;border-color:var(--violet-profond);}
+.filt-cnt{background:rgba(255,255,255,.25);border-radius:5px;padding:1px 6px;font-size:10px;}
+.filt-btn:not(.active) .filt-cnt{background:rgba(76,29,149,.08);color:var(--violet-profond);}
+
+/* ENSEIGNANT CARDS */
+.ens-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.ens-card{border:2px solid var(--bordure);border-radius:14px;padding:16px;cursor:pointer;transition:all .25s;background:var(--fond-carte);position:relative;overflow:hidden;}
+.ens-card:hover{border-color:rgba(76,29,149,.3);transform:translateY(-2px);box-shadow:0 8px 24px rgba(76,29,149,.08);}
+.ens-card.selected{border-color:var(--violet-profond);background:rgba(76,29,149,.03);box-shadow:0 0 0 3px rgba(76,29,149,.1);}
+.ens-card.occupied{border-color:rgba(217,119,6,.3);background:rgba(217,119,6,.02);}
+.ens-card.occupied:hover{border-color:rgba(217,119,6,.5);}
+.ens-card.current-ens{border-color:rgba(5,150,105,.35);background:rgba(5,150,105,.02);cursor:default;}
+.ens-card.current-ens:hover{transform:none;box-shadow:none;}
+
+.ec-top{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.ec-av{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:15px;color:#fff;flex-shrink:0;}
+.ec-name{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--texte-principal);}
+.ec-grade{font-size:11px;color:var(--texte-sec);margin-top:2px;}
+
+.ec-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.ec-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;}
+.tag-fr{background:rgba(124,58,237,.1);color:#7C3AED;}
+.tag-en{background:rgba(2,132,199,.1);color:#0284C7;}
+.tag-bi{background:rgba(5,150,105,.1);color:#059669;}
+.tag-math{background:rgba(76,29,149,.08);color:var(--violet-profond);}
+.tag-sci{background:rgba(6,182,212,.1);color:var(--cyan);}
+.tag-hist{background:rgba(217,119,6,.1);color:var(--avertissement);}
+.tag-sport{background:rgba(5,150,105,.08);color:var(--succes);}
+.tag-lit{background:rgba(225,29,72,.08);color:var(--danger);}
+
+.ec-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;}
+.ec-stat{background:var(--fond-page);border-radius:8px;padding:7px 8px;text-align:center;}
+.ec-stat-val{font-family:'Sora',sans-serif;font-size:14px;font-weight:800;color:var(--texte-principal);}
+.ec-stat-lbl{font-size:9px;color:var(--texte-sec);margin-top:1px;}
+
+.ec-footer{display:flex;align-items:center;justify-content:space-between;}
+.dispo-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;}
+.db-libre{background:rgba(5,150,105,.1);color:var(--succes);}
+.db-occupe{background:rgba(217,119,6,.1);color:var(--avertissement);}
+.db-current{background:rgba(5,150,105,.15);color:var(--succes);}
+.db-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+.sel-indicator{width:24px;height:24px;border-radius:7px;border:2px solid var(--bordure);display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s;}
+.ens-card.selected .sel-indicator{background:var(--violet-profond);border-color:var(--violet-profond);color:#fff;}
+.ens-card.current-ens .sel-indicator{background:var(--succes);border-color:var(--succes);color:#fff;font-size:13px;}
+
+/* BADGE OCCUPÉ overlay */
+.occ-overlay{position:absolute;top:12px;right:12px;background:rgba(217,119,6,.12);border:1px solid rgba(217,119,6,.25);border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;color:var(--avertissement);}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:32px 20px;color:var(--texte-sec);}
+.empty-state .ei{font-size:32px;margin-bottom:8px;}
+.empty-state p{font-size:13px;}
+
+/* SIDEBAR RECAP */
+.recap-card{background:var(--fond-carte);border:1.5px solid var(--bordure);border-radius:16px;overflow:hidden;position:sticky;top:0;margin-bottom:16px;}
+.recap-head{padding:14px 18px;border-bottom:1px solid var(--bordure);}
+.recap-title{font-family:'Sora',sans-serif;font-size:12px;font-weight:800;color:var(--texte-principal);}
+.recap-body{padding:18px;}
+
+/* TRANSITION VISUELLE */
+.transition-block{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.trans-row{display:flex;align-items:center;gap:8px;}
+.trans-ens{display:flex;align-items:center;gap:8px;flex:1;padding:10px 12px;border-radius:10px;border:1.5px solid var(--bordure);background:var(--fond-page);}
+.te-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:#fff;flex-shrink:0;}
+.te-name{font-size:12px;font-weight:700;color:var(--texte-principal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.te-role{font-size:10px;color:var(--texte-sec);}
+.trans-arrow{font-size:18px;color:var(--texte-sec);flex-shrink:0;}
+.trans-new{border-color:rgba(76,29,149,.3);background:rgba(76,29,149,.04);}
+
+.empty-trans{padding:12px;background:var(--fond-page);border-radius:10px;border:1.5px dashed var(--bordure);text-align:center;font-size:12px;color:var(--texte-sec);margin-bottom:14px;}
+
+/* NOTE INFO */
+.info-box{background:rgba(6,182,212,.05);border:1.5px solid rgba(6,182,212,.2);border-radius:12px;padding:13px 15px;margin-bottom:14px;}
+.ib-title{font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:var(--cyan);margin-bottom:5px;}
+.ib-text{font-size:11px;color:var(--texte-sec);line-height:1.55;}
+
+/* AVERT SI OCCUPÉ */
+.warn-box{background:rgba(217,119,6,.06);border:1.5px solid rgba(217,119,6,.25);border-radius:12px;padding:13px 15px;margin-bottom:14px;display:none;}
+.warn-box.visible{display:block;}
+.wb-title{font-family:'Sora',sans-serif;font-size:11px;font-weight:800;color:var(--avertissement);margin-bottom:5px;}
+.wb-text{font-size:11px;color:var(--texte-sec);line-height:1.55;}
+
+/* ACTIONS */
+.btn-submit{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(135deg,var(--violet-profond),var(--violet-hover));color:#fff;border:none;border-radius:11px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;box-shadow:0 4px 14px rgba(76,29,149,.3);transition:all .2s;margin-bottom:8px;}
+.btn-submit:hover{background:linear-gradient(135deg,var(--violet-hover),var(--cyan));}
+.btn-submit:disabled{opacity:.45;cursor:not-allowed;}
+.btn-cancel{width:100%;display:flex;align-items:center;justify-content:center;gap:5px;border:1.5px solid var(--bordure);background:var(--fond-carte);color:var(--texte-principal);border-radius:11px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-cancel:hover{border-color:var(--danger);color:var(--danger);}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--bordure);margin:12px 0;}
+
+/* MINI TABLE CLASSES ENS */
+.mini-table{width:100%;border-collapse:collapse;font-size:12px;}
+.mini-table th{padding:7px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--texte-sec);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--bordure);background:var(--fond-page);}
+.mini-table td{padding:8px 10px;border-bottom:1px solid var(--bordure);vertical-align:middle;}
+.mini-table tr:last-child td{border-bottom:none;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bordure);border-radius:3px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--violet-nuit);color:#fff;padding:14px 20px;border-radius:14px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.25);transform:translateY(80px);opacity:0;transition:all .35s;z-index:999;border:1px solid rgba(6,182,212,.3);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-dot{width:8px;height:8px;border-radius:50%;background:var(--succes);}
+
+/* ANIM */
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+.ens-grid{animation:fadeIn .2s ease;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo"><div class="logo-dot"></div>SCHOOL<span>i</span></div>
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item">🏠 <span>Tableau de bord</span></div>
+    <div class="nav-item">🎓 <span>Élèves</span><span class="na">312</span></div>
+    <div class="nav-item">📋 <span>Inscriptions</span></div>
+    <div class="nav-item active">🏫 <span>Classes</span><span class="na">15</span></div>
+    <div class="nav-item">💰 <span>Paiements</span></div>
+    <div class="nav-label">Pédagogie</div>
+    <div class="nav-item">📝 <span>Notes</span></div>
+    <div class="nav-item">⚠️ <span>Discipline</span></div>
+    <div class="nav-item">🚌 <span>Transport</span></div>
+    <div class="nav-label">Administration</div>
+    <div class="nav-item">🖨️ <span>Impressions</span></div>
+    <div class="nav-item">⚙️ <span>Paramètres</span></div>
+    <div class="nav-item">👥 <span>Utilisateurs</span></div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <button class="back-btn" onclick="history.back()">← Retour</button>
+    <div class="breadcrumb">Classes &nbsp;›&nbsp; CM2 Bilingue &nbsp;›&nbsp; <strong>Affecter un enseignant</strong></div>
+    <div class="topbar-right">
+      <div class="user-pill">
+        <div class="ava">AD</div>
+        <div><div class="uname">Admin</div><div class="urole">Administrateur</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <h1>👨‍🏫 Affecter un enseignant à la classe</h1>
+      <p>Sélectionnez l'enseignant titulaire pour la classe <strong>CM2 — Section Bilingue</strong>, année scolaire 2025–2026</p>
+    </div>
+
+    <!-- CLASSE CIBLE -->
+    <div class="target-bar">
+      <div class="tb-icon" style="background:linear-gradient(135deg,#059669,#34D399);">🌐</div>
+      <div class="tb-main">
+        <div class="tb-name">CM2 — Section Bilingue</div>
+        <div class="tb-sub">
+          <span>Code : <strong>CM2/BI</strong></span>
+          <span>·</span>
+          <span>📍 Salle C4</span>
+          <span>·</span>
+          <span>38 élèves inscrits</span>
+          <span>·</span>
+          <span class="tb-badge b-bi">🌐 Bilingue</span>
+        </div>
+      </div>
+      <div class="tb-current">
+        <div>
+          <div class="tc-label">⚠️ Enseignant actuel</div>
+          <div class="tc-name">Mme Ekotto Sylvie</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-layout">
+
+      <!-- COLONNE PRINCIPALE -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-row">
+              <div class="card-icon ci-v">👨‍🏫</div>
+              <div>
+                <div class="card-title">Choisir l'enseignant titulaire</div>
+                <div class="card-sub">Cliquez sur un profil pour le sélectionner — un seul enseignant par classe</div>
+              </div>
+            </div>
+            <div id="resultCount" style="font-size:12px;color:var(--texte-sec);"></div>
+          </div>
+          <div class="card-body">
+
+            <div class="search-box">
+              <div class="search-icon">🔍</div>
+              <input type="text" id="searchInput" placeholder="Rechercher par nom ou spécialité…" oninput="render()">
+            </div>
+
+            <div class="filter-row">
+              <div class="filt-btn active" data-f="all"   onclick="setFilter('all',this)">Tous <span class="filt-cnt" id="cntAll">0</span></div>
+              <div class="filt-btn"        data-f="libre" onclick="setFilter('libre',this)">🟢 Disponibles <span class="filt-cnt" id="cntLibre">0</span></div>
+              <div class="filt-btn"        data-f="occupe"onclick="setFilter('occupe',this)">🟡 Déjà affectés <span class="filt-cnt" id="cntOcc">0</span></div>
+              <div class="filt-btn"        data-f="bi"    onclick="setFilter('bi',this)">🌐 Bilingues <span class="filt-cnt" id="cntBi">0</span></div>
+            </div>
+
+            <div class="ens-grid" id="ensGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLONNE RÉCAP -->
+      <div>
+        <div class="recap-card">
+          <div class="recap-head"><div class="recap-title">📋 Récapitulatif de l'affectation</div></div>
+          <div class="recap-body">
+
+            <!-- TRANSITION -->
+            <div style="font-size:11px;font-weight:700;color:var(--texte-sec);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Changement d'enseignant</div>
+            <div class="transition-block">
+              <div class="trans-row">
+                <div class="trans-ens">
+                  <div class="te-av" style="background:linear-gradient(135deg,#059669,#34D399);">ME</div>
+                  <div><div class="te-name">Mme Ekotto Sylvie</div><div class="te-role">Enseignant actuel</div></div>
+                </div>
+              </div>
+              <div style="text-align:center;font-size:20px;color:var(--texte-sec);margin:2px 0;">↓</div>
+              <div class="trans-row" id="newEnsRow">
+                <div class="empty-trans" style="flex:1;">Aucun enseignant sélectionné</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- INFO -->
+            <div class="info-box">
+              <div class="ib-title">ℹ️ À savoir</div>
+              <div class="ib-text">L'ancien enseignant sera libéré de cette classe. Son historique de saisie de notes reste conservé. La modification prend effet immédiatement.</div>
+            </div>
+
+            <!-- AVERTISSEMENT ENSEIGNANT DÉJÀ OCCUPÉ -->
+            <div class="warn-box" id="warnBox">
+              <div class="wb-title">⚠️ Enseignant déjà affecté</div>
+              <div class="wb-text" id="warnText">Cet enseignant est déjà titulaire d'une autre classe. L'affecter ici le retirera automatiquement de son ancienne classe.</div>
+            </div>
+
+            <button class="btn-submit" id="btnConfirm" disabled onclick="confirmer()">👨‍🏫 Confirmer l'affectation</button>
+            <button class="btn-cancel" onclick="history.back()">✕ Annuler</button>
+
+            <div class="divider"></div>
+
+            <!-- CLASSES DE L'ENSEIGNANT SÉLECTIONNÉ -->
+            <div id="ensClassesBlock" style="display:none;">
+              <div style="font-size:11px;font-weight:700;color:var(--texte-sec);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;">Classes actuelles de l'enseignant</div>
+              <table class="mini-table">
+                <thead><tr><th>Classe</th><th>Section</th><th>Élèves</th></tr></thead>
+                <tbody id="ensClassesBody"></tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toastMsg"></span></div>
+
+<script>
+// ── DATA ENSEIGNANTS ──
+const avGrads = [
+  'linear-gradient(135deg,#7C3AED,#A78BFA)',
+  'linear-gradient(135deg,#0284C7,#38BDF8)',
+  'linear-gradient(135deg,#059669,#34D399)',
+  'linear-gradient(135deg,#D97706,#FBBF24)',
+  'linear-gradient(135deg,#E11D48,#FB7185)',
+  'linear-gradient(135deg,#4C1D95,#6D28D9)',
+  'linear-gradient(135deg,#06B6D4,#22D3EE)',
+  'linear-gradient(135deg,#374151,#9CA3AF)',
+  'linear-gradient(135deg,#7C3AED,#06B6D4)',
+  'linear-gradient(135deg,#059669,#0284C7)',
+  'linear-gradient(135deg,#D97706,#E11D48)',
+  'linear-gradient(135deg,#4C1D95,#06B6D4)',
+];
+
+const enseignants = [
+  {
+    id:'ENS001', prenom:'Sylvie', nom:'Ekotto', initiales:'SE',
+    grade:'Professeure certifiée', anciennete:6,
+    sections:['bi'], specialites:['Français','Anglais','Histoire-Géo'],
+    tags:['tag-bi','tag-lit','tag-hist'],
+    tagLabels:['🌐 Bilingue','📖 Français/Anglais','🌍 Hist-Géo'],
+    dispo:'current', classeActuelle:'CM2/BI', nbClasses:1, nbEleves:38,
+    note:4.8, avGrad: avGrads[2]
+  },
+  {
+    id:'ENS002', prenom:'Jean', nom:'Mbarga', initiales:'JM',
+    grade:'Professeur certifié', anciennete:9,
+    sections:['fr'], specialites:['Mathématiques','Sciences'],
+    tags:['tag-fr','tag-math','tag-sci'],
+    tagLabels:['🇫🇷 Francophone','🔢 Maths','🔬 Sciences'],
+    dispo:'occupe', classeActuelle:'CM1/FR', nbClasses:1, nbEleves:41,
+    note:4.6, avGrad: avGrads[0]
+  },
+  {
+    id:'ENS003', prenom:'Claire', nom:'Fotso', initiales:'CF',
+    grade:'Institutrice', anciennete:4,
+    sections:['fr','bi'], specialites:['Français','Éducation civique'],
+    tags:['tag-fr','tag-bi','tag-lit'],
+    tagLabels:['🇫🇷 Francophone','🌐 Bilingue','📖 Français'],
+    dispo:'libre', classeActuelle:null, nbClasses:0, nbEleves:0,
+    note:4.5, avGrad: avGrads[3]
+  },
+  {
+    id:'ENS004', prenom:'Pierre', nom:'Ateba', initiales:'PA',
+    grade:'Professeur certifié', anciennete:11,
+    sections:['en','bi'], specialites:['Mathématiques','Sciences','Anglais'],
+    tags:['tag-en','tag-bi','tag-math','tag-sci'],
+    tagLabels:['🇬🇧 Anglophone','🌐 Bilingue','🔢 Maths','🔬 Sciences'],
+    dispo:'occupe', classeActuelle:'CE2/EN', nbClasses:1, nbEleves:35,
+    note:4.9, avGrad: avGrads[1]
+  },
+  {
+    id:'ENS005', prenom:'Rose', nom:'Bella', initiales:'RB',
+    grade:'Institutrice', anciennete:3,
+    sections:['fr'], specialites:['Français','Histoire-Géo'],
+    tags:['tag-fr','tag-lit','tag-hist'],
+    tagLabels:['🇫🇷 Francophone','📖 Français','🌍 Hist-Géo'],
+    dispo:'libre', classeActuelle:null, nbClasses:0, nbEleves:0,
+    note:4.2, avGrad: avGrads[4]
+  },
+  {
+    id:'ENS006', prenom:'André', nom:'Kotto', initiales:'AK',
+    grade:'Professeur certifié', anciennete:7,
+    sections:['bi','en'], specialites:['Mathématiques','Anglais','Sciences'],
+    tags:['tag-bi','tag-en','tag-math'],
+    tagLabels:['🌐 Bilingue','🇬🇧 Anglophone','🔢 Maths'],
+    dispo:'libre', classeActuelle:null, nbClasses:0, nbEleves:0,
+    note:4.7, avGrad: avGrads[8]
+  },
+  {
+    id:'ENS007', prenom:'Hélène', nom:'Mongo', initiales:'HM',
+    grade:'Institutrice', anciennete:5,
+    sections:['fr','bi'], specialites:['Français','Anglais','Éducation civique'],
+    tags:['tag-fr','tag-bi','tag-lit'],
+    tagLabels:['🇫🇷 Francophone','🌐 Bilingue','📖 Français/Anglais'],
+    dispo:'occupe', classeActuelle:'CP/BI', nbClasses:1, nbEleves:30,
+    note:4.4, avGrad: avGrads[9]
+  },
+  {
+    id:'ENS008', prenom:'Luc', nom:'Soppo', initiales:'LS',
+    grade:'Professeur certifié', anciennete:13,
+    sections:['en'], specialites:['Mathématiques','Sciences','Sport'],
+    tags:['tag-en','tag-math','tag-sci','tag-sport'],
+    tagLabels:['🇬🇧 Anglophone','🔢 Maths','🔬 Sciences','⚽ Sport'],
+    dispo:'occupe', classeActuelle:'CM2/EN', nbClasses:1, nbEleves:39,
+    note:4.8, avGrad: avGrads[5]
+  },
+  {
+    id:'ENS009', prenom:'Anne', nom:'Nganou', initiales:'AN',
+    grade:'Institutrice', anciennete:2,
+    sections:['fr'], specialites:['Français','Histoire-Géo','Éducation civique'],
+    tags:['tag-fr','tag-lit','tag-hist'],
+    tagLabels:['🇫🇷 Francophone','📖 Français','🌍 Hist-Géo'],
+    dispo:'libre', classeActuelle:null, nbClasses:0, nbEleves:0,
+    note:4.1, avGrad: avGrads[6]
+  },
+  {
+    id:'ENS010', prenom:'Paul', nom:'Tagne', initiales:'PT',
+    grade:'Professeur certifié', anciennete:8,
+    sections:['bi','fr','en'], specialites:['Mathématiques','Sciences','Anglais'],
+    tags:['tag-bi','tag-fr','tag-en','tag-math'],
+    tagLabels:['🌐 Bilingue','🇫🇷 Fr','🇬🇧 En','🔢 Maths'],
+    dispo:'libre', classeActuelle:null, nbClasses:0, nbEleves:0,
+    note:4.9, avGrad: avGrads[10]
+  },
+  {
+    id:'ENS011', prenom:'Marc', nom:'Feudjio', initiales:'MF',
+    grade:'Professeur certifié', anciennete:10,
+    sections:['bi','en'], specialites:['Mathématiques','Sciences','Anglais'],
+    tags:['tag-bi','tag-en','tag-math','tag-sci'],
+    tagLabels:['🌐 Bilingue','🇬🇧 Anglophone','🔢 Maths','🔬 Sciences'],
+    dispo:'occupe', classeActuelle:'CM1/BI', nbClasses:1, nbEleves:33,
+    note:4.7, avGrad: avGrads[11]
+  },
+  {
+    id:'ENS012', prenom:'Sara', nom:'Ndoumbe', initiales:'SN',
+    grade:'Institutrice', anciennete:1,
+    sections:['fr','bi'], specialites:['Français','Anglais'],
+    tags:['tag-fr','tag-bi','tag-lit'],
+    tagLabels:['🇫🇷 Fr','🌐 Bilingue','📖 Français/Anglais'],
+    dispo:'libre', classeActuelle:null, nbClasses:0, nbEleves:0,
+    note:3.9, avGrad: avGrads[7]
+  },
+];
+
+let activeFilter = 'all';
+let selectedId = null;
+
+function setFilter(f, el){
+  activeFilter = f;
+  document.querySelectorAll('.filt-btn').forEach(b=>b.classList.toggle('active', b.dataset.f===f));
+  render();
+}
+
+function getFiltered(){
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  return enseignants.filter(e=>{
+    const qOk = !q || (e.prenom+' '+e.nom).toLowerCase().includes(q)
+                   || e.specialites.some(s=>s.toLowerCase().includes(q));
+    let fOk = true;
+    if(activeFilter==='libre')  fOk = e.dispo==='libre';
+    if(activeFilter==='occupe') fOk = e.dispo==='occupe';
+    if(activeFilter==='bi')     fOk = e.sections.includes('bi');
+    return qOk && fOk;
+  });
+}
+
+function render(){
+  // Counters
+  document.getElementById('cntAll').textContent   = enseignants.length;
+  document.getElementById('cntLibre').textContent = enseignants.filter(e=>e.dispo==='libre').length;
+  document.getElementById('cntOcc').textContent   = enseignants.filter(e=>e.dispo==='occupe').length;
+  document.getElementById('cntBi').textContent    = enseignants.filter(e=>e.sections.includes('bi')).length;
+
+  const filtered = getFiltered();
+  document.getElementById('resultCount').textContent = filtered.length + ' enseignant(s)';
+
+  const grid = document.getElementById('ensGrid');
+  if(filtered.length===0){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1;"><div class="ei">🔍</div><p>Aucun enseignant ne correspond à votre recherche.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(e=>{
+    const isCurrent  = e.dispo==='current';
+    const isOccupe   = e.dispo==='occupe';
+    const isSelected = selectedId===e.id;
+
+    let cardCls = 'ens-card';
+    if(isCurrent)  cardCls += ' current-ens';
+    else if(isOccupe) cardCls += ' occupied';
+    if(isSelected) cardCls += ' selected';
+
+    const click = isCurrent ? '' : `onclick="selectEns('${e.id}')"`;
+
+    const dispoBadge = isCurrent
+      ? `<span class="dispo-badge db-current"><span class="db-dot"></span>Titulaire actuel</span>`
+      : isOccupe
+        ? `<span class="dispo-badge db-occupe"><span class="db-dot"></span>Affecté — ${e.classeActuelle}</span>`
+        : `<span class="dispo-badge db-libre"><span class="db-dot"></span>Disponible</span>`;
+
+    const selInd = isCurrent
+      ? `<div class="sel-indicator">✓</div>`
+      : `<div class="sel-indicator">${isSelected?'✓':''}</div>`;
+
+    const stars = '★'.repeat(Math.floor(e.note)) + (e.note%1>=.5?'½':'') ;
+
+    return `
+    <div class="${cardCls}" ${click}>
+      ${isOccupe && !isCurrent ? `<div class="occ-overlay">Déjà affecté</div>` : ''}
+      <div class="ec-top">
+        <div class="ec-av" style="background:${e.avGrad};">${e.initiales}</div>
+        <div>
+          <div class="ec-name">${e.prenom} ${e.nom}</div>
+          <div class="ec-grade">${e.grade} · ${e.anciennete} an${e.anciennete>1?'s':''}</div>
+        </div>
+      </div>
+      <div class="ec-tags">
+        ${e.tagLabels.slice(0,3).map((l,i)=>`<span class="ec-tag ${e.tags[i]||'tag-fr'}">${l}</span>`).join('')}
+      </div>
+      <div class="ec-stats">
+        <div class="ec-stat"><div class="ec-stat-val">${e.nbClasses}</div><div class="ec-stat-lbl">Classe(s)</div></div>
+        <div class="ec-stat"><div class="ec-stat-val">${e.nbEleves||'—'}</div><div class="ec-stat-lbl">Élèves</div></div>
+        <div class="ec-stat"><div class="ec-stat-val" style="font-size:11px;color:var(--avertissement);">${e.note}★</div><div class="ec-stat-lbl">Évaluation</div></div>
+      </div>
+      <div class="ec-footer">
+        ${dispoBadge}
+        ${selInd}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selectEns(id){
+  if(id === selectedId){ selectedId=null; }
+  else { selectedId = id; }
+  render();
+  updateRecap();
+}
+
+function updateRecap(){
+  const e = enseignants.find(x=>x.id===selectedId);
+  const btn = document.getElementById('btnConfirm');
+  const warn = document.getElementById('warnBox');
+  const ensClassesBlock = document.getElementById('ensClassesBlock');
+
+  if(!e){
+    document.getElementById('newEnsRow').innerHTML = `<div class="empty-trans" style="flex:1;">Aucun enseignant sélectionné</div>`;
+    btn.disabled = true;
+    btn.innerHTML = '👨‍🏫 Confirmer l\'affectation';
+    warn.classList.remove('visible');
+    ensClassesBlock.style.display = 'none';
+    return;
+  }
+
+  // Row nouvel enseignant
+  document.getElementById('newEnsRow').innerHTML = `
+    <div class="trans-ens trans-new" style="flex:1;">
+      <div class="te-av" style="background:${e.avGrad};">${e.initiales}</div>
+      <div><div class="te-name">${e.prenom} ${e.nom}</div><div class="te-role">Nouvel enseignant</div></div>
+    </div>`;
+
+  // Warning si occupé
+  if(e.dispo==='occupe'){
+    warn.classList.add('visible');
+    document.getElementById('warnText').textContent =
+      `${e.prenom} ${e.nom} est actuellement titulaire de la classe ${e.classeActuelle} (${e.nbEleves} élèves). L'affecter ici le retirera de cette classe. Cette action est irréversible sans nouvelle affectation manuelle.`;
+  } else {
+    warn.classList.remove('visible');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `👨‍🏫 Affecter ${e.prenom} ${e.nom}`;
+
+  // Classes actuelles
+  if(e.nbClasses > 0){
+    ensClassesBlock.style.display = 'block';
+    document.getElementById('ensClassesBody').innerHTML = `
+      <tr>
+        <td style="font-weight:700;">${e.classeActuelle}</td>
+        <td>${e.sections.includes('bi')?'🌐 Bilingue':e.sections.includes('en')?'🇬🇧 Anglophone':'🇫🇷 Francophone'}</td>
+        <td>${e.nbEleves}</td>
+      </tr>`;
+  } else {
+    ensClassesBlock.style.display = 'none';
+  }
+}
+
+function confirmer(){
+  const e = enseignants.find(x=>x.id===selectedId);
+  if(!e) return;
+  const btn = document.getElementById('btnConfirm');
+  btn.disabled=true;
+  btn.textContent='⏳ Affectation en cours…';
+  setTimeout(()=>{
+    // Mettre à jour l'état
+    const ancien = enseignants.find(x=>x.dispo==='current');
+    if(ancien){ ancien.dispo='libre'; ancien.classeActuelle=null; ancien.nbClasses=0; ancien.nbEleves=0; }
+    if(e.dispo==='occupe'){ /* libérer ancienne classe si nécessaire */ }
+    e.dispo='current'; e.classeActuelle='CM2/BI'; e.nbClasses=1; e.nbEleves=38;
+
+    // Mettre à jour l'affichage de la barre cible
+    document.querySelector('.tc-name').textContent = e.prenom+' '+e.nom;
+
+    btn.innerHTML='✅ Enseignant affecté !';
+    btn.style.background='linear-gradient(135deg,var(--succes),#34D399)';
+    btn.disabled=false;
+    selectedId=null;
+    showToast(`✅ ${e.prenom} ${e.nom} a été affecté(e) à la classe CM2 Bilingue.`);
+    render();
+    updateRecap();
+  }, 1300);
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+render();
+</script>
+</body>
+</html>
