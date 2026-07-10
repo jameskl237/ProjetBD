@@ -34,9 +34,7 @@ const parentSchema = z.object({
   sexe: z.number().int().optional(),
 });
 
-const eleveCreateBodySchema = insertEleveSchema.omit({ idVilleNaissance: true }).extend({
-  villeNaissance: z.string().trim().min(1, "Ville de naissance requise"),
-});
+const villeNaissanceInputSchema = z.string().trim().min(1, "Ville de naissance requise");
 
 const inscriptionSchema = z.object({
   idSalle: z.coerce.number().int(),
@@ -193,9 +191,17 @@ router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.ENSEIG
 
 router.post("/", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
-    const { parent, inscription, ...eleveBody } = req.body;
+    const { parent, inscription, villeNaissance, ...eleveBody } = req.body;
 
-    const eleveParsed = eleveCreateBodySchema.safeParse(eleveBody);
+    const villeParsed = villeNaissanceInputSchema.safeParse(villeNaissance);
+    if (!villeParsed.success) {
+      res.status(400).json({ error: "Ville de naissance requise", details: villeParsed.error.flatten() });
+      return;
+    }
+
+    // idVilleNaissance is resolved from villeParsed.data inside the transaction; the placeholder
+    // here only satisfies insertEleveSchema's required field so the rest of the body can be validated.
+    const eleveParsed = insertEleveSchema.safeParse({ ...eleveBody, idVilleNaissance: 0 });
     if (!eleveParsed.success) {
       res.status(400).json({ error: "Données élève invalides", details: eleveParsed.error.flatten() });
       return;
@@ -219,8 +225,8 @@ router.post("/", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
 
     const now = new Date();
     const eleve = await db.transaction(async (tx) => {
-      const { villeNaissance, ...eleveRest } = eleveParsed.data;
-      const idVilleNaissance = await resolveVilleNaissance(tx, villeNaissance);
+      const { idVilleNaissance: _placeholder, ...eleveRest } = eleveParsed.data;
+      const idVilleNaissance = await resolveVilleNaissance(tx, villeParsed.data);
 
       const [eleveResult] = await tx.insert(eleveTable).values({ ...eleveRest, idVilleNaissance, idAdmin: req.user!.id, created_at: now });
       const matricule = eleveResult.insertId;
