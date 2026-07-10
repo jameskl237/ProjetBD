@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { eleveApi, modePaiementApi, paiementApi, trancheApi, anneeAcademiqueApi, extractList } from '../../api'
+import { eleveApi, modePaiementApi, paiementApi, anneeAcademiqueApi, api, extractList } from '../../api'
 import Module36Layout from './Module36Layout'
 
 const INITIAL_FORM = {
   matricule: '',
   idAca: '',
-  trancheLibelle: '',
   montant: '',
   date: new Date().toISOString().slice(0, 10),
   reference: '',
@@ -18,30 +17,32 @@ export default function Create() {
   const [form, setForm] = useState(INITIAL_FORM)
   const [eleves, setEleves] = useState([])
   const [annees, setAnnees] = useState([])
-  const [tranches, setTranches] = useState([])
   const [modes, setModes] = useState([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [feedback, setFeedback] = useState({ type: '', message: '' })
 
+  const [tranches, setTranches] = useState([])
+  const [selectedTrancheId, setSelectedTrancheId] = useState('')
+  const [trancheLoading, setTrancheLoading] = useState(false)
+  const [trancheError, setTrancheError] = useState('')
+
   const selectedMode = modes.find(item => String(item.idMode) === String(form.idMode))
   const selectedEleve = eleves.find(e => String(e.matricule) === String(form.matricule))
+  const selectedTranche = tranches.find(t => String(t.idTranche) === String(selectedTrancheId))
   const total = form.montant ? `${Number(form.montant).toLocaleString('fr-FR')} FCFA` : '0 FCFA'
 
   useEffect(() => {
     async function loadOptions() {
       try {
-        const [elevesResponse, tranchesResponse, modesResponse, anneesResponse] = await Promise.all([
+        const [elevesResponse, modesResponse, anneesResponse] = await Promise.all([
           eleveApi.list(),
-          trancheApi.list(),
           modePaiementApi.list(),
           anneeAcademiqueApi.list(),
         ])
         const eleveData = extractList(elevesResponse)
-        const trancheData = extractList(tranchesResponse)
         const modeData = extractList(modesResponse)
         const anneeData = extractList(anneesResponse)
         setEleves(eleveData)
-        setTranches(trancheData)
         setModes(modeData)
         setAnnees(anneeData)
         const latestAnnee = anneeData.reduce((best, current) => (!best || current.idAnnee > best.idAnnee ? current : best), null)
@@ -58,15 +59,44 @@ export default function Create() {
     loadOptions()
   }, [])
 
+  useEffect(() => {
+    setTranches([])
+    setSelectedTrancheId('')
+    setTrancheError('')
+    if (!form.matricule || !form.idAca) return
+    let cancelled = false
+    async function loadTranches() {
+      setTrancheLoading(true)
+      try {
+        const response = await api.get(`/paiements/statut/${form.matricule}`, { params: { idAca: form.idAca } })
+        if (cancelled) return
+        const list = response?.data?.tranches ?? []
+        setTranches(list)
+      } catch (error) {
+        if (cancelled) return
+        setTrancheError(error?.response?.data?.error || 'Aucune pension configurée pour la classe de cet élève.')
+      } finally {
+        if (!cancelled) setTrancheLoading(false)
+      }
+    }
+    loadTranches()
+    return () => { cancelled = true }
+  }, [form.matricule, form.idAca])
+
   function updateField(field, value) {
     setForm(previous => ({ ...previous, [field]: value }))
   }
 
+  function selectTranche(tranche) {
+    setSelectedTrancheId(tranche.idTranche)
+    setForm(previous => ({ ...previous, montant: String(tranche.montantRestant) }))
+  }
+
   async function handleSubmit() {
-    if (!form.matricule || !form.idAca || !form.idMode || !form.montant || !form.date) {
+    if (!form.matricule || !form.idAca || !form.idMode || !form.montant || !form.date || !selectedTrancheId) {
       setFeedback({
         type: 'warning',
-        message: 'Veuillez remplir tous les champs obligatoires.',
+        message: 'Veuillez sélectionner un élève, une tranche et remplir tous les champs obligatoires.',
       })
       return
     }
@@ -82,7 +112,7 @@ export default function Create() {
         idMode: Number(form.idMode),
         datePaie: form.date,
         operation_ID: form.reference || '',
-        comentaire: form.trancheLibelle || '',
+        idTranche: Number(selectedTrancheId),
       }
 
       await paiementApi.create(payload)
@@ -149,6 +179,7 @@ export default function Create() {
                 type="number"
                 className="module36-input"
                 value={form.montant}
+                max={selectedTranche?.montantRestant}
                 onChange={event => updateField('montant', event.target.value)}
               />
             </div>
@@ -196,14 +227,32 @@ export default function Create() {
           </div>
 
           <div className="module36-form-group">
-            <label className="module36-label" htmlFor="tranche">Description / Tranche</label>
-            <div className="module36-select-wrap">
-              <select id="tranche" className="module36-select" value={form.trancheLibelle} onChange={event => updateField('trancheLibelle', event.target.value)}>
-                <option value="">Aucune</option>
-                {tranches.map(tranche => <option key={tranche.idTranche} value={tranche.libelle}>{tranche.libelle}</option>)}
-              </select>
-              <span className="module36-select-arrow">▾</span>
-            </div>
+            <span className="module36-label">Tranche à payer (1/3 de la pension par trimestre)</span>
+            {!form.matricule || !form.idAca ? (
+              <p style={{ fontSize: 13, color: '#6b7280' }}>Sélectionnez un élève et une année pour voir ses tranches.</p>
+            ) : trancheLoading ? (
+              <p style={{ fontSize: 13, color: '#6b7280' }}>Chargement des tranches…</p>
+            ) : trancheError ? (
+              <p style={{ fontSize: 13, color: '#b91c1c' }}>{trancheError}</p>
+            ) : (
+              <div className="module36-mode-grid">
+                {tranches.map(tranche => (
+                  <button
+                    key={tranche.idTranche}
+                    type="button"
+                    disabled={tranche.montantRestant <= 0}
+                    className={`module36-mode-btn${String(selectedTrancheId) === String(tranche.idTranche) ? ' active' : ''}`}
+                    onClick={() => selectTranche(tranche)}
+                    style={{ opacity: tranche.montantRestant <= 0 ? 0.55 : 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}
+                  >
+                    <span>{tranche.libelle}</span>
+                    <span style={{ fontSize: 12, fontWeight: 400 }}>
+                      {tranche.statut === 'payé' ? '✅ Payé' : `${tranche.montantRestant.toLocaleString('fr-FR')} FCFA restant / ${tranche.montant.toLocaleString('fr-FR')} FCFA`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -213,7 +262,7 @@ export default function Create() {
           <div className="module36-summary-rows">
             {[
               { label: 'Élève', value: selectedEleve ? `${selectedEleve.prenom} ${selectedEleve.nom}` : '—' },
-              { label: 'Description', value: form.trancheLibelle || '—' },
+              { label: 'Tranche', value: selectedTranche?.libelle || '—' },
               { label: 'Mode', value: selectedMode?.libelle || '—' },
             ].map(row => (
               <div key={row.label} className="module36-summary-row">

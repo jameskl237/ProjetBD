@@ -9,7 +9,7 @@ import { validate } from "../middlewares/validate.ts";
 const router = Router();
 router.use(authenticate);
 
-router.get("/trimestres", authorize(ROLES.ADMINISTRATEUR), async (_req, res) => {
+router.get("/trimestres", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
   try {
     const trimestres = await db.select().from(trimestreTable);
     res.json(trimestres);

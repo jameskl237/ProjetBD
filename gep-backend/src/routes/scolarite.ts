@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { scolariteTable, insertScolariteSchema, tranchesTable, insertTranchesSchema, cycleTable } from "@workspace/db/schema";
+import { scolariteTable, insertScolariteSchema, tranchesTable, cycleTable, classeTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { authenticate } from "../middlewares/auth.ts";
-import { authorize, ROLES } from "../middlewares/rbac.ts";
+import { authorize, ROLES, requireDirecteur } from "../middlewares/rbac.ts";
 import { validate } from "../middlewares/validate.ts";
+import { ensureTranchesForClasse } from "../lib/tranches.ts";
 
 const router = Router();
 router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE));
@@ -39,31 +40,35 @@ router.delete("/cycles/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) =
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/tranches", async (_req, res) => {
+/** Vue "pension par classe" pour l'écran directeur : chaque classe + sa pension si déjà fixée. */
+router.get("/classes", async (_req, res) => {
   try {
-    const tranches = await db.select().from(tranchesTable);
-    res.json(tranches);
+    const rows = await db
+      .select({ classe: classeTable, cycle: cycleTable, scolarite: scolariteTable })
+      .from(classeTable)
+      .leftJoin(cycleTable, eq(classeTable.idCycle, cycleTable.idCycle))
+      .leftJoin(scolariteTable, eq(scolariteTable.idClasse, classeTable.idClasse))
+      .where(eq(classeTable.isDelete, 0));
+    res.json(rows.map(({ classe, cycle, scolarite }) => ({ ...classe, cycle, scolarite })));
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.post("/tranches", authorize(ROLES.COMPTABLE), validate(insertTranchesSchema), async (req, res) => {
+/**
+ * Génère (si besoin) et renvoie les 3 tranches (1/3 pension chacune) d'une classe
+ * pour une année académique donnée. Idempotent — appelé par le poste comptable
+ * quand il sélectionne un élève + une année pour enregistrer un paiement.
+ */
+router.get("/tranches", async (req, res) => {
   try {
-    await db.insert(tranchesTable).values({ ...req.body, idFondateur: req.user!.id });
-    res.status(201).json({ message: "Tranche créée" });
-  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
-});
-
-router.put("/tranches/:id", authorize(ROLES.COMPTABLE), async (req, res) => {
-  try {
-    await db.update(tranchesTable).set(req.body).where(eq(tranchesTable.idTranche, Number(req.params.id)));
-    res.json({ message: "Tranche mise à jour" });
-  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
-});
-
-router.delete("/tranches/:id", authorize(ROLES.COMPTABLE), async (req, res) => {
-  try {
-    await db.delete(tranchesTable).where(eq(tranchesTable.idTranche, Number(req.params.id)));
-    res.json({ message: "Tranche supprimée" });
+    const { idClasse, idAca } = req.query as Record<string, string>;
+    if (!idClasse || !idAca) {
+      const tranches = await db.select().from(tranchesTable);
+      res.json(tranches);
+      return;
+    }
+    const result = await ensureTranchesForClasse(Number(idClasse), Number(idAca));
+    if (!result) { res.status(404).json({ error: "Aucune pension configurée pour cette classe" }); return; }
+    res.json(result.tranches);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
@@ -82,14 +87,17 @@ router.get("/:id", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.post("/", authorize(ROLES.COMPTABLE), validate(insertScolariteSchema), async (req, res) => {
+// Fixer la pension d'une classe est réservé au directeur (RG spec).
+router.post("/", requireDirecteur, validate(insertScolariteSchema), async (req, res) => {
   try {
+    const [existing] = await db.select().from(scolariteTable).where(eq(scolariteTable.idClasse, req.body.idClasse)).limit(1);
+    if (existing) { res.status(409).json({ error: "Cette classe a déjà une pension configurée — modifiez-la plutôt" }); return; }
     await db.insert(scolariteTable).values({ ...req.body, idFondateur: req.user!.id, created_at: new Date() });
-    res.status(201).json({ message: "Scolarité créée" });
+    res.status(201).json({ message: "Pension enregistrée" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.put("/:id", authorize(ROLES.COMPTABLE), async (req, res) => {
+router.put("/:id", requireDirecteur, async (req, res) => {
   try {
     await db.update(scolariteTable).set(req.body).where(eq(scolariteTable.idScolarite, Number(req.params.id)));
     const [s] = await db.select().from(scolariteTable).where(eq(scolariteTable.idScolarite, Number(req.params.id))).limit(1);
@@ -98,10 +106,10 @@ router.put("/:id", authorize(ROLES.COMPTABLE), async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.delete("/:id", authorize(ROLES.COMPTABLE), async (req, res) => {
+router.delete("/:id", requireDirecteur, async (req, res) => {
   try {
-    await db.update(scolariteTable).set({ isDelete: 1 }).where(eq(scolariteTable.idScolarite, Number(req.params.id)));
-    res.json({ message: "Scolarité supprimée" });
+    await db.delete(scolariteTable).where(eq(scolariteTable.idScolarite, Number(req.params.id)));
+    res.json({ message: "Pension supprimée" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 

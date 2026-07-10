@@ -62,11 +62,12 @@ async function seed() {
     } catch (_) {}
   }
 
-  console.log("📚 Cycles et Classes...");
+  console.log("📚 Filières (Cycle) et Classes...");
+  // "Cycle" porte la filière linguistique de la classe (Anglophone/Francophone/Bilingue).
   const cycleData = [
-    { libelle: "Primaire", description: "Cycle primaire (1ère à 5ème)", idAdmin: adminId, created: now },
-    { libelle: "Moyen", description: "Cycle moyen (6ème à 9ème)", idAdmin: adminId, created: now },
-    { libelle: "Secondaire", description: "Cycle secondaire", idAdmin: adminId, created: now },
+    { libelle: "Anglophone", description: "Filière anglophone", idAdmin: adminId, created: now },
+    { libelle: "Francophone", description: "Filière francophone", idAdmin: adminId, created: now },
+    { libelle: "Bilingue", description: "Filière bilingue", idAdmin: adminId, created: now },
   ];
   for (const c of cycleData) {
     try {
@@ -76,13 +77,14 @@ async function seed() {
   }
 
   const cycles = await db.select().from(cycleTable).limit(3);
-  const cycleId = cycles[0]?.idCycle ?? 1;
-  const moyenId = cycles[1]?.idCycle ?? 2;
+  const anglophoneId = cycles[0]?.idCycle ?? 1;
+  const francophoneId = cycles[1]?.idCycle ?? 2;
+  const bilingueId = cycles[2]?.idCycle ?? 3;
 
   const classeData = [
-    { libelle: "1ère Année A", idCycle: cycleId, idAdmin: adminId, created_at: now },
-    { libelle: "2ème Année B", idCycle: cycleId, idAdmin: adminId, created_at: now },
-    { libelle: "6ème Moyen A", idCycle: moyenId, idAdmin: adminId, created_at: now },
+    { libelle: "1ère Année A", idCycle: anglophoneId, idAdmin: adminId, created_at: now },
+    { libelle: "2ème Année B", idCycle: francophoneId, idAdmin: adminId, created_at: now },
+    { libelle: "6ème Moyen A", idCycle: bilingueId, idAdmin: adminId, created_at: now },
   ];
   for (const c of classeData) {
     try {
@@ -91,7 +93,7 @@ async function seed() {
     } catch (_) {}
   }
 
-  const classes = await db.select().from(classeTable).limit(1);
+  const classes = await db.select().from(classeTable).limit(3);
   const classeId = classes[0]?.idClasse ?? 1;
 
   console.log("🏫 Salles...");
@@ -157,13 +159,18 @@ async function seed() {
     } catch (_) {}
   }
 
-  const scolariteData = [
-    { inscription: 5000, pension: 30000, nbreTranche: 3, description: "Scolarité Primaire 2024-2025", idCycle: cycleId, idFondateur: adminId, created_at: now },
-    { inscription: 6000, pension: 36000, nbreTranche: 3, description: "Scolarité Moyen 2024-2025", idCycle: moyenId, idFondateur: adminId, created_at: now },
-  ];
+  // Pension fixée par classe (déjà rattachée à sa filière via idCycle) — réservé au directeur.
+  const scolariteData = classes.map((c, i) => ({
+    inscription: 5000 + i * 1000,
+    pension: 30000 + i * 6000,
+    description: `Scolarité ${c.libelle}`,
+    idClasse: c.idClasse,
+    idFondateur: adminId,
+    created_at: now,
+  }));
   for (const s of scolariteData) {
     try {
-      const [ex] = await db.select().from(scolariteTable).where(eq(scolariteTable.description, s.description)).limit(1);
+      const [ex] = await db.select().from(scolariteTable).where(eq(scolariteTable.idClasse, s.idClasse)).limit(1);
       if (!ex) await db.insert(scolariteTable).values(s);
     } catch (_) {}
   }

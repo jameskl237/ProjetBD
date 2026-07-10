@@ -1,22 +1,26 @@
-import { mysqlTable, int, float, smallint, varchar, datetime } from "drizzle-orm/mysql-core";
+import { mysqlTable, int, float, varchar, datetime, unique } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
-import { cycleTable } from "./cycle.ts";
+import { classeTable } from "./classe.ts";
 import { z } from "zod/v4";
 
+/**
+ * Pension par classe : la classe porte déjà son cycle (filière), donc une ligne
+ * Scolarite par idClasse couvre "dépend de la classe et du cycle". Toujours
+ * scindée en 3 tranches (1 par trimestre) — voir Tranches.
+ */
 export const scolariteTable = mysqlTable("Scolarite", {
   idScolarite: int("idScolarite").autoincrement().primaryKey(),
   inscription: float("inscription").notNull(),
   pension: float("pension").notNull(),
-  nbreTranche: smallint("nbreTranche").notNull(),
   description: varchar("description", { length: 255 }).notNull().default(""),
-  idCycle: int("idCycle").notNull(),
+  idClasse: int("idClasse").notNull(),
   idFondateur: int("idFondateur").notNull(),
   created_at: datetime("created_at"),
-});
+}, (table) => [unique("scolarite_classe_unique").on(table.idClasse)]);
 
 export const scolariteRelations = relations(scolariteTable, ({ one }) => ({
-  cycle: one(cycleTable, { fields: [scolariteTable.idCycle], references: [cycleTable.idCycle] }),
+  classe: one(classeTable, { fields: [scolariteTable.idClasse], references: [classeTable.idClasse] }),
 }));
 
 export const insertScolariteSchema = createInsertSchema(scolariteTable).omit({ idScolarite: true, created_at: true, idFondateur: true });

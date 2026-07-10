@@ -1,14 +1,28 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { paiementTable, modeTable, eleveTable, anneeAcademiqueTable, frequenteTable, salleTable, classeTable, scolariteTable, tranchesTable } from "@workspace/db/schema";
-import { eq, inArray, desc, type SQL } from "drizzle-orm";
+import { eq, and, inArray, desc, type SQL } from "drizzle-orm";
 import PDFDocument from "pdfkit";
 import { authenticate } from "../middlewares/auth.ts";
 import { authorize, ROLES, getRole } from "../middlewares/rbac.ts";
 import { getParentMatricules, requireEleveScope } from "../middlewares/scope.ts";
+import { getTrancheStatutForEleve } from "../lib/tranches.ts";
 
 const router = Router();
 router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT));
+
+/** Classe actuellement fréquentée par l'élève pour une année donnée (dernière inscription connue sinon). */
+async function getEleveClasseId(matricule: number, idAca: number): Promise<number | null> {
+  const rows = await db
+    .select({ idClasse: classeTable.idClasse, idAcademi: frequenteTable.idAcademi })
+    .from(frequenteTable)
+    .innerJoin(salleTable, eq(frequenteTable.idSalle, salleTable.idSalle))
+    .innerJoin(classeTable, eq(salleTable.idClasse, classeTable.idClasse))
+    .where(eq(frequenteTable.matricule, matricule))
+    .orderBy(desc(frequenteTable.idFrequente));
+  if (rows.length === 0) return null;
+  return (rows.find((r) => r.idAcademi === idAca) ?? rows[0])!.idClasse;
+}
 
 async function paiementsWithRelations(where?: SQL) {
   const query = db
@@ -228,6 +242,20 @@ router.get("/impayes", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
+/** Les 3 tranches (montant dû / payé / restant) de l'élève pour l'année donnée. Génère les tranches si besoin. */
+router.get("/statut/:matricule", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT), requireEleveScope("matricule"), async (req, res) => {
+  try {
+    const matricule = Number(req.params.matricule);
+    const idAca = Number(req.query.idAca);
+    if (!idAca) { res.status(400).json({ error: "idAca requis" }); return; }
+    const idClasse = await getEleveClasseId(matricule, idAca);
+    if (!idClasse) { res.status(404).json({ error: "Aucune inscription trouvée pour cet élève" }); return; }
+    const statut = await getTrancheStatutForEleve(matricule, idClasse, idAca);
+    if (!statut) { res.status(404).json({ error: "Aucune pension configurée pour la classe de cet élève" }); return; }
+    res.json({ idClasse, tranches: statut });
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
 router.get("/eleve/:matricule", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT), requireEleveScope("matricule"), async (req, res) => {
   try {
     const paiements = await paiementsWithRelations(eq(paiementTable.matricule, Number(req.params.matricule)));
@@ -253,14 +281,26 @@ router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (req,
 
 router.post("/", authorize(ROLES.COMPTABLE), async (req, res) => {
   try {
-    const { matricule, idAca, montant, idMode, datePaie } = req.body;
-    if (!matricule || !idAca || !montant || !idMode || !datePaie) {
-      res.status(400).json({ error: "Champs requis: matricule, idAca, montant, idMode, datePaie" }); return;
+    const { matricule, idAca, montant, idMode, datePaie, idTranche } = req.body;
+    if (!matricule || !idAca || !montant || !idMode || !datePaie || !idTranche) {
+      res.status(400).json({ error: "Champs requis: matricule, idAca, montant, idMode, datePaie, idTranche" }); return;
+    }
+    const [tranche] = await db.select().from(tranchesTable).where(eq(tranchesTable.idTranche, Number(idTranche))).limit(1);
+    if (!tranche) { res.status(404).json({ error: "Tranche introuvable" }); return; }
+    const dejaPayes = await db
+      .select()
+      .from(paiementTable)
+      .where(and(eq(paiementTable.matricule, Number(matricule)), eq(paiementTable.idTranche, Number(idTranche))));
+    const dejaPaye = dejaPayes.reduce((s, p) => s + Number(p.montant), 0);
+    const restant = Math.round((tranche.montant - dejaPaye) * 100) / 100;
+    if (Number(montant) > restant) {
+      res.status(400).json({ error: `Montant supérieur au solde restant de la tranche (${restant} FCFA)` }); return;
     }
     await db.insert(paiementTable).values({
       matricule, idAca, montant, idMode, datePaie,
+      idTranche: Number(idTranche),
       url: req.body.url ?? "",
-      comentaire: req.body.comentaire ?? "",
+      comentaire: req.body.comentaire ?? tranche.libelle,
       operation_ID: req.body.operation_ID ?? "",
       idPers: req.user!.id,
       dateEnregistrer: new Date(),
