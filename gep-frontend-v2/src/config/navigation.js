@@ -52,6 +52,7 @@ export const NAV_ITEMS = [
   { to: '/dashboard', icon: '⊞', label: 'Tableau de bord', roles: [ROLES.ADMINISTRATEUR] },
   { to: '/paiements', icon: '⊞', label: 'Tableau de bord', roles: [ROLES.COMPTABLE] },
   { to: '/enseignant', icon: '⊞', label: 'Tableau de bord', roles: [ROLES.ENSEIGNANT] },
+  { to: '/enseignant/cours', icon: '📖', label: 'Mes cours', roles: [ROLES.ENSEIGNANT] },
   { to: '/parent', icon: '⊞', label: 'Tableau de bord', roles: [ROLES.PARENT] },
 
   { to: '/eleves', icon: '👦', label: 'Élèves', roles: [ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.ENSEIGNANT] },

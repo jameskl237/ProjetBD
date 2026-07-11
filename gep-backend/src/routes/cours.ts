@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { coursTable, insertCoursSchema, enseignantTable, insertEnseignantSchema, emploiDuTempsTable, insertEmploiDuTempsSchema, titulaireTable, insertTitulaireSchema, personneTable, classeTable } from "@workspace/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { coursTable, insertCoursSchema, enseignantTable, insertEnseignantSchema, emploiDuTempsTable, insertEmploiDuTempsSchema, titulaireTable, insertTitulaireSchema, personneTable, classeTable, cycleTable, frequenteTable, salleTable, anneeAcademiqueTable, evaluationTable, eleveTable, messagesTable } from "@workspace/db/schema";
+import { eq, and, inArray, sql, desc } from "drizzle-orm";
 import { authenticate } from "../middlewares/auth.ts";
 import { authorize, ROLES, getRole } from "../middlewares/rbac.ts";
 import { getEnseignantCoursIds, getParentClasseIds } from "../middlewares/scope.ts";
@@ -77,6 +77,228 @@ router.delete("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR), async (req, r
   try {
     await db.update(enseignantTable).set({ isDelete: 1 }).where(eq(enseignantTable.idEnseignant, Number(req.params.id)));
     res.json({ message: "Enseignant retiré" });
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.get("/enseignant/dashboard", authorize(ROLES.ENSEIGNANT), async (req, res) => {
+  try {
+    const idPers = req.user!.id;
+
+    const [profile] = await db
+      .select({
+        idPers: personneTable.idPers,
+        nom: personneTable.nom,
+        prenom: personneTable.prenom,
+        login: personneTable.login,
+        email: personneTable.email,
+        mobile: personneTable.mobile,
+        phone: personneTable.phone,
+        sexe: personneTable.sexe,
+        dateNaissance: personneTable.dateNaissance,
+        lieuNaissance: personneTable.lieuNaissance,
+        photoURL: personneTable.photoURL,
+      })
+      .from(personneTable)
+      .where(eq(personneTable.idPers, idPers))
+      .limit(1);
+
+    const [titulaire] = await db
+      .select({ idClasse: classeTable.idClasse, libelle: classeTable.libelle })
+      .from(classeTable)
+      .where(and(eq(classeTable.titulaire, idPers), eq(classeTable.isDelete, 0)))
+      .limit(1);
+
+    let nombreElevesTitulaire = 0;
+    if (titulaire) {
+      const [latestAnnee] = await db
+        .select()
+        .from(anneeAcademiqueTable)
+        .where(eq(anneeAcademiqueTable.isDelete, 0))
+        .orderBy(desc(anneeAcademiqueTable.idAnnee))
+        .limit(1);
+
+      if (latestAnnee) {
+        const salles = await db
+          .select({ idSalle: salleTable.idSalle })
+          .from(salleTable)
+          .where(eq(salleTable.idClasse, titulaire.idClasse));
+        const salleIds = salles.map((s) => s.idSalle);
+        if (salleIds.length > 0) {
+          const rows = await db
+            .select({ matricule: frequenteTable.matricule })
+            .from(frequenteTable)
+            .where(and(inArray(frequenteTable.idSalle, salleIds), eq(frequenteTable.idAcademi, latestAnnee.idAnnee)));
+          nombreElevesTitulaire = new Set(rows.map((r) => r.matricule)).size;
+        }
+      }
+    }
+
+    const classRows = await db
+      .select({ idClasse: coursTable.idClasse })
+      .from(enseignantTable)
+      .innerJoin(coursTable, eq(enseignantTable.idCours, coursTable.idCours))
+      .where(and(eq(enseignantTable.idPers, idPers), eq(enseignantTable.isDelete, 0)));
+    const nombreDistinctClasses = new Set(classRows.map((r) => r.idClasse)).size;
+
+    let repartitionNotes: { tranche: string; count: number }[] = [];
+    if (titulaire) {
+      const [latestAnnee] = await db
+        .select()
+        .from(anneeAcademiqueTable)
+        .where(eq(anneeAcademiqueTable.isDelete, 0))
+        .orderBy(desc(anneeAcademiqueTable.idAnnee))
+        .limit(1);
+
+      if (latestAnnee) {
+        const salles = await db
+          .select({ idSalle: salleTable.idSalle })
+          .from(salleTable)
+          .where(eq(salleTable.idClasse, titulaire.idClasse));
+        const salleIds = salles.map((s) => s.idSalle);
+
+        if (salleIds.length > 0) {
+          const elevesInClass = await db
+            .select({ matricule: frequenteTable.matricule })
+            .from(frequenteTable)
+            .where(and(inArray(frequenteTable.idSalle, salleIds), eq(frequenteTable.idAcademi, latestAnnee.idAnnee)));
+          const matricules = [...new Set(elevesInClass.map((r) => r.matricule))];
+
+          if (matricules.length > 0) {
+            const notes = await db
+              .select({ note: evaluationTable.note })
+              .from(evaluationTable)
+              .where(inArray(evaluationTable.matricule, matricules));
+
+            const tranches = [
+              { tranche: '0 – 4.9', min: 0, max: 5, count: 0 },
+              { tranche: '5 – 9.9', min: 5, max: 10, count: 0 },
+              { tranche: '10 – 14.9', min: 10, max: 15, count: 0 },
+              { tranche: '15 – 20', min: 15, max: 20.1, count: 0 },
+            ];
+            for (const n of notes) {
+              const v = Number(n.note);
+              for (const t of tranches) {
+                if (v >= t.min && v < t.max) { t.count++; break; }
+              }
+            }
+            repartitionNotes = tranches.map(({ tranche, count }) => ({ tranche, count }));
+          }
+        }
+      }
+    }
+
+    let elevesTitulaire: { matricule: number; nom: string | null; prenom: string | null; sexe: number | null }[] = [];
+    if (titulaire) {
+      const [latestAnnee] = await db
+        .select()
+        .from(anneeAcademiqueTable)
+        .where(eq(anneeAcademiqueTable.isDelete, 0))
+        .orderBy(desc(anneeAcademiqueTable.idAnnee))
+        .limit(1);
+
+      if (latestAnnee) {
+        const salles = await db
+          .select({ idSalle: salleTable.idSalle })
+          .from(salleTable)
+          .where(eq(salleTable.idClasse, titulaire.idClasse));
+        const salleIds = salles.map((s) => s.idSalle);
+
+        if (salleIds.length > 0) {
+          const rows = await db
+            .select({ matricule: frequenteTable.matricule })
+            .from(frequenteTable)
+            .where(and(inArray(frequenteTable.idSalle, salleIds), eq(frequenteTable.idAcademi, latestAnnee.idAnnee)));
+          const matricules = [...new Set(rows.map((r) => r.matricule))];
+
+          if (matricules.length > 0) {
+            const eleves = await db
+              .select({ matricule: eleveTable.matricule, nom: eleveTable.nom, prenom: eleveTable.prenom, sexe: eleveTable.sexe })
+              .from(eleveTable)
+              .where(and(inArray(eleveTable.matricule, matricules), eq(eleveTable.isDelete, 0)));
+            elevesTitulaire = eleves;
+          }
+        }
+      }
+    }
+
+    const derniersMessages = await db
+      .select({ message: messagesTable, expediteur: personneTable })
+      .from(messagesTable)
+      .leftJoin(personneTable, eq(messagesTable.idExp_Pers, personneTable.idPers))
+      .where(eq(messagesTable.idExp_Pers, idPers))
+      .orderBy(desc(messagesTable.created_at))
+      .limit(4);
+
+    const messagesFormatted = derniersMessages.map(({ message, expediteur }) => ({
+      idMessages: message.idMessages,
+      objet: message.objet,
+      information: message.information,
+      created_at: message.created_at,
+      isRead: message.isRead,
+      expediteurNom: expediteur ? `${expediteur.prenom || ''} ${expediteur.nom || ''}`.trim() : null,
+    }));
+
+    const coursIds = await getEnseignantCoursIds(idPers);
+
+    const evaluationsRecentes = coursIds.length > 0
+      ? await db
+          .select({
+            idEval: evaluationTable.idEval,
+            note: evaluationTable.note,
+            appreciation: evaluationTable.appreciation,
+            created_at: evaluationTable.created_at,
+            matricule: evaluationTable.matricule,
+            idCours: evaluationTable.idCours,
+            nomEleve: eleveTable.nom,
+            prenomEleve: eleveTable.prenom,
+            coursLibelle: coursTable.libelle,
+          })
+          .from(evaluationTable)
+          .innerJoin(eleveTable, eq(evaluationTable.matricule, eleveTable.matricule))
+          .innerJoin(coursTable, eq(evaluationTable.idCours, coursTable.idCours))
+          .where(and(eq(evaluationTable.idPers, idPers), eq(eleveTable.isDelete, 0)))
+          .orderBy(desc(evaluationTable.created_at))
+          .limit(8)
+      : [];
+
+    const edtRows = coursIds.length > 0
+      ? await db
+          .select({
+            jour: emploiDuTempsTable.jour,
+            heure: emploiDuTempsTable.heure,
+            coursLibelle: coursTable.libelle,
+            classeLibelle: classeTable.libelle,
+          })
+          .from(emploiDuTempsTable)
+          .innerJoin(coursTable, eq(emploiDuTempsTable.idCours, coursTable.idCours))
+          .innerJoin(classeTable, eq(emploiDuTempsTable.idClasse, classeTable.idClasse))
+          .where(inArray(emploiDuTempsTable.idCours, coursIds))
+      : [];
+
+    const JOUR_ORDRE: Record<string, number> = { Lundi: 1, Mardi: 2, Mercredi: 3, Jeudi: 4, Vendredi: 5, Samedi: 6, Dimanche: 7 };
+    const heuresParJour: { jour: string; heures: number }[] = [];
+    const slotsByJour = new Map<string, Set<string>>();
+    for (const row of edtRows) {
+      if (!slotsByJour.has(row.jour)) slotsByJour.set(row.jour, new Set());
+      slotsByJour.get(row.jour)!.add(row.heure);
+    }
+    const allJours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    for (const jour of allJours) {
+      heuresParJour.push({ jour, heures: slotsByJour.get(jour)?.size ?? 0 });
+    }
+
+    res.json({
+      profile,
+      classeTitulaire: titulaire ?? null,
+      nombreElevesTitulaire,
+      nombreDistinctClasses,
+      repartitionNotes,
+      elevesTitulaire,
+      messages: messagesFormatted,
+      evaluationsRecentes,
+      emploiDuTemps: edtRows,
+      heuresParJour,
+    });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
@@ -172,8 +394,32 @@ router.delete("/titulaires/:id", authorize(ROLES.ADMINISTRATEUR), async (req, re
 
 router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
   try {
-    const cours = await db.select().from(coursTable);
-    res.json(cours);
+    const rows = await db
+      .select({
+        cours: coursTable,
+        classe: classeTable,
+        cycle: cycleTable,
+      })
+      .from(coursTable)
+      .leftJoin(classeTable, eq(coursTable.idClasse, classeTable.idClasse))
+      .leftJoin(cycleTable, eq(classeTable.idCycle, cycleTable.idCycle))
+      .where(eq(coursTable.isDelete, 0));
+
+    const enriched = await Promise.all(rows.map(async ({ cours, classe, cycle }) => {
+      const enseignants = await db
+        .select({ idPers: enseignantTable.idPers, nom: personneTable.nom, prenom: personneTable.prenom })
+        .from(enseignantTable)
+        .innerJoin(personneTable, eq(enseignantTable.idPers, personneTable.idPers))
+        .where(and(eq(enseignantTable.idCours, cours.idCours), eq(enseignantTable.isDelete, 0)));
+      return {
+        ...cours,
+        classe: classe ? { idClasse: classe.idClasse, libelle: classe.libelle } : null,
+        section: cycle?.libelle ?? null,
+        enseignants,
+      };
+    }));
+
+    res.json(enriched);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
