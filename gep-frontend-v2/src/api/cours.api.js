@@ -12,3 +12,7 @@ export const emploiDuTempsApi = {
   update: (id, payload) => client.put(`${ENDPOINTS.cours.emploiDuTemps}/${id}`, payload).then((r) => r.data),
   remove: (id) => client.delete(`${ENDPOINTS.cours.emploiDuTemps}/${id}`).then((r) => r.data),
 }
+
+export const enseignantDashboardApi = {
+  get: () => client.get(ENDPOINTS.cours.enseignantDashboard).then((r) => r.data),
+}

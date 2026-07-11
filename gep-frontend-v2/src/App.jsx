@@ -47,6 +47,7 @@ import Compte from './pages/personnes/Compte'
 import Comptes from './pages/admin/Comptes'
 
 import EnseignantDashboard from './pages/enseignant/EnseignantDashboard'
+import EnseignantCours from './pages/enseignant/EnseignantCours'
 
 import ParentDashboard from './pages/parent/ParentDashboard'
 import ParentNotes from './pages/parent/Notes'
@@ -86,6 +87,7 @@ export default function App() {
 
             <Route path="/dashboard" element={guarded(ADMIN, <Dashboard />)} />
             <Route path="/enseignant" element={guarded(ENSEIGNANT, <EnseignantDashboard />)} />
+            <Route path="/enseignant/cours" element={guarded(ENSEIGNANT, <EnseignantCours />)} />
             <Route path="/parent" element={guarded(PARENT, <ParentDashboard />)} />
 
             <Route path="/eleves" element={guarded(ADMIN_COMPTABLE_ENSEIGNANT, <EleveIndex />)} />

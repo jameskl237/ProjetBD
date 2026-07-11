@@ -20,6 +20,7 @@ export const ENDPOINTS = {
     enseignants: '/cours/enseignants',
     emploiDuTemps: '/cours/emploi-du-temps',
     titulaires: '/cours/titulaires',
+    enseignantDashboard: '/cours/enseignant/dashboard',
   },
   evaluations: {
     root: '/evaluations',
