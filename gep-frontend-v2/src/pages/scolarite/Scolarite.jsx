@@ -12,12 +12,9 @@ import { scolariteApi, scolariteClassesApi, tranchesApi } from '../../api/scolar
 import { useAuth } from '../../hooks/useAuth'
 import { isDirecteur } from '../../config/navigation'
 
-// Gestion des frais de scolarité par classe (réservé au directeur en écriture,
-// cf. requireDirecteur côté backend). Les tranches de paiement sont affichées
-// en lecture, rattachées à chaque scolarité.
 export default function Scolarite() {
   const { data, loading, error, reload } = useResource(scolariteApi)
-  const [classes, setClasses] = useState([])
+  const [cycles, setCycles] = useState([])
   const [tranches, setTranches] = useState([])
   const [modal, setModal] = useState(null)
   const [formError, setFormError] = useState('')
@@ -25,7 +22,7 @@ export default function Scolarite() {
   const canWrite = isDirecteur(user)
 
   useEffect(() => {
-    scolariteClassesApi.list().then(setClasses).catch(() => {})
+    scolariteClassesApi.list().then(setCycles).catch(() => {})
     tranchesApi.list().then(setTranches).catch(() => {})
   }, [])
 
@@ -37,7 +34,7 @@ export default function Scolarite() {
     e.preventDefault()
     setFormError('')
     try {
-      const payload = { description: modal.values.description, idClasse: Number(modal.values.idClasse) }
+      const payload = { description: modal.values.description, pension: Number(modal.values.pension || 0), inscription: Number(modal.values.inscription || 0), nbreTranche: Number(modal.values.nbreTranche || 3), idCycle: Number(modal.values.idCycle) }
       if (modal.mode === 'create') await scolariteApi.create(payload)
       else await scolariteApi.update(modal.values.idScolarite, payload)
       setModal(null)
@@ -51,8 +48,8 @@ export default function Scolarite() {
     <div>
       <PageHeader
         title="Scolarité"
-        subtitle="Frais de scolarité définis par classe"
-        actions={canWrite ? <Button onClick={() => setModal({ mode: 'create', values: { description: '', idClasse: '' } })}>＋ Ajouter</Button> : null}
+        subtitle="Frais de scolarité définis par cycle"
+        actions={canWrite ? <Button onClick={() => setModal({ mode: 'create', values: { description: '', pension: '', inscription: '', nbreTranche: 3, idCycle: '' } })}>＋ Ajouter</Button> : null}
       />
       <Alert tone="error">{error}</Alert>
       {!canWrite && <Alert tone="info">Lecture seule — la création et la modification sont réservées au directeur.</Alert>}
@@ -60,8 +57,10 @@ export default function Scolarite() {
         <Table
           columns={[
             { key: 'description', label: 'Description' },
-            { key: 'idClasse', label: 'Classe', render: (r) => classes.find((c) => c.idClasse === r.idClasse)?.libelle || `#${r.idClasse}` },
-            { key: 'tranches', label: 'Tranches', render: (r) => trancheCount(r.idScolarite) },
+            { key: 'idCycle', label: 'Cycle', render: (r) => cycles.find((c) => c.idCycle === r.idCycle)?.libelle || `#${r.idCycle}` },
+            { key: 'inscription', label: 'Inscription' },
+            { key: 'pension', label: 'Pension' },
+            { key: 'nbreTranche', label: 'Tranches' },
           ]}
           rows={data}
           loading={loading}
@@ -80,8 +79,11 @@ export default function Scolarite() {
           <form onSubmit={handleSubmit}>
             <Alert tone="error">{formError}</Alert>
             <InputField label="Description" required value={modal.values.description} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, description: e.target.value } }))} />
-            <SelectField label="Classe" required value={modal.values.idClasse} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, idClasse: e.target.value } }))}
-              options={classes.map((c) => ({ value: c.idClasse, label: c.libelle }))} />
+            <SelectField label="Cycle" required value={modal.values.idCycle} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, idCycle: e.target.value } }))}
+              options={cycles.map((c) => ({ value: c.idCycle, label: c.libelle }))} />
+            <InputField label="Frais d'inscription" type="number" value={modal.values.inscription} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, inscription: e.target.value } }))} />
+            <InputField label="Pension" type="number" value={modal.values.pension} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, pension: e.target.value } }))} />
+            <InputField label="Nombre de tranches" type="number" value={modal.values.nbreTranche} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, nbreTranche: e.target.value } }))} />
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <Button type="button" variant="secondary" onClick={() => setModal(null)}>Annuler</Button>
               <Button type="submit">Enregistrer</Button>

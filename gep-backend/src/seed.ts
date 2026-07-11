@@ -159,18 +159,20 @@ async function seed() {
     } catch (_) {}
   }
 
-  // Pension fixée par classe (déjà rattachée à sa filière via idCycle) — réservé au directeur.
-  const scolariteData = classes.map((c, i) => ({
+  // Pension fixée par cycle — réservé au directeur.
+  const cycleRows = await db.select().from(cycleTable);
+  const scolariteData = cycleRows.map((cyc, i) => ({
     inscription: 5000 + i * 1000,
     pension: 30000 + i * 6000,
-    description: `Scolarité ${c.libelle}`,
-    idClasse: c.idClasse,
+    nbreTranche: 3,
+    description: `Scolarité ${cyc.libelle}`,
+    idCycle: cyc.idCycle,
     idFondateur: adminId,
     created_at: now,
   }));
   for (const s of scolariteData) {
     try {
-      const [ex] = await db.select().from(scolariteTable).where(eq(scolariteTable.idClasse, s.idClasse)).limit(1);
+      const [ex] = await db.select().from(scolariteTable).where(eq(scolariteTable.idCycle, s.idCycle)).limit(1);
       if (!ex) await db.insert(scolariteTable).values(s);
     } catch (_) {}
   }

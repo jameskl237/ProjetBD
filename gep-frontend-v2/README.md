@@ -1,4 +1,4 @@
-# GEP Nebular — Frontend (v2)
+# GEP Nebula — Frontend (v2)
 
 Frontend React (Vite) refondu pour l'application de gestion d'établissement **GEP**.
 Cette version corrige les anomalies structurelles du frontend précédent et respecte
@@ -31,7 +31,7 @@ strictement le contrat exposé par le backend Express (`gep-backend`).
 
 ## Charte graphique
 
-Les couleurs, polices et l'identité "GEP Nebular" (violet profond `#4C1D95` /
+Les couleurs, polices et l'identité "GEP Nebula" (violet profond `#4C1D95` /
 cyan `#06B6D4`, police Plus Jakarta Sans + DM Sans) sont reprises du frontend
 existant (`src/index.css`), afin de conserver une continuité visuelle avec
 l'application actuelle.

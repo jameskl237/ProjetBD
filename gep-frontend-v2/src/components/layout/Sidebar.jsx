@@ -27,7 +27,7 @@ export default function Sidebar() {
         <BrandLogo />
         <div style={{ minWidth: 0 }}>
           <div style={{ fontFamily: 'var(--font)', fontWeight: 800, color: '#fff', fontSize: 15 }}>
-            GEP <span style={{ color: 'var(--cyan)' }}>Nebular</span>
+            GEP <span style={{ color: 'var(--cyan)' }}>Nebula</span>
           </div>
           <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>
             {user?.role || ROLE_LABELS[roleKey] || ''}
