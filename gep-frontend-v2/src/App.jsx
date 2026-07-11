@@ -48,6 +48,8 @@ import Comptes from './pages/admin/Comptes'
 
 import EnseignantDashboard from './pages/enseignant/EnseignantDashboard'
 import EnseignantCours from './pages/enseignant/EnseignantCours'
+import EnseignantEleves from './pages/enseignant/EnseignantEleves'
+import EnseignantEmploiDuTemps from './pages/enseignant/EnseignantEmploiDuTemps'
 
 import ParentDashboard from './pages/parent/ParentDashboard'
 import ParentNotes from './pages/parent/Notes'
@@ -88,6 +90,7 @@ export default function App() {
             <Route path="/dashboard" element={guarded(ADMIN, <Dashboard />)} />
             <Route path="/enseignant" element={guarded(ENSEIGNANT, <EnseignantDashboard />)} />
             <Route path="/enseignant/cours" element={guarded(ENSEIGNANT, <EnseignantCours />)} />
+            <Route path="/enseignant/eleves" element={guarded(ENSEIGNANT, <EnseignantEleves />)} />
             <Route path="/parent" element={guarded(PARENT, <ParentDashboard />)} />
 
             <Route path="/eleves" element={guarded(ADMIN_COMPTABLE_ENSEIGNANT, <EleveIndex />)} />
@@ -106,7 +109,8 @@ export default function App() {
             <Route path="/annees" element={guarded(ADMIN, <Annees />)} />
 
             <Route path="/cours" element={guarded(ADMIN, <Cours />)} />
-            <Route path="/emploi-du-temps" element={guarded(ADMIN_ENSEIGNANT, <EmploiDuTemps />)} />
+            <Route path="/emploi-du-temps" element={guarded(ADMIN, <EmploiDuTemps />)} />
+            <Route path="/enseignant/emploi-du-temps" element={guarded(ENSEIGNANT, <EnseignantEmploiDuTemps />)} />
             <Route path="/enseignants" element={guarded(ADMIN, <Enseignants />)} />
 
             <Route path="/examens" element={guarded(ADMIN_ENSEIGNANT, <Examens />)} />
