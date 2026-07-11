@@ -5,6 +5,7 @@ import { eleveTable } from "./eleve.ts";
 import { anneeAcademiqueTable } from "./annee_academique.ts";
 import { modeTable } from "./mode.ts";
 import { personneTable } from "./personne.ts";
+import { tranchesTable } from "./tranches.ts";
 import { z } from "zod/v4";
 
 export const paiementTable = mysqlTable("Paiement", {
@@ -15,6 +16,7 @@ export const paiementTable = mysqlTable("Paiement", {
   url: varchar("url", { length: 255 }).notNull().default(""),
   comentaire: varchar("comentaire", { length: 255 }).notNull().default(""),
   idMode: int("idMode").notNull(),
+  idTranche: int("idTranche"),
   operation_ID: varchar("operation_ID", { length: 30 }).notNull().default(""),
   idPers: int("idPers").notNull(),
   datePaie: date("datePaie").notNull(),
@@ -26,6 +28,7 @@ export const paiementRelations = relations(paiementTable, ({ one }) => ({
   annee: one(anneeAcademiqueTable, { fields: [paiementTable.idAca], references: [anneeAcademiqueTable.idAnnee] }),
   mode: one(modeTable, { fields: [paiementTable.idMode], references: [modeTable.idMode] }),
   personne: one(personneTable, { fields: [paiementTable.idPers], references: [personneTable.idPers] }),
+  tranche: one(tranchesTable, { fields: [paiementTable.idTranche], references: [tranchesTable.idTranche] }),
 }));
 
 export const insertPaiementSchema = createInsertSchema(paiementTable).omit({ idPaie: true });

@@ -4,9 +4,9 @@
   "description": "GEP — API REST de gestion d'établissement scolaire",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --watch --experimental-strip-types src/index.ts",
-    "build": "node build.mjs",
-    "start": "node --env-file-if-exists=.env dist/index.mjs",
+    "dev": "tsx watch --env-file-if-exists=.env src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
     "seed": "node --env-file-if-exists=.env --experimental-strip-types src/seed.ts",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
@@ -35,8 +35,7 @@
     "@types/node": "^24.0.3",
     "@types/pdfkit": "^0.13.9",
     "drizzle-kit": "^0.31.10",
-    "esbuild": "^0.25.5",
-    "esbuild-plugin-pino": "^2.2.0",
+    "tsx": "^4.23.0",
     "typescript": "^5.7.3"
   }
 }
