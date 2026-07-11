@@ -218,7 +218,7 @@ export default function EnseignantDashboard() {
               </p>
             </div>
             {eleves.length > 5 && (
-              <Link to="/eleves" style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', whiteSpace: 'nowrap' }}>
+              <Link to="/enseignant/eleves" style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', whiteSpace: 'nowrap' }}>
                 Voir tous ({eleves.length}) →
               </Link>
             )}
@@ -348,7 +348,7 @@ export default function EnseignantDashboard() {
               </p>
             </div>
             {(stats.emploiDuTemps?.length || 0) > 5 && (
-              <Link to="/emploi-du-temps" style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', whiteSpace: 'nowrap' }}>
+              <Link to="/enseignant/emploi-du-temps" style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', whiteSpace: 'nowrap' }}>
                 Voir tout →
               </Link>
             )}

@@ -59,23 +59,33 @@ router.get("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT)
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.post("/enseignants", authorize(ROLES.ADMINISTRATEUR), validate(insertEnseignantSchema), async (req, res) => {
+router.post("/enseignants", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), validate(insertEnseignantSchema), async (req, res) => {
   try {
     await db.insert(enseignantTable).values({ ...req.body, idAdmin: req.user!.id, created_at: new Date() });
     res.status(201).json({ message: "Enseignant affecté avec succès" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.put("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
+router.put("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (req, res) => {
   try {
-    await db.update(enseignantTable).set(req.body).where(eq(enseignantTable.idEnseignant, Number(req.params.id)));
+    const idEnseignant = Number(req.params.id);
+    if (req.user!.typePersonne === 1) {
+      const [row] = await db.select().from(enseignantTable).where(eq(enseignantTable.idEnseignant, idEnseignant)).limit(1);
+      if (!row || row.idPers !== req.user!.id) { res.status(403).json({ error: "Accès refusé" }); return; }
+    }
+    await db.update(enseignantTable).set(req.body).where(eq(enseignantTable.idEnseignant, idEnseignant));
     res.json({ message: "Enseignant mis à jour" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.delete("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
+router.delete("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (req, res) => {
   try {
-    await db.update(enseignantTable).set({ isDelete: 1 }).where(eq(enseignantTable.idEnseignant, Number(req.params.id)));
+    const idEnseignant = Number(req.params.id);
+    if (req.user!.typePersonne === 1) {
+      const [row] = await db.select().from(enseignantTable).where(eq(enseignantTable.idEnseignant, idEnseignant)).limit(1);
+      if (!row || row.idPers !== req.user!.id) { res.status(403).json({ error: "Accès refusé" }); return; }
+    }
+    await db.update(enseignantTable).set({ isDelete: 1 }).where(eq(enseignantTable.idEnseignant, idEnseignant));
     res.json({ message: "Enseignant retiré" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
@@ -320,9 +330,14 @@ router.get("/emploi-du-temps", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT,
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.post("/emploi-du-temps", authorize(ROLES.ADMINISTRATEUR), validate(insertEmploiDuTempsSchema), async (req, res) => {
+router.post("/emploi-du-temps", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), validate(insertEmploiDuTempsSchema), async (req, res) => {
   try {
+    const role = getRole(req.user);
     const { jour, heure, idCours, idSalle } = req.body;
+    if (role === ROLES.ENSEIGNANT) {
+      const coursIds = new Set(await getEnseignantCoursIds(req.user!.id));
+      if (!coursIds.has(Number(idCours))) { res.status(403).json({ error: "Accès refusé : ce cours ne vous est pas attribué" }); return; }
+    }
     const conflict = await findEmploiConflict(jour, heure, idCours, idSalle);
     if (conflict) { res.status(409).json({ error: "Conflit d'emploi du temps : cet enseignant est déjà affecté à une autre salle sur ce créneau" }); return; }
     await db.insert(emploiDuTempsTable).values({ ...req.body, idAdmin: req.user!.id, created_at: new Date() });
@@ -330,11 +345,17 @@ router.post("/emploi-du-temps", authorize(ROLES.ADMINISTRATEUR), validate(insert
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.put("/emploi-du-temps/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
+router.put("/emploi-du-temps/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (req, res) => {
   try {
     const idTemps = Number(req.params.id);
     const [current] = await db.select().from(emploiDuTempsTable).where(eq(emploiDuTempsTable.idTemps, idTemps)).limit(1);
     if (!current) { res.status(404).json({ error: "Créneau introuvable" }); return; }
+    const role = getRole(req.user);
+    if (role === ROLES.ENSEIGNANT) {
+      const coursIds = new Set(await getEnseignantCoursIds(req.user!.id));
+      const idCours = req.body.idCours ?? current.idCours;
+      if (!coursIds.has(Number(idCours))) { res.status(403).json({ error: "Accès refusé : ce cours ne vous est pas attribué" }); return; }
+    }
     const jour = req.body.jour ?? current.jour;
     const heure = req.body.heure ?? current.heure;
     const idCours = req.body.idCours ?? current.idCours;
@@ -347,9 +368,17 @@ router.put("/emploi-du-temps/:id", authorize(ROLES.ADMINISTRATEUR), async (req, 
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.delete("/emploi-du-temps/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
+router.delete("/emploi-du-temps/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (req, res) => {
   try {
-    await db.delete(emploiDuTempsTable).where(eq(emploiDuTempsTable.idTemps, Number(req.params.id)));
+    const idTemps = Number(req.params.id);
+    const [current] = await db.select().from(emploiDuTempsTable).where(eq(emploiDuTempsTable.idTemps, idTemps)).limit(1);
+    if (!current) { res.status(404).json({ error: "Créneau introuvable" }); return; }
+    const role = getRole(req.user);
+    if (role === ROLES.ENSEIGNANT) {
+      const coursIds = new Set(await getEnseignantCoursIds(req.user!.id));
+      if (!coursIds.has(current.idCours)) { res.status(403).json({ error: "Accès refusé : ce créneau ne correspond pas à un de vos cours" }); return; }
+    }
+    await db.delete(emploiDuTempsTable).where(eq(emploiDuTempsTable.idTemps, idTemps));
     res.json({ message: "Créneau supprimé" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
