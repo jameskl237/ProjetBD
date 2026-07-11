@@ -1,15 +1,18 @@
 import { db } from "@workspace/db";
-import { scolariteTable, trimestreTable, tranchesTable, paiementTable } from "@workspace/db/schema";
+import { scolariteTable, trimestreTable, tranchesTable, paiementTable, classeTable } from "@workspace/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 
 /**
- * Une classe a toujours exactement 3 tranches (1 par trimestre de l'année),
- * chacune valant pension/3. Générées à la demande — jamais saisies à la main —
+ * Une classe a toujours exactement N tranches (1 par trimestre de l'année),
+ * chacune valant pension/N. Générées à la demande — jamais saisies à la main —
  * et le montant est figé au moment de la génération pour ne pas bouger si la
- * pension de la classe change ensuite.
+ * pension du cycle change ensuite.
  */
 export async function ensureTranchesForClasse(idClasse: number, idAca: number) {
-  const [scolarite] = await db.select().from(scolariteTable).where(eq(scolariteTable.idClasse, idClasse)).limit(1);
+  const [classe] = await db.select().from(classeTable).where(eq(classeTable.idClasse, idClasse)).limit(1);
+  if (!classe) return null;
+
+  const [scolarite] = await db.select().from(scolariteTable).where(eq(scolariteTable.idCycle, classe.idCycle)).limit(1);
   if (!scolarite) return null;
 
   const trimestres = await db
@@ -25,7 +28,8 @@ export async function ensureTranchesForClasse(idClasse: number, idAca: number) {
     .where(and(eq(tranchesTable.idScolarite, scolarite.idScolarite), inArray(tranchesTable.idTrimestre, trimestres.map((t) => t.idTrimes))));
   const existingByTrimestre = new Map(existing.map((t) => [t.idTrimestre, t]));
 
-  const montantTranche = Math.round((scolarite.pension / 3) * 100) / 100;
+  const nbreTranches = scolarite.nbreTranche || 3;
+  const montantTranche = Math.round((scolarite.pension / nbreTranches) * 100) / 100;
   for (const trimestre of trimestres) {
     if (existingByTrimestre.has(trimestre.idTrimes)) continue;
     await db.insert(tranchesTable).values({

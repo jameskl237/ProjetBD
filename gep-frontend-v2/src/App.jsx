@@ -4,6 +4,7 @@ import { ROLES } from './config/navigation'
 import ProtectedRoute from './routes/ProtectedRoute'
 import AppLayout from './components/layout/AppLayout'
 
+import Home from './pages/Home'
 import Login from './pages/auth/Login'
 import Dashboard from './pages/Dashboard'
 
@@ -78,10 +79,10 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
 
           <Route element={<ProtectedRoute allowedRoles={ALL_ROLES}><AppLayout /></ProtectedRoute>}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
             <Route path="/dashboard" element={guarded(ADMIN, <Dashboard />)} />
             <Route path="/enseignant" element={guarded(ENSEIGNANT, <EnseignantDashboard />)} />

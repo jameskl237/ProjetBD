@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { scolariteTable, insertScolariteSchema, tranchesTable, cycleTable, classeTable } from "@workspace/db/schema";
+import { scolariteTable, insertScolariteSchema, tranchesTable, cycleTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { authenticate } from "../middlewares/auth.ts";
 import { authorize, ROLES, requireDirecteur } from "../middlewares/rbac.ts";
@@ -40,16 +40,16 @@ router.delete("/cycles/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) =
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-/** Vue "pension par classe" pour l'écran directeur : chaque classe + sa pension si déjà fixée. */
+/** Vue "pension par cycle" pour l'écran directeur : chaque cycle + sa pension si déjà fixée. */
 router.get("/classes", async (_req, res) => {
   try {
-    const rows = await db
-      .select({ classe: classeTable, cycle: cycleTable, scolarite: scolariteTable })
-      .from(classeTable)
-      .leftJoin(cycleTable, eq(classeTable.idCycle, cycleTable.idCycle))
-      .leftJoin(scolariteTable, eq(scolariteTable.idClasse, classeTable.idClasse))
-      .where(eq(classeTable.isDelete, 0));
-    res.json(rows.map(({ classe, cycle, scolarite }) => ({ ...classe, cycle, scolarite })));
+    const cycles = await db.select().from(cycleTable);
+    const scols = await db.select().from(scolariteTable);
+    const result = cycles.map((cycle) => ({
+      ...cycle,
+      scolarite: scols.find((s) => s.idCycle === cycle.idCycle) || null,
+    }));
+    res.json(result);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
@@ -87,11 +87,11 @@ router.get("/:id", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-// Fixer la pension d'une classe est réservé au directeur (RG spec).
+// Fixer la pension d'un cycle est réservé au directeur (RG spec).
 router.post("/", requireDirecteur, validate(insertScolariteSchema), async (req, res) => {
   try {
-    const [existing] = await db.select().from(scolariteTable).where(eq(scolariteTable.idClasse, req.body.idClasse)).limit(1);
-    if (existing) { res.status(409).json({ error: "Cette classe a déjà une pension configurée — modifiez-la plutôt" }); return; }
+    const [existing] = await db.select().from(scolariteTable).where(eq(scolariteTable.idCycle, req.body.idCycle)).limit(1);
+    if (existing) { res.status(409).json({ error: "Ce cycle a déjà une pension configurée — modifiez-la plutôt" }); return; }
     await db.insert(scolariteTable).values({ ...req.body, idFondateur: req.user!.id, created_at: new Date() });
     res.status(201).json({ message: "Pension enregistrée" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
