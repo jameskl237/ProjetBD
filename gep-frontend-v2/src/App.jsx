@@ -50,6 +50,10 @@ import EnseignantDashboard from './pages/enseignant/EnseignantDashboard'
 import EnseignantCours from './pages/enseignant/EnseignantCours'
 import EnseignantEleves from './pages/enseignant/EnseignantEleves'
 import EnseignantEmploiDuTemps from './pages/enseignant/EnseignantEmploiDuTemps'
+import EnseignantAbsences from './pages/enseignant/EnseignantAbsences'
+import EnseignantAnnonces from './pages/enseignant/EnseignantAnnonces'
+import EnseignantNouvelleAnnonce from './pages/enseignant/EnseignantNouvelleAnnonce'
+import EnseignantCompte from './pages/enseignant/EnseignantCompte'
 
 import ParentDashboard from './pages/parent/ParentDashboard'
 import ParentNotes from './pages/parent/Notes'
@@ -126,14 +130,18 @@ export default function App() {
             <Route path="/personnes" element={guarded(ADMIN, <Personnes />)} />
             <Route path="/discipline" element={guarded(ADMIN, <Discipline />)} />
 
-            <Route path="/absences" element={guarded(ADMIN_ENSEIGNANT, <Absences />)} />
+            <Route path="/absences" element={guarded(ADMIN, <Absences />)} />
+            <Route path="/enseignant/absences" element={guarded(ENSEIGNANT, <EnseignantAbsences />)} />
             <Route path="/transport" element={guarded(ADMIN, <Transport />)} />
             <Route path="/quartiers" element={guarded(ADMIN, <Quartiers />)} />
             <Route path="/bibliotheque" element={guarded(ADMIN, <Livres />)} />
-            <Route path="/annonces" element={guarded(ANNONCES_ROLES, <Annonces />)} />
+            <Route path="/annonces" element={guarded([ROLES.ADMINISTRATEUR, ROLES.PARENT], <Annonces />)} />
+            <Route path="/enseignant/annonces" element={guarded(ENSEIGNANT, <EnseignantAnnonces />)} />
+            <Route path="/enseignant/annonces/nouvelle" element={guarded(ENSEIGNANT, <EnseignantNouvelleAnnonce />)} />
 
             <Route path="/comptes" element={guarded(ADMIN, <Comptes />)} />
-            <Route path="/compte" element={guarded(ALL_ROLES, <Compte />)} />
+            <Route path="/compte" element={guarded([ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT], <Compte />)} />
+            <Route path="/enseignant/compte" element={guarded(ENSEIGNANT, <EnseignantCompte />)} />
 
             <Route path="/parent/notes" element={guarded(PARENT, <ParentNotes />)} />
             <Route path="/parent/absences" element={guarded(PARENT, <ParentAbsences />)} />
