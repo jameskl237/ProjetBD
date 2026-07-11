@@ -7,13 +7,14 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
-    "noEmit": true,
+    "rewriteRelativeImportExtensions": true,
+    "noEmit": false,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",
     "outDir": "dist",
-    "rootDir": ".",
+    "rootDir": "src",
     "types": ["node"]
   },
-  "include": ["src", "db"]
+  "include": ["src"]
 }
