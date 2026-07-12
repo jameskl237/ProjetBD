@@ -7,9 +7,9 @@ import { authorize, ROLES } from "../middlewares/rbac.ts";
 import { validate } from "../middlewares/validate.ts";
 
 const router = Router();
-router.use(authenticate, authorize(ROLES.ADMINISTRATEUR));
+router.use(authenticate);
 
-router.get("/", async (_req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.PARENT), async (_req, res) => {
   try {
     const rows = await db
       .select({ salle: salleTable, classe: classeTable })
@@ -20,7 +20,7 @@ router.get("/", async (_req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.PARENT), async (req, res) => {
   try {
     const rows = await db
       .select({ salle: salleTable, classe: classeTable })
@@ -35,7 +35,7 @@ router.get("/:id", async (req, res) => {
 
 // Une salle se crée toujours libre : l'affectation à une classe se fait exclusivement
 // depuis la création/modification de la classe (voir classes.ts), jamais depuis ici.
-router.post("/", validate(insertSalleSchema), async (req, res) => {
+router.post("/", authorize(ROLES.ADMINISTRATEUR), validate(insertSalleSchema), async (req, res) => {
   try {
     const { idClasse: _ignoredIdClasse, ...rest } = req.body;
     await db.insert(salleTable).values({ ...rest, idAdmin: req.user!.id, created_at: new Date() });
@@ -43,7 +43,7 @@ router.post("/", validate(insertSalleSchema), async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     // On autorise seulement à libérer une salle (idClasse: null) depuis cet endpoint —
     // l'affecter à une classe se fait uniquement via classes.ts, pour garder une seule
@@ -64,7 +64,7 @@ router.put("/:id", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     const [salle] = await db.select().from(salleTable).where(eq(salleTable.idSalle, Number(req.params.id))).limit(1);
     if (!salle) { res.status(404).json({ error: "Salle introuvable" }); return; }

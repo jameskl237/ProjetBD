@@ -75,7 +75,7 @@ export default function Discipline() {
         <Card style={{ padding: 0 }}>
           <Alert tone="error">{rapports.error}</Alert>
           <Table columns={[
-            { key: 'eleve', label: 'Élève', render: (r) => r.eleve ? `${r.eleve.nom} ${r.eleve.prenom}` : `#${r.matricule}` },
+            { key: 'eleve', label: 'Élève', render: (r) => r.eleve ? `${r.eleve.nom} ${r.eleve.prenom}` : `#${r.eleve?.matriculeCode || r.matricule}` },
             { key: 'discipline', label: 'Sanction', render: (r) => r.discipline?.libelle || '—' },
             { key: 'event_date', label: 'Date', render: (r) => r.event_date?.slice(0, 10) },
             { key: 'commentaire', label: 'Commentaire' },

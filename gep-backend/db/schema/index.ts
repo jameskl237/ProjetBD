@@ -30,3 +30,5 @@ export * from "./specialite.ts";
 export * from "./livre.ts";
 export * from "./absence.ts";
 export * from "./abonnement.ts";
+export * from "./bulletin.ts";
+export * from "./appreciation.ts";

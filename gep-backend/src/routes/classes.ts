@@ -177,7 +177,7 @@ router.get("/:id/eleves", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLE
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE), async (req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE, ROLES.PARENT), async (req, res) => {
   try {
     const role = getRole(req.user);
     let classFilter = eq(classeTable.isDelete, 0);

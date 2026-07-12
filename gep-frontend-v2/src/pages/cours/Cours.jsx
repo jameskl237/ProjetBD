@@ -189,7 +189,7 @@ export default function Cours() {
       </Card>
 
       {/* ── Table ── */}
-      <Card style={{ padding: 0, overflow: 'hidden' }}>
+      <Card style={{ padding: 0, overflow: 'hidden', maxHeight: 520, overflowY: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
           <thead>
             <tr style={{ background: 'var(--surface-alt, #f9fafb)', textAlign: 'left' }}>

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { evaluationTable, sessionTable, epreuveTable, natureEpreuveTable, insertNatureEpreuveSchema, eleveTable, coursTable, villeNaissanceTable, trimestreTable, personneTable } from "@workspace/db/schema";
+import { evaluationTable, sessionTable, epreuveTable, natureEpreuveTable, insertNatureEpreuveSchema, eleveTable, coursTable, villeNaissanceTable, trimestreTable, personneTable, anneeAcademiqueTable, appreciationTable, classeTable, cycleTable } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import PDFDocument from "pdfkit";
 import { authenticate } from "../middlewares/auth.ts";
@@ -87,7 +87,11 @@ router.delete("/epreuves/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res)
 
 router.get("/natures", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
   try {
-    const natures = await db.select().from(natureEpreuveTable);
+    const rows = await db
+      .select({ nature: natureEpreuveTable, annee: anneeAcademiqueTable })
+      .from(natureEpreuveTable)
+      .leftJoin(anneeAcademiqueTable, eq(natureEpreuveTable.idAnnee, anneeAcademiqueTable.idAnnee));
+    const natures = rows.map(({ nature, annee }) => ({ ...nature, annee }));
     res.json(natures);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
@@ -113,12 +117,13 @@ async function buildBulletin(matricule: number) {
   const sessions = await db.select().from(sessionTable);
   const epreuves = await db.select().from(epreuveTable);
   const cours = await db.select().from(coursTable);
+  const appreciations = await db.select().from(appreciationTable);
 
   const sessionsMap = Object.fromEntries(sessions.map(s => [s.idSession, s]));
   const epreuvesMap = Object.fromEntries(epreuves.map(e => [e.idEpreuve, e]));
   const coursMap = Object.fromEntries(cours.map(c => [c.idCours, c]));
 
-  const bySession: Record<number, { session: typeof sessions[0]; lignes: Array<{ cours: string; coef: number; note: number; appreciation: string }> }> = {};
+  const bySession: Record<number, { session: typeof sessions[0]; lignes: Array<{ cours: string; coef: number; note: number; appreciation: string; appreciationFr: string; appreciationEn: string }> }> = {};
 
   for (const ev of evaluations) {
     const sid = ev.idSession ?? 0;
@@ -126,11 +131,15 @@ async function buildBulletin(matricule: number) {
       bySession[sid] = { session: sessionsMap[sid] ?? { idSession: sid, libelle: "Session " + sid, description: "", idTrimestre: 0, idPers: 0, date_passage: null, created_at: new Date() }, lignes: [] };
     }
     const c = coursMap[ev.idCours ?? 0];
+    const note = Number(ev.note ?? 0);
+    const matchedAppreciation = appreciations.find((a) => note >= a.noteMin && note < a.noteMax);
     bySession[sid]!.lignes.push({
       cours: c?.libelle ?? "Cours " + ev.idCours,
       coef: Number(c?.coefficient ?? 1),
-      note: Number(ev.note ?? 0),
-      appreciation: ev.appreciation ?? "",
+      note,
+      appreciation: ev.appreciation || (matchedAppreciation?.grade ?? ""),
+      appreciationFr: matchedAppreciation?.libelleFr ?? "",
+      appreciationEn: matchedAppreciation?.libelleEn ?? "",
     });
   }
 
@@ -145,7 +154,16 @@ async function buildBulletin(matricule: number) {
     ? Math.round((sessionsResult.reduce((a, s) => a + s.moyenne, 0) / sessionsResult.length) * 100) / 100
     : 0;
 
-  return { eleve, sessions: sessionsResult, moyenneGenerale };
+  const matchedGeneral = appreciations.find((a) => moyenneGenerale >= a.noteMin && moyenneGenerale < a.noteMax);
+
+  return {
+    eleve,
+    sessions: sessionsResult,
+    moyenneGenerale,
+    appreciationGenerale: matchedGeneral?.grade ?? "",
+    appreciationGeneraleFr: matchedGeneral?.libelleFr ?? "",
+    appreciationGeneraleEn: matchedGeneral?.libelleEn ?? "",
+  };
 }
 
 router.get("/bulletin/:matricule", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.COMPTABLE), requireEleveScope("matricule"), async (req, res) => {
@@ -158,7 +176,7 @@ router.get("/bulletin/:matricule", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGN
 
 router.get("/bulletin/:matricule/export", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.COMPTABLE), requireEleveScope("matricule"), async (req, res) => {
   try {
-    const { format = "pdf" } = req.query as { format?: string };
+    const { format = "pdf", lang } = req.query as { format?: string; lang?: string };
     const bulletin = await buildBulletin(Number(req.params.matricule));
     if (!bulletin) { res.status(404).json({ error: "Élève introuvable" }); return; }
 
@@ -186,27 +204,37 @@ router.get("/bulletin/:matricule/export", authorize(ROLES.ADMINISTRATEUR, ROLES.
     const el = bulletin.eleve as any;
     const nomEleve = `${el.nom ?? ""} ${el.prenom ?? ""}`.trim();
     const sexe = el.sexe === 1 ? "M" : el.sexe === 2 ? "F" : "-";
+    const isEnglish = lang === "en" || (lang !== "fr" && ((el.langue || "").toUpperCase().includes("ANG") || (el.langue || "").toUpperCase().includes("ENG")));
 
-    doc.fontSize(16).font("Helvetica-Bold").text("BULLETIN DE NOTES", { align: "center" });
-    doc.fontSize(11).font("Helvetica-Bold").text("GEP — Gestion d'Établissement de Formation", { align: "center" });
-    doc.moveDown(0.5);
-    doc.moveTo(40, doc.y).lineTo(555, doc.y).stroke();
+    doc.fontSize(11).font("Helvetica-Bold").text("REPUBLIC OF CAMEROON", { align: "center" });
+    doc.fontSize(9).font("Helvetica").text("Ministry of Education", { align: "center" });
+    doc.moveDown(0.3);
+    doc.moveTo(40, doc.y).lineTo(555, doc.y).lineWidth(1.5).stroke();
+    doc.moveDown(0.4);
+    doc.fontSize(12).font("Helvetica-Bold").text("GROUPE SCOLAIRE BILINGUE GEP", { align: "center" });
+    doc.moveDown(0.3);
+    doc.fontSize(14).font("Helvetica-Bold").text(isEnglish ? "REPORT CARD" : "BULLETIN DE NOTES / REPORT CARD", { align: "center" });
+    doc.moveDown(0.3);
+    doc.moveTo(40, doc.y).lineTo(555, doc.y).lineWidth(1).stroke();
     doc.moveDown(0.5);
 
-    doc.fontSize(10).font("Helvetica-Bold").text("INFORMATIONS ÉLÈVE", { underline: true });
+    doc.fontSize(10).font("Helvetica-Bold").text(isEnglish ? "STUDENT INFORMATION" : "INFORMATIONS ELEVE / STUDENT INFORMATION", { underline: true });
     doc.moveDown(0.3);
     doc.font("Helvetica").fontSize(10);
-    doc.text(`Matricule : ${el.matricule}   |   Nom : ${nomEleve}   |   Sexe : ${sexe}`);
-    if (el.dateNaissance) doc.text(`Date de naissance : ${new Date(el.dateNaissance).toLocaleDateString("fr-FR")}`);
+    doc.text(`Matricule : ${el.matriculeCode || el.matricule}   |   ${isEnglish ? "Name" : "Nom / Name"} : ${nomEleve}   |   ${isEnglish ? "Gender" : "Sexe / Gender"} : ${sexe}`);
+    if (el.dateNaissance) doc.text(`${isEnglish ? "Date of birth" : "Date de naissance / Date of birth"} : ${new Date(el.dateNaissance).toLocaleDateString("fr-FR")}`);
     doc.moveDown(0.8);
 
     for (const s of bulletin.sessions) {
-      doc.fontSize(11).font("Helvetica-Bold").text(`Session : ${s.session}`, { underline: true });
+      doc.fontSize(11).font("Helvetica-Bold").text(`${isEnglish ? "Session" : "Session"} : ${s.session}`, { underline: true });
       doc.moveDown(0.3);
 
       const colX = [40, 260, 330, 390, 460];
       doc.fontSize(8).font("Helvetica-Bold");
-      ["Cours", "Coefficient", "Note /20", "Pts pondérés", "Appréciation"].forEach((h, i) => {
+      const headers = isEnglish
+        ? ["Subject", "Coefficient", "Note /20", "W. Points", "Appreciation"]
+        : ["Cours / Subject", "Coefficient", "Note /20", "Pts pond. / Wpts", "Appreciation"];
+      headers.forEach((h, i) => {
         doc.text(h, colX[i]!, doc.y, { width: (colX[i + 1] ?? 555) - colX[i]!, lineBreak: false });
       });
       doc.moveDown(0.4);
@@ -217,7 +245,8 @@ router.get("/bulletin/:matricule/export", authorize(ROLES.ADMINISTRATEUR, ROLES.
       for (const l of s.lignes) {
         const y = doc.y;
         const pts = Math.round(l.note * l.coef * 100) / 100;
-        [l.cours.slice(0, 30), String(l.coef), String(l.note), String(pts), l.appreciation.slice(0, 18)].forEach((v, i) => {
+        const appLabel = isEnglish ? (l.appreciationEn || l.appreciation) : (l.appreciationFr || l.appreciation);
+        [l.cours.slice(0, 30), String(l.coef), String(l.note), String(pts), appLabel.slice(0, 18)].forEach((v, i) => {
           doc.text(v, colX[i]!, y, { width: (colX[i + 1] ?? 555) - colX[i]!, lineBreak: false });
         });
         doc.moveDown(0.55);
@@ -225,21 +254,45 @@ router.get("/bulletin/:matricule/export", authorize(ROLES.ADMINISTRATEUR, ROLES.
       }
       doc.moveTo(40, doc.y).lineTo(555, doc.y).stroke();
       doc.moveDown(0.3);
-      const mention = s.moyenne >= 16 ? "Très Bien" : s.moyenne >= 14 ? "Bien" : s.moyenne >= 12 ? "Assez Bien" : s.moyenne >= 10 ? "Passable" : "Insuffisant";
-      doc.fontSize(9).font("Helvetica-Bold").text(`Moyenne de session : ${s.moyenne}/20  —  ${mention}`, { align: "right" });
+
+      const mentionFR = s.moyenne >= 16 ? "Tres Bien" : s.moyenne >= 14 ? "Bien" : s.moyenne >= 12 ? "Assez Bien" : s.moyenne >= 10 ? "Passable" : "Insuffisant";
+      const mentionEN = s.moyenne >= 16 ? "Very Good" : s.moyenne >= 14 ? "Good" : s.moyenne >= 12 ? "Fairly Good" : s.moyenne >= 10 ? "Pass" : "Insufficient";
+      const mention = isEnglish ? mentionEN : `${mentionFR} / ${mentionEN}`;
+      doc.fontSize(9).font("Helvetica-Bold").text(`${isEnglish ? "Session average" : "Moyenne de session / Session average"} : ${s.moyenne}/20  —  ${mention}`, { align: "right" });
       doc.moveDown(0.8);
     }
 
     doc.moveTo(40, doc.y).lineTo(555, doc.y).lineWidth(1.5).stroke();
     doc.moveDown(0.4);
     const mG = bulletin.moyenneGenerale;
-    const mentionG = mG >= 16 ? "Très Bien" : mG >= 14 ? "Bien" : mG >= 12 ? "Assez Bien" : mG >= 10 ? "Passable" : "Insuffisant";
-    const decisionG = mG >= 10 ? "ADMIS(E)" : "À REPRENDRE";
+    const mentionGFR = mG >= 16 ? "Tres Bien" : mG >= 14 ? "Bien" : mG >= 12 ? "Assez Bien" : mG >= 10 ? "Passable" : "Insuffisant";
+    const mentionGEN = mG >= 16 ? "Very Good" : mG >= 14 ? "Good" : mG >= 12 ? "Fairly Good" : mG >= 10 ? "Pass" : "Insufficient";
+    const mentionG = isEnglish ? mentionGEN : `${mentionGFR} / ${mentionGEN}`;
+    const decisionG = mG >= 10
+      ? (isEnglish ? "PASSED" : "ADMIS(E) / PASSED")
+      : (isEnglish ? "TO RETAKE" : "A REPRENDRE / TO RETAKE");
     doc.fontSize(12).font("Helvetica-Bold")
-      .text(`MOYENNE GÉNÉRALE : ${mG}/20  —  ${mentionG}  —  ${decisionG}`, { align: "center" });
+      .text(`${isEnglish ? "GENERAL AVERAGE" : "MOYENNE GENERALE / GENERAL AVERAGE"} : ${mG}/20  —  ${mentionG}  —  ${decisionG}`, { align: "center" });
     doc.moveDown(0.5);
+
+    if (bulletin.appreciationGenerale) {
+      const genLabel = isEnglish
+        ? (bulletin.appreciationGeneraleEn || bulletin.appreciationGenerale)
+        : (bulletin.appreciationGeneraleFr || bulletin.appreciationGenerale);
+      doc.fontSize(10).font("Helvetica-Bold").text(`${isEnglish ? "Appreciation" : "Appreciation"} : ${genLabel}`, { align: "center" });
+      doc.moveDown(0.5);
+    }
+
     doc.fontSize(8).font("Helvetica").fillColor("#666")
-      .text(`Document généré le ${new Date().toLocaleDateString("fr-FR")} à ${new Date().toLocaleTimeString("fr-FR")}`, { align: "center" });
+      .text(`${isEnglish ? "Class council" : "Conseil de classe / Class council"}: ___________________________`, 40, doc.y);
+    doc.moveDown(1);
+    doc.moveTo(40, doc.y).lineTo(555, doc.y).lineWidth(0.5).stroke();
+    doc.moveDown(0.5);
+    doc.fontSize(8).font("Helvetica").fillColor("#444")
+      .text("GROUPE SCOLAIRE BILINGUE GEP  |  Email: info@gep-ecole.cm  |  Tel: +237 699 100 000", { align: "center" });
+    doc.moveDown(0.3);
+    doc.fontSize(7).font("Helvetica").fillColor("#999")
+      .text(`Document genere le ${new Date().toLocaleDateString("fr-FR")} a ${new Date().toLocaleTimeString("fr-FR")}`, { align: "center" });
     doc.end();
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });

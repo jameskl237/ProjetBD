@@ -18,6 +18,8 @@ import personnesRouter from "./personnes.ts";
 import dashboardRouter from "./dashboard.ts";
 import absencesRouter from "./absences.ts";
 import transportRouter from "./transport.ts";
+import bulletinsRouter from "./bulletins.ts";
+import appreciationsRouter from "./appreciations.ts";
 
 const router: IRouter = Router();
 
@@ -40,5 +42,7 @@ router.use("/livres", livresRouter);
 router.use("/personnes", personnesRouter);
 router.use("/absences", absencesRouter);
 router.use("/transport", transportRouter);
+router.use("/bulletins", bulletinsRouter);
+router.use("/appreciations", appreciationsRouter);
 
 export default router;

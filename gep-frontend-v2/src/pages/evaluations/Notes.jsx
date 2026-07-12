@@ -166,7 +166,7 @@ function NotesTab() {
           setNotes((prev) => ({ ...prev, [matricule]: { ...prev[matricule], idEval: res.idEval } }))
         }
       }
-      setMessage(`Note enregistrée pour #${matricule}`)
+      setMessage(`Note enregistrée pour #${eleves.find((e) => e.matricule == matricule)?.matriculeCode || matricule}`)
       evaluationsApi.list().then(setEvaluations).catch(() => {})
     } catch (err) {
       setMessage(err.response?.data?.error || 'Erreur lors de l\'enregistrement')
@@ -323,7 +323,7 @@ function NotesTab() {
                           <span style={{
                             fontFamily: 'monospace', fontSize: 12, fontWeight: 600,
                             padding: '2px 8px', borderRadius: 6, background: 'var(--border-light)',
-                          }}>{el.matricule}</span>
+                          }}>{el.matriculeCode || el.matricule}</span>
                         </td>
                         <td style={{ ...tdStyle, textAlign: 'center' }}>
                           <input
@@ -499,7 +499,7 @@ function BulletinsTab() {
                   {bulletin.eleve.nom} {bulletin.eleve.prenom}
                 </h3>
                 <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                  Matricule {bulletin.eleve.matricule}
+                  Matricule {bulletin.eleve.matriculeCode || bulletin.eleve.matricule}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>

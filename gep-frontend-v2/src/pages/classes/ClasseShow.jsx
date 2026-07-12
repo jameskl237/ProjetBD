@@ -42,7 +42,7 @@ export default function ClasseShow() {
           columns={[
             { key: 'nom', label: 'Nom' },
             { key: 'prenom', label: 'Prénom' },
-            { key: 'matricule', label: 'Matricule' },
+            { key: 'matricule', label: 'Matricule', render: (r) => r.matriculeCode || r.matricule },
           ]}
           rows={eleves}
           keyField="matricule"

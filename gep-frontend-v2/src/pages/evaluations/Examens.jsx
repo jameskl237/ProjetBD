@@ -11,7 +11,7 @@ import InputField from '../../components/forms/InputField'
 import SelectField from '../../components/forms/SelectField'
 import { useResource } from '../../hooks/useResource'
 import { sessionsApi, epreuvesApi, naturesApi } from '../../api/evaluations.api'
-import { trimestresApi } from '../../api/annees.api'
+import { trimestresApi, anneesApi } from '../../api/annees.api'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleKey, ROLES } from '../../config/navigation'
 
@@ -33,11 +33,12 @@ export default function Examens() {
   const epreuves = useResource(epreuvesApi)
   const natures = useResource(naturesApi)
   const [trimestres, setTrimestres] = useState([])
+  const [annees, setAnnees] = useState([])
   const [modal, setModal] = useState(null)
   const [formError, setFormError] = useState('')
   const [search, setSearch] = useState('')
 
-  useEffect(() => { trimestresApi.list().then(setTrimestres).catch(() => {}) }, [])
+  useEffect(() => { trimestresApi.list().then(setTrimestres).catch(() => {}); anneesApi.list().then(setAnnees).catch(() => {}) }, [])
 
   const filteredSessions = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -82,7 +83,7 @@ export default function Examens() {
         if (modal.mode === 'edit') await epreuvesApi.update(modal.values.idEpreuve, p); else await epreuvesApi.create(p)
         epreuves.reload()
       } else {
-        const p = { libelle: modal.values.libelle, description: modal.values.description }
+        const p = { libelle: modal.values.libelle, description: modal.values.description, idAnnee: modal.values.idAnnee ? Number(modal.values.idAnnee) : null }
         await naturesApi.create(p)
         natures.reload()
       }
@@ -100,7 +101,7 @@ export default function Examens() {
         actions={
           tab === 'sessions' && isAdmin ? <Button onClick={() => setModal({ mode: 'create', kind: 'session', values: { libelle: '', description: '', idTrimestre: '', date_passage: '' } })}>＋ Session</Button> :
           tab === 'epreuves' ? <Button onClick={() => setModal({ mode: 'create', kind: 'epreuve', values: { libelle: '', idNature: '', urlDoc: '', auteur: '' } })}>＋ Épreuve</Button> :
-          tab === 'natures' && isAdmin ? <Button onClick={() => setModal({ mode: 'create', kind: 'nature', values: { libelle: '', description: '' } })}>＋ Nature</Button> : null
+          tab === 'natures' && isAdmin ? <Button onClick={() => setModal({ mode: 'create', kind: 'nature', values: { libelle: '', description: '', idAnnee: '' } })}>＋ Nature</Button> : null
         }
       />
 
@@ -324,12 +325,13 @@ export default function Examens() {
                     <th style={thStyle}>#</th>
                     <th style={thStyle}>Libellé</th>
                     <th style={thStyle}>Description</th>
+                    <th style={thStyle}>Année Acad.</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredNatures.length === 0 && (
                     <tr>
-                      <td colSpan={3} style={{ padding: 48, textAlign: 'center' }}>
+                      <td colSpan={4} style={{ padding: 48, textAlign: 'center' }}>
                         <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
                         <div style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 15 }}>Aucune nature trouvée</div>
                       </td>
@@ -362,6 +364,11 @@ export default function Examens() {
                       <td style={tdStyle}>
                         <span style={{ fontSize: 13, color: n.description ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                           {n.description || '—'}
+                        </span>
+                      </td>
+                      <td style={tdStyle}>
+                        <span style={{ fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'var(--info-light)', color: 'var(--info)' }}>
+                          {n.annee?.libelle || '—'}
                         </span>
                       </td>
                     </tr>
@@ -397,7 +404,11 @@ export default function Examens() {
               </>
             )}
             {modal.kind !== 'epreuve' && (
-              <InputField label="Description" value={modal.values.description} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, description: e.target.value } }))} />
+              <>
+                <InputField label="Description" value={modal.values.description} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, description: e.target.value } }))} />
+                <SelectField label="Année académique" value={modal.values.idAnnee || ''} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, idAnnee: e.target.value } }))}
+                  options={annees.map((a) => ({ value: a.idAnnee, label: a.libelle }))} placeholder="Facultatif" />
+              </>
             )}
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
               <Button type="button" variant="secondary" onClick={() => setModal(null)}>Annuler</Button>

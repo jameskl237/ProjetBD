@@ -421,7 +421,7 @@ router.delete("/titulaires/:id", authorize(ROLES.ADMINISTRATEUR), async (req, re
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT), async (_req, res) => {
   try {
     const rows = await db
       .select({

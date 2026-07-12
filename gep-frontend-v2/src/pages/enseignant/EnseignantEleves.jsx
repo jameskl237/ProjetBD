@@ -185,7 +185,7 @@ export default function EnseignantEleves() {
                       <span style={{
                         fontFamily: 'monospace', fontSize: 12.5, fontWeight: 600,
                         padding: '3px 8px', borderRadius: 6, background: 'var(--border-light)',
-                      }}>{e.matricule}</span>
+                      }}>{e.matriculeCode || e.matricule}</span>
                     </td>
                     <td style={tdStyle}>
                       <span style={{
