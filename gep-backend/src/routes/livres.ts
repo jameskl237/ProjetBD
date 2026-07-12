@@ -44,6 +44,22 @@ router.post("/stock", validate(insertLivresSchema), async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
+router.put("/stock/:id", async (req, res) => {
+  try {
+    await db.update(livresTable).set(req.body).where(eq(livresTable.idLivre, Number(req.params.id)));
+    const [l] = await db.select().from(livresTable).where(eq(livresTable.idLivre, Number(req.params.id))).limit(1);
+    if (!l) { res.status(404).json({ error: "Livre introuvable" }); return; }
+    res.json(l);
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.delete("/stock/:id", async (req, res) => {
+  try {
+    await db.delete(livresTable).where(eq(livresTable.idLivre, Number(req.params.id)));
+    res.json({ message: "Livre supprimé" });
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
 router.get("/", async (_req, res) => {
   try {
     const livres = await db.select().from(livreTable);

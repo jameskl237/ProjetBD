@@ -5,10 +5,11 @@ import Button from '../../components/ui/Button'
 import Table from '../../components/ui/Table'
 import Modal from '../../components/ui/Modal'
 import Alert from '../../components/ui/Alert'
+import Badge from '../../components/ui/Badge'
 import InputField from '../../components/forms/InputField'
 import SelectField from '../../components/forms/SelectField'
 import { useResource } from '../../hooks/useResource'
-import { sessionsApi, epreuvesApi, naturesApi } from '../../api/evaluations.api'
+import { sessionsApi, epreuvesApi, naturesApi, epreuveValidationApi } from '../../api/evaluations.api'
 import { trimestresApi } from '../../api/annees.api'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleKey, ROLES } from '../../config/navigation'
@@ -23,7 +24,7 @@ export default function Examens() {
   const [tab, setTab] = useState('sessions')
   const { user } = useAuth()
   const roleKey = getRoleKey(user)
-  const isAdmin = roleKey === ROLES.ADMINISTRATEUR
+  const isAdmin = roleKey === ROLES.ADMINISTRATEUR || roleKey === ROLES.SECRETAIRE
 
   const sessions = useResource(sessionsApi)
   const epreuves = useResource(epreuvesApi)
@@ -31,6 +32,7 @@ export default function Examens() {
   const [trimestres, setTrimestres] = useState([])
   const [modal, setModal] = useState(null)
   const [formError, setFormError] = useState('')
+  const [message, setMessage] = useState('')
 
   useEffect(() => { trimestresApi.list().then(setTrimestres).catch(() => {}) }, [])
 
@@ -55,6 +57,24 @@ export default function Examens() {
     } catch (err) { setFormError(err.response?.data?.error || 'Erreur lors de l\'enregistrement') }
   }
 
+  function flash(msg) { setMessage(msg); setTimeout(() => setMessage(''), 4000) }
+
+  async function handleValiderEpreuve(id) {
+    try {
+      await epreuveValidationApi.valider(id)
+      flash('Épreuve validée avec succès')
+      epreuves.reload()
+    } catch (err) { flash(err.response?.data?.error || 'Erreur lors de la validation') }
+  }
+
+  async function handleRejeterEpreuve(id) {
+    try {
+      await epreuveValidationApi.rejeter(id)
+      flash('Épreuve rejetée')
+      epreuves.reload()
+    } catch (err) { flash(err.response?.data?.error || 'Erreur lors du rejet') }
+  }
+
   return (
     <div>
       <PageHeader
@@ -66,6 +86,8 @@ export default function Examens() {
           tab === 'natures' && isAdmin ? <Button onClick={() => setModal({ mode: 'create', kind: 'nature', values: { libelle: '', description: '' } })}>＋ Nature</Button> : null
         }
       />
+
+      {message && <Alert tone="info">{message}</Alert>}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
         {TABS.map((t) => (
@@ -89,7 +111,7 @@ export default function Examens() {
             actions={isAdmin ? (row) => (
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <button onClick={() => setModal({ mode: 'edit', kind: 'session', values: row })} style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Modifier</button>
-                <button onClick={async () => { if (confirm('Supprimer ?')) { await sessionsApi.remove(row.idSession); sessions.reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>
+                <button onClick={async () => { if (confirm('Supprimer cette session ?')) { await sessionsApi.remove(row.idSession); sessions.reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>
               </div>
             ) : null} />
         </Card>
@@ -102,11 +124,14 @@ export default function Examens() {
             { key: 'libelle', label: 'Libellé' },
             { key: 'nature', label: 'Nature', render: (r) => r.nature?.libelle || '—' },
             { key: 'auteur', label: 'Auteur' },
+            { key: 'valider', label: 'Statut', render: (r) => <Badge tone={r.valider ? 'success' : 'warning'}>{r.valider ? 'Validée' : 'En attente'}</Badge> },
           ]} rows={epreuves.data} loading={epreuves.loading} keyField="idEpreuve"
             actions={(row) => (
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                {isAdmin && !row.valider && <button onClick={() => handleValiderEpreuve(row.idEpreuve)} style={{ color: 'var(--success)', fontSize: 13, fontWeight: 600 }}>Valider</button>}
+                {isAdmin && row.valider && <button onClick={() => handleRejeterEpreuve(row.idEpreuve)} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Rejeter</button>}
                 <button onClick={() => setModal({ mode: 'edit', kind: 'epreuve', values: row })} style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Modifier</button>
-                {isAdmin && <button onClick={async () => { if (confirm('Supprimer ?')) { await epreuvesApi.remove(row.idEpreuve); epreuves.reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>}
+                {isAdmin && <button onClick={async () => { if (confirm('Supprimer cette épreuve ?')) { await epreuvesApi.remove(row.idEpreuve); epreuves.reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>}
               </div>
             )} />
         </Card>

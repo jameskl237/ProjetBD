@@ -13,7 +13,7 @@ export default function ClasseIndex() {
   const { data, loading, error, reload } = useResource(classesApi)
   const { user } = useAuth()
   const roleKey = getRoleKey(user)
-  const isAdmin = roleKey === ROLES.ADMINISTRATEUR
+  const isAdmin = roleKey === ROLES.ADMINISTRATEUR || roleKey === ROLES.SECRETAIRE
 
   async function handleDelete(row) {
     if (!confirm(`Supprimer la classe ${row.libelle} ?`)) return

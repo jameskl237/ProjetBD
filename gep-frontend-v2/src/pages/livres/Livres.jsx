@@ -8,11 +8,11 @@ import Alert from '../../components/ui/Alert'
 import InputField from '../../components/forms/InputField'
 import SelectField from '../../components/forms/SelectField'
 import { useResource } from '../../hooks/useResource'
-import { livresApi, specialitesApi } from '../../api/livres.api'
+import { stockApi, specialitesApi } from '../../api/livres.api'
 
 export default function Livres() {
-  const { data, loading, error, reload } = useResource(livresApi)
-  const specialites = useResource(specialitesApi)
+  const { data, loading, error, reload } = useResource(stockApi)
+  const { data: specialites, reload: reloadSpecialites } = useResource(specialitesApi)
   const [modal, setModal] = useState(null)
   const [formError, setFormError] = useState('')
 
@@ -21,20 +21,14 @@ export default function Livres() {
     setFormError('')
     try {
       const p = {
-        titre: modal.values.titre, auteurs: modal.values.auteurs,
-        idSpecialite: Number(modal.values.idSpecialite), edition: modal.values.edition,
+        titre: modal.values.titre, auteurs: modal.values.auteurs || '',
+        idSpecialite: Number(modal.values.idSpecialite), edition: modal.values.edition || '',
         totalCopie: Number(modal.values.totalCopie || 1),
+        prix: Number(modal.values.prix || 0),
       }
-      if (modal.mode === 'edit') await livresApi.update(modal.values.idLivre, p); else await livresApi.create(p)
+      if (modal.mode === 'edit') await stockApi.update(modal.values.idLivre, p); else await stockApi.create(p)
       setModal(null); reload()
-    } catch (err) { setFormError(err.response?.data?.error || 'Erreur') }
-  }
-
-  async function handleAddSpecialite() {
-    const libelle = prompt('Nom de la nouvelle spécialité :')
-    if (!libelle) return
-    await specialitesApi.create({ libelle })
-    specialites.reload()
+    } catch (err) { setFormError(err.response?.data?.error || 'Erreur lors de l\'enregistrement du livre') }
   }
 
   return (
@@ -42,10 +36,7 @@ export default function Livres() {
       <PageHeader
         title="Bibliothèque"
         subtitle="Fonds documentaire de l'établissement"
-        actions={<>
-          <Button variant="secondary" onClick={handleAddSpecialite}>＋ Spécialité</Button>
-          <Button onClick={() => { setModal({ mode: 'create', values: { titre: '', auteurs: '', idSpecialite: '', edition: '', totalCopie: 1 } }); setFormError('') }}>＋ Livre</Button>
-        </>}
+        actions={<Button onClick={() => { setModal({ mode: 'create', values: { titre: '', auteurs: '', idSpecialite: '', edition: '', totalCopie: 1, prix: '' } }); setFormError('') }}>＋ Livre</Button>}
       />
       <Alert tone="error">{error}</Alert>
       <Card style={{ padding: 0 }}>
@@ -53,7 +44,8 @@ export default function Livres() {
           columns={[
             { key: 'titre', label: 'Titre' },
             { key: 'auteurs', label: 'Auteur(s)' },
-            { key: 'idSpecialite', label: 'Spécialité', render: (r) => specialites.data.find((s) => s.idSpecialite === r.idSpecialite)?.libelle || '—' },
+            { key: 'idSpecialite', label: 'Spécialité', render: (r) => specialites?.find((s) => s.idSpecialite === r.idSpecialite)?.libelle || '—' },
+            { key: 'edition', label: 'Édition' },
             { key: 'totalCopie', label: 'Copies' },
           ]}
           rows={data}
@@ -62,22 +54,23 @@ export default function Livres() {
           actions={(row) => (
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => { setModal({ mode: 'edit', values: row }); setFormError('') }} style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Modifier</button>
-              <button onClick={async () => { if (confirm('Supprimer ?')) { await livresApi.remove(row.idLivre); reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>
+              <button onClick={async () => { if (confirm('Supprimer ce livre ?')) { await stockApi.remove(row.idLivre); reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>
             </div>
           )}
         />
       </Card>
 
-      <Modal open={!!modal} title={modal?.mode === 'create' ? 'Ajouter un livre' : 'Modifier'} onClose={() => setModal(null)}>
+      <Modal open={!!modal} title={modal?.mode === 'create' ? 'Ajouter un livre' : 'Modifier le livre'} onClose={() => setModal(null)}>
         {modal && (
           <form onSubmit={handleSubmit}>
             <Alert tone="error">{formError}</Alert>
             <InputField label="Titre" required value={modal.values.titre} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, titre: e.target.value } }))} />
             <InputField label="Auteur(s)" value={modal.values.auteurs} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, auteurs: e.target.value } }))} />
             <SelectField label="Spécialité" required value={modal.values.idSpecialite} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, idSpecialite: e.target.value } }))}
-              options={specialites.data.map((s) => ({ value: s.idSpecialite, label: s.libelle }))} />
+              options={(specialites || []).map((s) => ({ value: s.idSpecialite, label: s.libelle }))} />
             <InputField label="Édition" value={modal.values.edition} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, edition: e.target.value } }))} />
-            <InputField label="Nombre de copies" type="number" value={modal.values.totalCopie} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, totalCopie: e.target.value } }))} />
+            <InputField label="Prix" type="number" value={modal.values.prix} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, prix: e.target.value } }))} />
+            <InputField label="Nombre de copies" type="number" required value={modal.values.totalCopie} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, totalCopie: e.target.value } }))} />
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <Button type="button" variant="secondary" onClick={() => setModal(null)}>Annuler</Button>
               <Button type="submit">Enregistrer</Button>

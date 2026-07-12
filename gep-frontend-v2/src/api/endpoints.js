@@ -6,6 +6,7 @@ export const ENDPOINTS = {
     me: '/auth/me',
   },
   admins: '/admins',
+  adminsMe: '/admins/me',
   dashboard: { stats: '/dashboard/stats' },
   eleves: '/eleves',
   classes: '/classes',

@@ -9,7 +9,7 @@ import { getParentMatricules, requireEleveScope } from "../middlewares/scope.ts"
 import { getTrancheStatutForEleve } from "../lib/tranches.ts";
 
 const router = Router();
-router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT));
+router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT, ROLES.SECRETAIRE));
 
 /** Classe actuellement fréquentée par l'élève pour une année donnée (dernière inscription connue sinon). */
 async function getEleveClasseId(matricule: number, idAca: number): Promise<number | null> {
@@ -220,8 +220,8 @@ router.get("/impayes", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (
       const scolariteTranches = tranchesByScolarite.get(scolarite.idScolarite) ?? [];
       let echeance: Date | null = null;
       for (const t of scolariteTranches) {
-        const mois = Number(t.delai_mois);
-        const jour = Number(t.delai_jour);
+        const mois = Number((t as any).delai_mois);
+        const jour = Number((t as any).delai_jour);
         if (!mois || !jour) continue;
         const date = new Date(today.getFullYear(), mois - 1, jour);
         if (!echeance || date > echeance) echeance = date;
@@ -279,7 +279,7 @@ router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (req,
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.post("/", authorize(ROLES.COMPTABLE), async (req, res) => {
+router.post("/", authorize(ROLES.COMPTABLE, ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     const { matricule, idAca, montant, idMode, datePaie, idTranche } = req.body;
     if (!matricule || !idAca || !montant || !idMode || !datePaie || !idTranche) {
@@ -309,16 +309,29 @@ router.post("/", authorize(ROLES.COMPTABLE), async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.put("/:id", authorize(ROLES.COMPTABLE), async (req, res) => {
+router.put("/:id", authorize(ROLES.COMPTABLE, ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
-    await db.update(paiementTable).set(req.body).where(eq(paiementTable.idPaie, Number(req.params.id)));
+    const { matricule, idAca, montant, idMode, datePaie, idTranche, url, comentaire, operation_ID } = req.body;
+    const data: Record<string, unknown> = {};
+    if (matricule !== undefined) data.matricule = matricule;
+    if (idAca !== undefined) data.idAca = idAca;
+    if (montant !== undefined) data.montant = montant;
+    if (idMode !== undefined) data.idMode = idMode;
+    if (datePaie !== undefined) data.datePaie = datePaie;
+    if (idTranche !== undefined) data.idTranche = idTranche;
+    if (url !== undefined) data.url = url;
+    if (comentaire !== undefined) data.comentaire = comentaire;
+    if (operation_ID !== undefined) data.operation_ID = operation_ID;
+    if (Object.keys(data).length > 0) {
+      await db.update(paiementTable).set(data).where(eq(paiementTable.idPaie, Number(req.params.id)));
+    }
     const [p] = await paiementsWithRelations(eq(paiementTable.idPaie, Number(req.params.id)));
     if (!p) { res.status(404).json({ error: "Paiement introuvable" }); return; }
     res.json(p);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.delete("/:id", authorize(ROLES.COMPTABLE), async (req, res) => {
+router.delete("/:id", authorize(ROLES.COMPTABLE, ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     await db.delete(paiementTable).where(eq(paiementTable.idPaie, Number(req.params.id)));
     res.json({ message: "Paiement supprimé" });

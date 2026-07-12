@@ -25,7 +25,7 @@ const TABS = [
 export default function Paiements() {
   const { user } = useAuth()
   const roleKey = getRoleKey(user)
-  const isComptable = roleKey === ROLES.COMPTABLE
+  const isComptable = roleKey === ROLES.COMPTABLE || roleKey === ROLES.SECRETAIRE
   const [tab, setTab] = useState('liste')
 
   const { data, loading, error, reload } = useResource(paiementsApi)
@@ -60,7 +60,7 @@ export default function Paiements() {
   async function loadStatut(matricule, idAca) {
     if (!matricule || !idAca) { setStatut(null); return }
     try {
-      const res = await paiementsExtra.statut(matricule)
+      const res = await paiementsExtra.statut(matricule, idAca)
       setStatut(res)
     } catch { setStatut(null) }
   }

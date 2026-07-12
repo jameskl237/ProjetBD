@@ -13,7 +13,7 @@ export default function Cours() {
 
   return (
     <SimpleCrudPage
-      title="Cours / Matières"
+      title="Cours & Matières"
       subtitle="Matières enseignées, rattachées à une classe"
       service={coursApi}
       idField="idCours"

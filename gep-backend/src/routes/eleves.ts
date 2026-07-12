@@ -13,6 +13,8 @@ import {
   classeTable,
   parentsTable,
   personneTable,
+  residentsTable,
+  quartierTable,
   coursTable,
   rapportTable,
   disciplineTable,
@@ -23,6 +25,7 @@ import { z } from "zod";
 import { authenticate } from "../middlewares/auth.ts";
 import { authorize, ROLES, getRole } from "../middlewares/rbac.ts";
 import { getEnseignantClasseIds, getParentMatricules, requireEleveScope } from "../middlewares/scope.ts";
+import { getTrancheStatutForEleve } from "../lib/tranches.ts";
 
 const parentSchema = z.object({
   nom: z.string().min(1),
@@ -42,8 +45,20 @@ const inscriptionSchema = z.object({
   commentaire: z.string().optional(),
 });
 
+type EleveInscription = {
+  classe: typeof classeTable.$inferSelect | null;
+  annee: typeof anneeAcademiqueTable.$inferSelect | null;
+  idSalle: number;
+};
+
+type EleveWithRelations = typeof eleveTable.$inferSelect & {
+  inscriptions: EleveInscription[];
+  tuteurs: { tuteur: typeof personneTable.$inferSelect }[];
+  quartier: typeof quartierTable.$inferSelect | null;
+};
+
 /** Finds an existing VilleNaissance row by name (trimmed) or creates one. Must run inside the caller's transaction. */
-async function resolveVilleNaissance(tx: typeof db, villeName: string): Promise<number> {
+async function resolveVilleNaissance(tx: { select: any; insert: any }, villeName: string): Promise<number> {
   const libelle = villeName.trim();
   const [existing] = await tx.select().from(villeNaissanceTable).where(eq(villeNaissanceTable.libelle, libelle)).limit(1);
   if (existing) return existing.idVille;
@@ -55,14 +70,17 @@ const router = Router();
 router.use(authenticate);
 
 /** Filters an already-enriched eleve list down to what the caller's role is allowed to see. */
-async function scopeElevesForRole<T extends { matricule: number; inscriptions: { classe?: { idClasse?: number } }[] }>(
+async function scopeElevesForRole<T extends { matricule: number; inscriptions: Array<{ classe?: { idClasse?: number } | null | undefined; annee?: { idAnnee?: number } | null | undefined }> }>(
   eleves: T[],
   userId: number,
   role: ReturnType<typeof getRole>,
 ): Promise<T[]> {
   if (role === ROLES.ENSEIGNANT) {
     const classeIds = new Set(await getEnseignantClasseIds(userId));
-    return eleves.filter((e) => e.inscriptions.some((i) => i.classe?.idClasse != null && classeIds.has(i.classe.idClasse)));
+    return eleves.filter((e) => e.inscriptions.some((i) => {
+      const classe = i.classe as { idClasse?: number } | null | undefined;
+      return classe?.idClasse != null && classeIds.has(classe.idClasse);
+    }));
   }
   if (role === ROLES.PARENT) {
     const matricules = new Set(await getParentMatricules(userId));
@@ -71,9 +89,9 @@ async function scopeElevesForRole<T extends { matricule: number; inscriptions: {
   return eleves;
 }
 
-async function attachRelations(eleves: (typeof eleveTable.$inferSelect)[]) {
+async function attachRelations(eleves: (typeof eleveTable.$inferSelect)[]): Promise<EleveWithRelations[]> {
   const matricules = eleves.map((e) => e.matricule);
-  if (matricules.length === 0) return eleves.map((eleve) => ({ ...eleve, inscriptions: [], tuteurs: [] }));
+  if (matricules.length === 0) return eleves.map((eleve) => ({ ...eleve, inscriptions: [], tuteurs: [], quartier: null }));
 
   const [inscriptionRows, tuteurRows] = await Promise.all([
     db
@@ -91,31 +109,61 @@ async function attachRelations(eleves: (typeof eleveTable.$inferSelect)[]) {
       .where(and(inArray(parentsTable.matricule, matricules), eq(parentsTable.isDelete, 0))),
   ]);
 
-  const inscriptionByMatricule = new Map<number, { classe: unknown; annee: unknown; idSalle: number }>();
+  const inscriptionByMatricule = new Map<number, EleveInscription>();
   for (const row of inscriptionRows) {
     if (!inscriptionByMatricule.has(row.frequente.matricule)) {
       inscriptionByMatricule.set(row.frequente.matricule, { classe: row.classe, annee: row.annee, idSalle: row.frequente.idSalle });
     }
   }
 
-  const tuteursByMatricule = new Map<number, { tuteur: unknown }[]>();
+  const tuteursByMatricule = new Map<number, { tuteur: typeof personneTable.$inferSelect }[]>();
+  const parentIds = new Set<number>();
   for (const row of tuteurRows) {
     const list = tuteursByMatricule.get(row.parent.matricule) ?? [];
-    list.push({ tuteur: row.personne });
+    list.push({ tuteur: row.personne as typeof personneTable.$inferSelect });
     tuteursByMatricule.set(row.parent.matricule, list);
+    parentIds.add(row.parent.idPers);
+  }
+
+  const residentRows = parentIds.size === 0 ? [] : await db
+    .select({ resident: residentsTable, quartier: quartierTable })
+    .from(residentsTable)
+    .leftJoin(quartierTable, eq(residentsTable.idQuartier, quartierTable.idQuartier))
+    .where(and(inArray(residentsTable.idPers, [...parentIds]), eq(residentsTable.isDelete, 0)));
+
+  const quartierByParent = new Map<number, typeof quartierTable.$inferSelect>();
+  for (const row of residentRows) {
+    if (!quartierByParent.has(row.resident.idPers) && row.quartier) {
+      quartierByParent.set(row.resident.idPers, row.quartier);
+    }
   }
 
   return eleves.map((eleve) => {
     const inscription = inscriptionByMatricule.get(eleve.matricule);
+    const tuteurs = tuteursByMatricule.get(eleve.matricule) ?? [];
+    const quartier = tuteurs
+      .map((t) => quartierByParent.get((t.tuteur as any).idPers))
+      .find(Boolean) || null;
+
     return {
       ...eleve,
       inscriptions: inscription ? [inscription] : [],
-      tuteurs: tuteursByMatricule.get(eleve.matricule) ?? [],
+      tuteurs,
+      quartier,
     };
   });
 }
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.ENSEIGNANT, ROLES.PARENT), async (req, res) => {
+async function getElevePaymentStatus(matricule: number, inscription: EleveInscription | undefined) {
+  if (!inscription?.classe?.idClasse || !inscription?.annee?.idAnnee) return undefined;
+  const statut = await getTrancheStatutForEleve(matricule, inscription.classe.idClasse, inscription.annee.idAnnee);
+  if (!statut || statut.length === 0) return undefined;
+  if (statut.every((t) => t.statut === 'payé')) return 'payé';
+  if (statut.some((t) => t.statut === 'partiel')) return 'partiel';
+  return 'impayé';
+}
+
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const rows = await db
       .select({ eleve: eleveTable, ville: villeNaissanceTable })
@@ -125,11 +173,15 @@ router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.ENSEIGNAN
     const eleves = await attachRelations(rows.map((r) => r.eleve));
     const withVille = eleves.map((eleve, i) => ({ ...eleve, ville: rows[i]!.ville }));
     const scoped = await scopeElevesForRole(withVille, req.user!.id, getRole(req.user));
-    res.json(scoped);
+    const withStatus = await Promise.all(scoped.map(async (eleve) => ({
+      ...eleve,
+      paiementStatut: await getElevePaymentStatus(eleve.matricule, eleve.inscriptions?.[0]),
+    })));
+    res.json(withStatus);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id/paiements", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT), requireEleveScope(), async (req, res) => {
+router.get("/:id/paiements", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT, ROLES.SECRETAIRE), requireEleveScope(), async (req, res) => {
   try {
     const rows = await db
       .select({ paiement: paiementTable, annee: anneeAcademiqueTable, mode: modeTable })
@@ -143,7 +195,7 @@ router.get("/:id/paiements", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, RO
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id/notes", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT), requireEleveScope(), async (req, res) => {
+router.get("/:id/notes", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE), requireEleveScope(), async (req, res) => {
   try {
     const rows = await db
       .select({ evaluation: evaluationTable, cours: coursTable, personne: personneTable })
@@ -156,14 +208,14 @@ router.get("/:id/notes", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id/inscriptions", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
+router.get("/:id/inscriptions", authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const inscriptions = await db.select().from(frequenteTable).where(eq(frequenteTable.matricule, Number(req.params.id)));
     res.json(inscriptions);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id/rapports", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
+router.get("/:id/rapports", authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const rows = await db
       .select({ rapport: rapportTable, discipline: disciplineTable })
@@ -175,7 +227,7 @@ router.get("/:id/rapports", authorize(ROLES.ADMINISTRATEUR), async (req, res) =>
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.ENSEIGNANT, ROLES.PARENT), requireEleveScope(), async (req, res) => {
+router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE), requireEleveScope(), async (req, res) => {
   try {
     const rows = await db
       .select({ eleve: eleveTable, ville: villeNaissanceTable })
@@ -226,7 +278,7 @@ router.post("/", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
     const now = new Date();
     const eleve = await db.transaction(async (tx) => {
       const { idVilleNaissance: _placeholder, ...eleveRest } = eleveParsed.data;
-      const idVilleNaissance = await resolveVilleNaissance(tx, villeParsed.data);
+      const idVilleNaissance = await resolveVilleNaissance(tx as any, villeParsed.data);
 
       const [eleveResult] = await tx.insert(eleveTable).values({ ...eleveRest, idVilleNaissance, idAdmin: req.user!.id, created_at: now });
       const matricule = eleveResult.insertId;
@@ -278,12 +330,24 @@ router.post("/", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   }
 });
 
-router.put("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
+router.put("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE), async (req, res) => {
   try {
-    const { matricule: _ignoredMatricule, villeNaissance, ...updatable } = req.body;
-    if (typeof villeNaissance === "string" && villeNaissance.trim()) {
-      updatable.idVilleNaissance = await resolveVilleNaissance(db, villeNaissance);
+    const { nom, prenom, dateNaissance, lieuNaissance, sexe, langue, photoURL, actif, idVilleNaissance, villeNaissance: villeNaissanceText } = req.body as Record<string, any>;
+    const updatable: Record<string, any> = {};
+    if (nom !== undefined) updatable.nom = nom;
+    if (prenom !== undefined) updatable.prenom = prenom;
+    if (dateNaissance !== undefined) updatable.dateNaissance = dateNaissance;
+    if (lieuNaissance !== undefined) updatable.lieuNaissance = lieuNaissance;
+    if (sexe !== undefined) updatable.sexe = sexe;
+    if (langue !== undefined) updatable.langue = langue;
+    if (photoURL !== undefined) updatable.photoURL = photoURL;
+    if (actif !== undefined) updatable.actif = actif;
+    if (typeof villeNaissanceText === "string" && villeNaissanceText.trim()) {
+      updatable.idVilleNaissance = await resolveVilleNaissance(db, villeNaissanceText);
+    } else if (idVilleNaissance !== undefined) {
+      updatable.idVilleNaissance = idVilleNaissance;
     }
+    if (Object.keys(updatable).length === 0) { res.status(400).json({ error: "Aucun champ à modifier" }); return; }
     await db.update(eleveTable).set(updatable).where(eq(eleveTable.matricule, Number(req.params.id)));
     const rows = await db
       .select({ eleve: eleveTable, ville: villeNaissanceTable })

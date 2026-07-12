@@ -9,7 +9,7 @@ import { authorize, requireDirecteur, ROLES } from "../middlewares/rbac.ts";
 import { validate } from "../middlewares/validate.ts";
 
 const router = Router();
-router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT));
+router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE));
 
 const safeFields = {
   idPers: personneTable.idPers,
@@ -29,7 +29,7 @@ const safeFields = {
   created_at: personneTable.created_at,
 };
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (_req, res) => {
   try {
     const personnes = await db.select(safeFields).from(personneTable).where(eq(personneTable.isDelete, 0));
     res.json(personnes);
@@ -56,7 +56,7 @@ router.put("/me", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT), async (req, res) => {
+router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const [p] = await db.select(safeFields).from(personneTable).where(eq(personneTable.idPers, Number(req.params.id))).limit(1);
     if (!p) { res.status(404).json({ error: "Personne introuvable" }); return; }

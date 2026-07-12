@@ -57,7 +57,7 @@ export default function EleveShow() {
       <PageHeader
         title={`${eleve.nom} ${eleve.prenom}`}
         subtitle={`Matricule ${eleve.matricule} · ${inscription?.classe?.libelle || 'Non inscrit'}`}
-        actions={roleKey === ROLES.ADMINISTRATEUR ? (
+        actions={roleKey === ROLES.ADMINISTRATEUR || roleKey === ROLES.SECRETAIRE ? (
           <>
             <Link to={`/eleves/${id}/modifier`}><Button variant="secondary">Modifier</Button></Link>
             <Button variant="danger" onClick={handleDelete}>Supprimer</Button>
