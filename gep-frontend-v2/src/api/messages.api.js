@@ -8,4 +8,6 @@ export const messagesApi = {
   ...base,
   marquerLu: (id) => client.put(`${ENDPOINTS.messages}/${id}/lire`).then((r) => r.data),
   valider: (id) => client.put(`${ENDPOINTS.messages}/${id}/valider`).then((r) => r.data),
+  broadcast: ({ target, idClasse, ids, objet, information }) =>
+    client.post(`${ENDPOINTS.messages}/broadcast`, { target, idClasse, ids, objet, information }).then((r) => r.data),
 }

@@ -64,6 +64,7 @@ import ParentAbsences from './pages/parent/Absences'
 import ParentEmploiDuTemps from './pages/parent/EmploiDuTemps'
 import ParentTransport from './pages/parent/Transport'
 import ParentPaiements from './pages/parent/Paiements'
+import ParentAppreciations from './pages/parent/Appreciations'
 
 const ADMIN = [ROLES.ADMINISTRATEUR]
 const ADMIN_COMPTABLE = [ROLES.ADMINISTRATEUR, ROLES.COMPTABLE]
@@ -154,6 +155,7 @@ export default function App() {
             <Route path="/parent/emploi-du-temps" element={guarded(PARENT, <ParentEmploiDuTemps />)} />
             <Route path="/parent/transport" element={guarded(PARENT, <ParentTransport />)} />
             <Route path="/parent/paiements" element={guarded(PARENT, <ParentPaiements />)} />
+            <Route path="/parent/appreciations" element={guarded(PARENT, <ParentAppreciations />)} />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>

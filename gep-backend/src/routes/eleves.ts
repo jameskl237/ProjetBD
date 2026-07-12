@@ -19,6 +19,7 @@ import {
 } from "@workspace/db/schema";
 import { eq, and, inArray, desc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import PDFDocument from "pdfkit";
 import { z } from "zod";
 import { authenticate } from "../middlewares/auth.ts";
 import { authorize, ROLES, getRole } from "../middlewares/rbac.ts";
@@ -305,6 +306,90 @@ router.delete("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     await db.update(eleveTable).set({ isDelete: 1 }).where(eq(eleveTable.matricule, Number(req.params.id)));
     res.json({ message: "Élève supprimé" });
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.get("/:id/badge", authorize(ROLES.ADMINISTRATEUR, ROLES.PARENT, ROLES.ENSEIGNANT), requireEleveScope("id"), async (req, res) => {
+  try {
+    const matricule = Number(req.params.id);
+    const [row] = await db
+      .select({ eleve: eleveTable, ville: villeNaissanceTable })
+      .from(eleveTable)
+      .leftJoin(villeNaissanceTable, eq(eleveTable.idVilleNaissance, villeNaissanceTable.idVille))
+      .where(eq(eleveTable.matricule, matricule))
+      .limit(1);
+    if (!row) { res.status(404).json({ error: "Élève introuvable" }); return; }
+
+    const el = row.eleve;
+    const inscriptions = await db
+      .select({ freq: frequenteTable, salle: salleTable, classe: classeTable })
+      .from(frequenteTable)
+      .leftJoin(salleTable, eq(frequenteTable.idSalle, salleTable.idSalle))
+      .leftJoin(classeTable, eq(salleTable.idClasse, classeTable.idClasse))
+      .where(eq(frequenteTable.matricule, matricule));
+    const latestAnnee = await db
+      .select().from(anneeAcademiqueTable)
+      .where(eq(anneeAcademiqueTable.isDelete, 0))
+      .orderBy(desc(anneeAcademiqueTable.idAnnee))
+      .limit(1);
+    const currentInscription = inscriptions.find((i) => latestAnnee[0] && i.freq.idAcademi === latestAnnee[0].idAnnee) || inscriptions[inscriptions.length - 1];
+    const classeLibelle = currentInscription?.classe?.libelle || "—";
+    const anneeLibelle = latestAnnee[0]?.libelle || new Date().getFullYear().toString();
+    const nomEleve = `${el.nom ?? ""} ${el.prenom ?? ""}`.trim();
+    const matriculeDisplay = el.matriculeCode || String(el.matricule).padStart(8, "0");
+    const sexe = el.sexe === 1 ? "Masculin / Male" : el.sexe === 0 ? "Féminin / Female" : "—";
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=badge_${matricule}.pdf`);
+
+    const doc = new PDFDocument({ size: [340, 220], margin: 0 });
+    doc.pipe(res);
+
+    doc.rect(0, 0, 340, 220).fill("#ffffff");
+
+    doc.rect(4, 4, 332, 212).lineWidth(3).stroke("#1b4332");
+    doc.rect(8, 8, 324, 204).lineWidth(1).stroke("#d4af37");
+
+    doc.rect(12, 12, 316, 50).fill("#1b4332");
+    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(13).text("GROUPE SCOLAIRE BILINGUE GEP", 12, 20, { width: 316, align: "center" });
+    doc.fontSize(8).font("Helvetica").text("BADGE D'ELEVE / STUDENT CARD", 12, 38, { width: 316, align: "center" });
+
+    const yPhoto = 72;
+    if (el.photoURL) {
+      try {
+        doc.image(el.photoURL, 24, yPhoto, { width: 60, height: 60 });
+      } catch {
+        doc.rect(24, yPhoto, 60, 60).fill("#e5e7eb");
+        doc.fillColor("#9ca3af").font("Helvetica-Bold").fontSize(16)
+          .text((el.nom?.[0] || "") + (el.prenom?.[0] || ""), 24, yPhoto + 20, { width: 60, align: "center" });
+      }
+    } else {
+      doc.rect(24, yPhoto, 60, 60).fill("#1b4332");
+      doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(20)
+        .text((el.nom?.[0] || "") + (el.prenom?.[0] || ""), 24, yPhoto + 18, { width: 60, align: "center" });
+    }
+
+    const infoX = 96;
+    doc.fillColor("#1b4332").font("Helvetica-Bold").fontSize(12).text(nomEleve, infoX, yPhoto, { width: 220 });
+    doc.font("Helvetica").fontSize(9).fillColor("#333333");
+    doc.text(`Matricule : ${matriculeDisplay}`, infoX, yPhoto + 18, { width: 220 });
+    doc.text(`Classe : ${classeLibelle}`, infoX, yPhoto + 31, { width: 220 });
+    doc.text(`Sexe : ${sexe}`, infoX, yPhoto + 44, { width: 220 });
+
+    const yFooter = 148;
+    doc.rect(12, yFooter, 316, 1).fill("#d4af37");
+
+    doc.font("Helvetica").fontSize(8).fillColor("#666666");
+    doc.text(`Annee scolaire / Academic year : ${anneeLibelle}`, 16, yFooter + 6, { width: 308, align: "center" });
+    if (el.dateNaissance) {
+      doc.text(`Ne(e) le / Date of birth : ${new Date(el.dateNaissance).toLocaleDateString("fr-FR")}`, 16, yFooter + 18, { width: 308, align: "center" });
+    }
+    doc.text(`Lieu : ${el.lieuNaissance || "—"}`, 16, yFooter + 30, { width: 308, align: "center" });
+
+    doc.fontSize(7).fillColor("#999999")
+      .text("GROUPE SCOLAIRE BILINGUE GEP  |  info@gep-ecole.cm  |  +237 699 100 000", 12, 198, { width: 316, align: "center" });
+
+    doc.end();
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 

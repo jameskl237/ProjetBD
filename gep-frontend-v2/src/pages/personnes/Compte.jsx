@@ -9,15 +9,19 @@ import Spinner from '../../components/ui/Spinner'
 import { personnesApi } from '../../api/personnes.api'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleKey, ROLES } from '../../config/navigation'
+import ParentMonCompte from '../parent/MonCompte'
 
 // "Mon compte" — utilisable par Enseignant et Parent via GET/PUT /personnes/me.
 // Les comptes Admin/Comptable n'ont pas d'entrée Personne : /personnes/me ne
 // leur est pas applicable côté backend (authorize exclut même le Comptable),
 // donc on les redirige vers la gestion des comptes admin plutôt que d'appeler
 // un endpoint qui ne les concerne pas.
+// Le Parent bénéficie d'une dédiée avec avatar, tabs et liste d'enfants.
 export default function Compte() {
   const { user } = useAuth()
   const roleKey = getRoleKey(user)
+
+  if (roleKey === ROLES.PARENT) return <ParentMonCompte />
 
   if (roleKey === ROLES.ADMINISTRATEUR || roleKey === ROLES.COMPTABLE) {
     return (

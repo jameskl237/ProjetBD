@@ -7,6 +7,7 @@ import Badge from '../../components/ui/Badge'
 import { elevesApi } from '../../api/eleves.api'
 import { bulletinApi } from '../../api/evaluations.api'
 import { paiementsExtra } from '../../api/paiements.api'
+import client from '../../api/client'
 
 export default function ParentEnfants() {
   const [enfants, setEnfants] = useState(null)
@@ -93,6 +94,24 @@ export default function ParentEnfants() {
                       <span>Sexe : {sexeLabel}</span>
                       <span>Langue : {e.langue || '—'}</span>
                       <span>Ville : {e.ville?.nom || '—'}</span>
+                    </div>
+                    <div style={{ marginTop: 10 }}>
+                      <a
+                        href={`${client.defaults.baseURL}/eleves/${e.matricule}/badge`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          padding: '7px 16px', borderRadius: 'var(--radius-sm)',
+                          background: 'var(--accent)', color: '#fff',
+                          fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                          transition: 'opacity 0.15s',
+                        }}
+                        onMouseEnter={(ev) => ev.currentTarget.style.opacity = '0.85'}
+                        onMouseLeave={(ev) => ev.currentTarget.style.opacity = '1'}
+                      >
+                        🪪 Générer le badge
+                      </a>
                     </div>
                   </div>
                 </div>

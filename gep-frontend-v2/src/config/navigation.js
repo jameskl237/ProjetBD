@@ -92,6 +92,7 @@ export const NAV_ITEMS = [
   { to: '/parent/emploi-du-temps', icon: '📅', label: 'Emploi du temps', roles: [ROLES.PARENT] },
   { to: '/parent/transport', icon: '🚌', label: 'Transport', roles: [ROLES.PARENT] },
   { to: '/parent/paiements', icon: '💳', label: 'Paiements', roles: [ROLES.PARENT] },
+  { to: '/parent/appreciations', icon: '⭐', label: 'Appréciations', roles: [ROLES.PARENT] },
 ]
 
 // Si le rôle n'est pas encore résolu (session en cours de chargement), on
