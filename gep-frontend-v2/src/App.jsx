@@ -45,6 +45,8 @@ import Transport from './pages/transport/Transport'
 import Personnes from './pages/personnes/Personnes'
 import Compte from './pages/personnes/Compte'
 import Comptes from './pages/admin/Comptes'
+import BulletinsAdmin from './pages/admin/BulletinsAdmin'
+import Appreciations from './pages/admin/Appreciations'
 
 import EnseignantDashboard from './pages/enseignant/EnseignantDashboard'
 import EnseignantCours from './pages/enseignant/EnseignantCours'
@@ -56,6 +58,7 @@ import EnseignantNouvelleAnnonce from './pages/enseignant/EnseignantNouvelleAnno
 import EnseignantCompte from './pages/enseignant/EnseignantCompte'
 
 import ParentDashboard from './pages/parent/ParentDashboard'
+import ParentEnfants from './pages/parent/ParentEnfants'
 import ParentNotes from './pages/parent/Notes'
 import ParentAbsences from './pages/parent/Absences'
 import ParentEmploiDuTemps from './pages/parent/EmploiDuTemps'
@@ -96,6 +99,7 @@ export default function App() {
             <Route path="/enseignant/cours" element={guarded(ENSEIGNANT, <EnseignantCours />)} />
             <Route path="/enseignant/eleves" element={guarded(ENSEIGNANT, <EnseignantEleves />)} />
             <Route path="/parent" element={guarded(PARENT, <ParentDashboard />)} />
+            <Route path="/parent/enfants" element={guarded(PARENT, <ParentEnfants />)} />
 
             <Route path="/eleves" element={guarded(ADMIN_COMPTABLE_ENSEIGNANT, <EleveIndex />)} />
             <Route path="/eleves/nouveau" element={guarded(ADMIN, <EleveForm />)} />
@@ -140,6 +144,8 @@ export default function App() {
             <Route path="/enseignant/annonces/nouvelle" element={guarded(ENSEIGNANT, <EnseignantNouvelleAnnonce />)} />
 
             <Route path="/comptes" element={guarded(ADMIN, <Comptes />)} />
+            <Route path="/bulletins-admin" element={guarded(ADMIN, <BulletinsAdmin />)} />
+            <Route path="/appreciations" element={guarded(ADMIN, <Appreciations />)} />
             <Route path="/compte" element={guarded([ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT], <Compte />)} />
             <Route path="/enseignant/compte" element={guarded(ENSEIGNANT, <EnseignantCompte />)} />
 

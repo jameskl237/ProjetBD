@@ -231,6 +231,10 @@ router.post("/", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
       const [eleveResult] = await tx.insert(eleveTable).values({ ...eleveRest, idVilleNaissance, idAdmin: req.user!.id, created_at: now });
       const matricule = eleveResult.insertId;
 
+      const yearSuffix = String(now.getFullYear()).slice(-2);
+      const matriculeCode = String(matricule).padStart(6, '0') + yearSuffix;
+      await tx.update(eleveTable).set({ matriculeCode }).where(eq(eleveTable.matricule, matricule));
+
       await tx.insert(frequenteTable).values({
         idSalle: inscriptionParsed.data.idSalle,
         idAcademi: inscriptionParsed.data.idAnnee,

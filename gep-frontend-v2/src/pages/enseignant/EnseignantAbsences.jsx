@@ -262,7 +262,7 @@ export default function EnseignantAbsences() {
                       <span style={{
                         fontFamily: 'monospace', fontSize: 12, fontWeight: 600,
                         padding: '2px 8px', borderRadius: 6, background: 'var(--border-light)',
-                      }}>{a.matricule}</span>
+                      }}>{a.eleve?.matriculeCode || a.matricule}</span>
                     </td>
                     <td style={tdStyle}>
                       <span style={{ fontSize: 13, fontWeight: 600 }}>{a.cours?.libelle || '—'}</span>

@@ -56,7 +56,7 @@ export default function EleveShow() {
     <div>
       <PageHeader
         title={`${eleve.nom} ${eleve.prenom}`}
-        subtitle={`Matricule ${eleve.matricule} · ${inscription?.classe?.libelle || 'Non inscrit'}`}
+        subtitle={`Matricule ${eleve.matriculeCode || eleve.matricule} · ${inscription?.classe?.libelle || 'Non inscrit'}`}
         actions={roleKey === ROLES.ADMINISTRATEUR ? (
           <>
             <Link to={`/eleves/${id}/modifier`}><Button variant="secondary">Modifier</Button></Link>

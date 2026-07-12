@@ -46,7 +46,7 @@ export default function Transport() {
       <Card style={{ padding: 0 }}>
         <Table
           columns={[
-            { key: 'matricule', label: 'Élève', render: (r) => eleves.find((e) => e.matricule === r.matricule) ? `${eleves.find((e) => e.matricule === r.matricule).nom} ${eleves.find((e) => e.matricule === r.matricule).prenom}` : `#${r.matricule}` },
+            { key: 'matricule', label: 'Élève', render: (r) => { const e = eleves.find((e) => e.matricule === r.matricule); return e ? `${e.nom} ${e.prenom}` : `#${r.eleve?.matriculeCode || r.matricule}`; } },
             { key: 'type', label: 'Type', render: (r) => TYPES.find((t) => Number(t.value) === r.type)?.label || '—' },
             { key: 'dateDebut', label: 'Début', render: (r) => r.dateDebut?.slice(0, 10) },
             { key: 'dateFin', label: 'Fin', render: (r) => r.dateFin?.slice(0, 10) || '—' },

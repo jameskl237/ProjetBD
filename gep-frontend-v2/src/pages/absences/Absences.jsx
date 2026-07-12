@@ -59,7 +59,7 @@ export default function Absences() {
       <Card style={{ padding: 0 }}>
         <Table
           columns={[
-            { key: 'eleve', label: 'Élève', render: (r) => r.eleve ? `${r.eleve.nom} ${r.eleve.prenom}` : `#${r.matricule}` },
+            { key: 'eleve', label: 'Élève', render: (r) => r.eleve ? `${r.eleve.nom} ${r.eleve.prenom}` : `#${r.eleve?.matriculeCode || r.matricule}` },
             { key: 'cours', label: 'Cours', render: (r) => r.cours?.libelle || '—' },
             { key: 'date', label: 'Date', render: (r) => r.date?.slice(0, 10) },
             { key: 'justifiee', label: 'Statut', render: (r) => <Badge tone={r.justifiee ? 'success' : 'warning'}>{r.justifiee ? 'Justifiée' : 'Non justifiée'}</Badge> },

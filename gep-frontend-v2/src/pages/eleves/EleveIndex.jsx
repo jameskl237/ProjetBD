@@ -20,11 +20,11 @@ export default function EleveIndex() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return data
-    return data.filter((e) => `${e.nom} ${e.prenom} ${e.matricule}`.toLowerCase().includes(q))
+    return data.filter((e) => `${e.nom} ${e.prenom} ${e.matricule} ${e.matriculeCode}`.toLowerCase().includes(q))
   }, [data, search])
 
   const columns = [
-    { key: 'matricule', label: 'Matricule' },
+    { key: 'matricule', label: 'Matricule', render: (r) => r.matriculeCode || r.matricule },
     { key: 'nom', label: 'Nom' },
     { key: 'prenom', label: 'Prénom' },
     {

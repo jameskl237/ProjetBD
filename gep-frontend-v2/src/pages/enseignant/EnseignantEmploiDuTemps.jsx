@@ -13,6 +13,24 @@ import { classesApi, sallesApi } from '../../api/classes.api'
 import { useAuth } from '../../hooks/useAuth'
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
+
+const CRENEAUX = [
+  { value: '07:30', label: '07h30 – 08h00' },
+  { value: '08:00', label: '08h00 – 08h30' },
+  { value: '08:30', label: '08h30 – 09h00' },
+  { value: '09:00', label: '09h00 – 09h30' },
+  { value: '10:00', label: '10h00 – 10h30 (après pause)' },
+  { value: '10:30', label: '10h30 – 11h00' },
+  { value: '11:00', label: '11h00 – 11h30' },
+  { value: '11:30', label: '11h30 – 12h00' },
+  { value: '12:30', label: '12h30 – 13h00 (après pause)' },
+  { value: '13:00', label: '13h00 – 13h30' },
+  { value: '13:30', label: '13h30 – 14h00' },
+  { value: '14:00', label: '14h00 – 14h30' },
+  { value: '14:30', label: '14h30 – 15h00' },
+  { value: '15:00', label: '15h00 – 15h30' },
+  { value: '15:30', label: '15h30 – 16h00' },
+]
 const COULEURS = [
   { bg: '#eef2ff', border: '#818cf8', text: '#3730a3' },
   { bg: '#ecfdf5', border: '#34d399', text: '#065f46' },
@@ -423,12 +441,12 @@ export default function EnseignantEmploiDuTemps() {
               onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, jour: e.target.value } }))}
               options={JOURS.map((j) => ({ value: j, label: j }))}
             />
-            <InputField
-              label="Heure"
+            <SelectField
+              label="Créneau horaire"
               required
-              placeholder="Ex: 08:00"
               value={modal.values.heure}
               onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, heure: e.target.value } }))}
+              options={CRENEAUX}
             />
             <SelectField
               label="Cours"

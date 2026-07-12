@@ -44,6 +44,7 @@ export const ENDPOINTS = {
     impayes: '/paiements/impayes',
     statut: (matricule) => `/paiements/statut/${matricule}`,
     parEleve: (matricule) => `/paiements/eleve/${matricule}`,
+    recu: (id) => `/paiements/${id}/recu`,
   },
   parents: {
     root: '/parents',
@@ -67,4 +68,6 @@ export const ENDPOINTS = {
   },
   absences: '/absences',
   transport: { abonnements: '/transport/abonnements' },
+  bulletins: '/bulletins',
+  appreciations: '/appreciations',
 }

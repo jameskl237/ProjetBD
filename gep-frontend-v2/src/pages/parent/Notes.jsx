@@ -44,7 +44,7 @@ export default function ParentNotes() {
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
             <div>
               <h3>{bulletin.eleve.nom} {bulletin.eleve.prenom}</h3>
-              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Matricule {bulletin.eleve.matricule}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Matricule {bulletin.eleve.matriculeCode || bulletin.eleve.matricule}</div>
             </div>
             <a href={bulletinApi.exportUrl(matricule) + '?format=pdf'} target="_blank" rel="noreferrer"><Button variant="secondary">Télécharger le bulletin (PDF)</Button></a>
           </div>
