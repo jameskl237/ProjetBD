@@ -30,18 +30,35 @@ const CRENEAUX = [
   { value: '15:30', label: '15h30 – 16h00' },
 ]
 
-const COULEURS = [
-  { bg: '#eef2ff', border: '#818cf8', text: '#3730a3' },
-  { bg: '#ecfdf5', border: '#34d399', text: '#065f46' },
-  { bg: '#fef3c7', border: '#fbbf24', text: '#92400e' },
-  { bg: '#fce7f3', border: '#f472b6', text: '#9d174d' },
-  { bg: '#dbeafe', border: '#60a5fa', text: '#1e40af' },
-  { bg: '#f3e8ff', border: '#a78bfa', text: '#5b21b6' },
-  { bg: '#ffedd5', border: '#fb923c', text: '#9a3412' },
-  { bg: '#d1fae5', border: '#6ee7b7', text: '#065f46' },
-  { bg: '#e0e7ff', border: '#818cf8', text: '#3730a3' },
-  { bg: '#fdf2f8', border: '#f9a8d4', text: '#9d174d' },
-]
+const FAMILLES = {
+  lang: { label: 'Langues', bg: '#E6ECF4', border: '#2B4C7E', text: '#1D3A63' },
+  math: { label: 'Mathématiques', bg: '#F7EFD6', border: '#C9A227', text: '#7A5A10' },
+  sci: { label: 'Sciences', bg: '#E4F1EC', border: '#3E8E7E', text: '#296155' },
+  art: { label: 'Arts & Sport', bg: '#F5E7E6', border: '#A63D40', text: '#7C2C2E' },
+  gen: { label: 'Général / Autre', bg: '#EDEAE0', border: '#8B8E80', text: '#54574B' },
+}
+
+function getCourseFamily(libelle) {
+  if (!libelle) return 'gen'
+  const s = libelle.toLowerCase()
+  if (s.includes('math') || s.includes('alg') || s.includes('géo') || s.includes('arith')) return 'math'
+  if (
+    s.includes('français') || s.includes('francais') || s.includes('english') || s.includes('anglais') ||
+    s.includes('lang') || s.includes('dict') || s.includes('gramm') || s.includes('ortho') ||
+    s.includes('lect') || s.includes('voc') || s.includes('expr') || s.includes('lv') ||
+    s.includes('espagnol') || s.includes('allemand') || s.includes('littér') || s.includes('litter')
+  ) return 'lang'
+  if (
+    s.includes('sci') || s.includes('phys') || s.includes('chim') || s.includes('biol') ||
+    s.includes('observ') || s.includes('tech') || s.includes('info')
+  ) return 'sci'
+  if (
+    s.includes('art') || s.includes('dessin') || s.includes('musique') || s.includes('chant') ||
+    s.includes('poés') || s.includes('poes') || s.includes('sport') || s.includes('eps') ||
+    s.includes('gym') || s.includes('physique et')
+  ) return 'art'
+  return 'gen'
+}
 
 const SECTION_STYLE = {
   Francophone: { bg: '#E6ECF4', color: '#1D3A63' },
@@ -136,20 +153,16 @@ export default function EmploiDuTemps() {
 
   const currentClasse = idClasse ? classeMap[Number(idClasse)] : null
 
-  const coursCouleurs = useMemo(() => {
-    const m = {}
-    let i = 0
-    filtered.forEach((e) => {
-      if (!m[e.idCours]) { m[e.idCours] = COULEURS[i % COULEURS.length]; i++ }
-    })
-    return m
-  }, [filtered])
-
   const slots = useMemo(() => {
-    const set = new Set()
+    if (!idClasse) {
+      const set = new Set()
+      filtered.forEach((e) => { if (e.heure) set.add(e.heure) })
+      return [...set].sort()
+    }
+    const set = new Set(CRENEAUX.map((c) => c.value))
     filtered.forEach((e) => { if (e.heure) set.add(e.heure) })
     return [...set].sort()
-  }, [filtered])
+  }, [filtered, idClasse])
 
   const grid = useMemo(() => {
     const g = {}
@@ -254,8 +267,12 @@ export default function EmploiDuTemps() {
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <span style={pillStyle}>🗓️ Hebdomadaire</span>
-            <span style={pillStyle}>🎓 {stats.total} créneaux</span>
-            <span style={pillStyle}>📖 {stats.cours} cours</span>
+            {idClasse && (
+              <>
+                <span style={pillStyle}>🎓 {stats.total} créneaux</span>
+                <span style={pillStyle}>📖 {stats.cours} cours</span>
+              </>
+            )}
           </div>
         </div>
       </Card>
@@ -286,48 +303,65 @@ export default function EmploiDuTemps() {
           </span>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginLeft: 'auto', flexWrap: 'wrap' }}>
-          {currentClasse?.titulaire && (
+          {idClasse && currentClasse?.titulaire && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
-              👤 Titulaire : <strong>{currentClasse.titulaire}</strong>
+              👤 Titulaire : <strong>{currentClasse.titulaire.nom} {currentClasse.titulaire.prenom}</strong>
             </span>
           )}
-          {currentClasse?.effectif != null && (
+          {idClasse && currentClasse?.effectif != null && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
               👥 {currentClasse.effectif} élèves
             </span>
+          )}
+          {idClasse && (
+            <Button onClick={() => openCreate()}>
+              <span style={{ marginRight: 6 }}>＋</span> Nouveau créneau
+            </Button>
           )}
         </div>
       </Card>
 
       {/* ── Stats ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14, marginBottom: 20 }}>
-        <StatCard icon="📅" label="Créneaux" value={stats.total} hint="Total de séances" tone="info" />
-        <StatCard icon="📆" label="Jours actifs" value={stats.actifs} hint="Jours programmés" tone="warning" />
-        <StatCard icon="📖" label="Cours" value={stats.cours} hint="Disciplines" tone="success" />
-        <StatCard icon="🏫" label="Classes" value={stats.classes} hint="Classes concernées" tone="danger" />
-      </div>
+      {idClasse && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14, marginBottom: 20 }}>
+          <StatCard icon="📅" label="Créneaux" value={stats.total} hint="Total de séances" tone="info" />
+          <StatCard icon="📆" label="Jours actifs" value={stats.actifs} hint="Jours programmés" tone="warning" />
+          <StatCard icon="📖" label="Cours" value={stats.cours} hint="Disciplines" tone="success" />
+          <StatCard icon="🏫" label="Salle" value={stats.classes} hint="Salles utilisées" tone="danger" />
+        </div>
+      )}
 
       {/* ── Legend ── */}
-      {Object.keys(coursCouleurs).length > 0 && (
+      {idClasse && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 18, margin: '4px 2px 16px', flexWrap: 'wrap' }}>
-          {Object.entries(coursCouleurs).map(([idCours, c]) => (
-            <div key={idCours} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: 'var(--text-secondary)' }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', background: c.border, flexShrink: 0 }} />
-              {coursMap[idCours]?.libelle || `Cours #${idCours}`}
+          {Object.entries(FAMILLES).map(([key, f]) => (
+            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: 'var(--text-secondary)' }}>
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: f.border, flexShrink: 0 }} />
+              {f.label}
             </div>
           ))}
         </div>
       )}
 
-      {/* ── Schedule Grid ── */}
-      {filtered.length === 0 ? (
+      {/* ── No class selected ── */}
+      {!idClasse ? (
+        <Card style={{ padding: 64, textAlign: 'center' }}>
+          <div style={{ fontSize: 54, marginBottom: 12 }}>🗓️</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
+            Sélectionnez une classe
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            Choisissez une classe dans le menu ci-dessus pour afficher et gérer son emploi du temps.
+          </div>
+        </Card>
+      ) : filtered.length === 0 ? (
         <Card style={{ padding: 64, textAlign: 'center' }}>
           <div style={{ fontSize: 54, marginBottom: 12 }}>📅</div>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
             Aucun créneau programmé
           </div>
           <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-            {idClasse ? 'Aucun cours programmé pour cette classe.' : "L'emploi du temps est encore vide. Ajoutez des créneaux pour commencer."}
+            Aucun cours programmé pour cette classe.
           </div>
           <Button onClick={() => openCreate()} style={{ marginTop: 18 }}>＋ Ajouter un créneau</Button>
         </Card>
@@ -371,25 +405,40 @@ export default function EmploiDuTemps() {
                           borderBottom: '1px solid var(--border-light)', minWidth: 124, height: 80,
                         }}>
                           {cellItems.map((item, idx) => {
-                            const c = coursCouleurs[item.idCours] || COULEURS[0]
                             const crs = coursMap[item.idCours]
+                            const famKey = getCourseFamily(crs?.libelle)
+                            const c = FAMILLES[famKey]
+                            const teachers = ensByCours[item.idCours] || []
+                            const teacherNames = teachers.map(t => `${t.prenom || ''} ${t.nom || ''}`.trim()).join(', ')
                             return (
                               <div key={idx} style={{
                                 background: c.bg, borderLeft: `3px solid ${c.border}`,
                                 borderRadius: 10, padding: '8px 10px', marginBottom: 4,
                                 boxShadow: '0 4px 12px rgba(15, 23, 42, 0.06)',
-                                cursor: 'pointer',
                                 transition: 'transform .12s ease, box-shadow .12s ease',
                               }}
-                                onClick={() => openEdit(item)}
                                 onMouseEnter={(ev) => { ev.currentTarget.style.transform = 'translateY(-1px)'; ev.currentTarget.style.boxShadow = '0 8px 18px rgba(15, 23, 42, 0.10)' }}
                                 onMouseLeave={(ev) => { ev.currentTarget.style.transform = 'translateY(0)'; ev.currentTarget.style.boxShadow = '0 4px 12px rgba(15, 23, 42, 0.06)' }}
                               >
-                                <div style={{ fontSize: 13, fontWeight: 800, color: c.text, marginBottom: 2, lineHeight: 1.2 }}>
-                                  {crs?.libelle || `Cours #${item.idCours}`}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 4 }}>
+                                  <div style={{ fontSize: 13, fontWeight: 800, color: c.text, lineHeight: 1.2, minWidth: 0 }}>
+                                    {crs?.libelle || `Cours #${item.idCours}`}
+                                  </div>
+                                  <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                                    <button
+                                      onClick={(ev) => { ev.stopPropagation(); openEdit(item) }}
+                                      style={{ width: 22, height: 22, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: c.text, background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                                      title="Modifier"
+                                    >✎</button>
+                                    <button
+                                      onClick={(ev) => { ev.stopPropagation(); handleDelete(item) }}
+                                      style={{ width: 22, height: 22, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: '#E11D48', background: 'rgba(255,255,255,0.6)', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+                                      title="Supprimer"
+                                    >✕</button>
+                                  </div>
                                 </div>
-                                <div style={{ fontSize: 11, color: c.text, opacity: 0.8, fontWeight: 600 }}>
-                                  {classeMap[item.idClasse]?.libelle || `Classe #${item.idClasse}`}
+                                <div style={{ fontSize: 11, color: c.text, opacity: 0.8, fontWeight: 600, marginTop: 2 }}>
+                                  {idClasse ? (teacherNames || 'Sans enseignant') : (classeMap[item.idClasse]?.libelle || `Classe #${item.idClasse}`)}
                                 </div>
                                 {item.idSalle && (
                                   <div style={{ fontSize: 10, color: c.text, opacity: 0.6, marginTop: 2, fontFamily: 'monospace' }}>

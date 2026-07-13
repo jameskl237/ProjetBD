@@ -8,7 +8,9 @@ import Badge from '../../components/ui/Badge'
 import StatCard from '../../components/ui/StatCard'
 import SelectField from '../../components/forms/SelectField'
 import Spinner from '../../components/ui/Spinner'
-import { evaluationsApi, sessionsApi, epreuvesApi, bulletinApi } from '../../api/evaluations.api'
+import Table from '../../components/ui/Table'
+import { useResource } from '../../hooks/useResource'
+import { evaluationsApi, sessionsApi, epreuvesApi, bulletinApi, evaluationValidationApi } from '../../api/evaluations.api'
 import { coursApi, enseignantsApi } from '../../api/cours.api'
 import { classesApi } from '../../api/classes.api'
 import { elevesApi } from '../../api/eleves.api'
@@ -234,7 +236,7 @@ function BulletinsTab() {
               <a href={bulletinApi.exportUrl(matricule) + '?format=pdf'} target="_blank" rel="noreferrer"><Button variant="secondary">Exporter PDF</Button></a>
               <a href={bulletinApi.exportUrl(matricule) + '?format=csv'} target="_blank" rel="noreferrer"><Button variant="secondary">Exporter CSV</Button></a>
             </div>
-          </Card>
+          </div>
 
           {bulletin.sessions.map((s, i) => (
             <Card key={i} style={{ marginBottom: 16 }}>
@@ -296,7 +298,7 @@ function BulletinsTab() {
               {bulletin.moyenneGenerale}/20
             </span>
           </Card>
-        </div>
+        </Card>
       )}
 
       {idClasse && !bulletin && !loading && !error && (

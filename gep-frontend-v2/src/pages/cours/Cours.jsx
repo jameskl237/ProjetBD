@@ -1,6 +1,4 @@
 import { useEffect, useState, useMemo } from 'react'
-import PageHeader from '../../components/layout/PageHeader'
-import Card from '../../components/ui/Card'
 import Spinner from '../../components/ui/Spinner'
 import Alert from '../../components/ui/Alert'
 import Button from '../../components/ui/Button'
@@ -68,9 +66,11 @@ export default function Cours() {
     const map = {}
     enseignants.forEach((e) => {
       const id = e.cours?.idCours
-      if (!id) return
+      if (!id || !e.personne) return
       if (!map[id]) map[id] = []
-      if (e.personne) map[id].push(e.personne)
+      if (!map[id].some((p) => p.idPers === e.personne.idPers)) {
+        map[id].push(e.personne)
+      }
     })
     return map
   }, [enseignants])
@@ -159,25 +159,6 @@ export default function Cours() {
   if (loading) return <Spinner label="Chargement des cours…" />
 
   return (
-    <SimpleCrudPage
-      title="Cours & Matières"
-      subtitle="Matières enseignées, rattachées à une classe"
-      service={coursApi}
-      idField="idCours"
-      columns={[
-        { key: 'libelle', label: 'Libellé' },
-        { key: 'classe', label: 'Classe', render: (r) => classes.find((c) => c.idClasse === r.idClasse)?.libelle || `#${r.idClasse}` },
-        { key: 'coefficient', label: 'Coefficient' },
-        { key: 'heures', label: 'Heures' },
-      ]}
-      fields={[
-        { name: 'libelle', label: 'Libellé', required: true },
-        { name: 'idClasse', label: 'Classe', type: 'select', required: true, options: classes.map((c) => ({ value: c.idClasse, label: c.libelle })) },
-        { name: 'coefficient', label: 'Coefficient', type: 'number', default: 1 },
-        { name: 'heures', label: 'Heures', type: 'number' },
-        { name: 'description', label: 'Description' },
-      ]}
-    />
     <div>
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
@@ -278,94 +259,118 @@ export default function Cours() {
           </div>
         </div>
 
-        {/* ── Card grid ── */}
-        {filtered.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: 16 }}>
-            {filtered.map((c) => {
-              const ens = coursEnseignants[c.idCours] || []
-              const sectionKey = SECTION_KEY[c.section] || 'all'
-              const sectionColor = SECTION_COLORS[c.section]?.accent || 'var(--text-muted)'
-              return (
-                <div key={c.idCours} className="course-card" style={cardStyle(sectionColor)}>
-                  {/* Spine */}
-                  <div style={{ width: 6, flexShrink: 0, background: sectionColor, borderRadius: '11px 0 0 11px' }} />
-                  {/* Body */}
-                  <div style={{ padding: '16px 18px 15px', flex: 1, minWidth: 0 }}>
-                    {/* Top row: title + badge */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontFamily: 'var(--font)', fontWeight: 700, fontSize: 15.5, margin: 0, lineHeight: 1.3, color: 'var(--text-primary)' }}>
-                          {c.libelle}
-                        </div>
+        {/* ── Table ── */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <thead>
+              <tr>
+                {[
+                  { label: 'Cours', width: '22%' },
+                  { label: 'Classe', width: '14%' },
+                  { label: 'Section', width: '14%' },
+                  { label: 'Enseignant(s)', width: '20%' },
+                  { label: 'Coeff.', width: '8%' },
+                  { label: 'Heures', width: '8%' },
+                  { label: '', width: '14%' },
+                ].map((col, i) => (
+                  <th key={i} style={{
+                    textAlign: 'left', padding: '12px 14px', borderBottom: '2px solid var(--border)',
+                    color: 'var(--text-secondary)', fontWeight: 700, fontSize: 11, textTransform: 'uppercase',
+                    letterSpacing: 0.5, width: col.width, whiteSpace: 'nowrap',
+                  }}>
+                    {col.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>📂</div>
+                    <p style={{ margin: 0, fontSize: 14 }}>
+                      {search || filterClasse || activeTab !== 'all' ? 'Aucun cours ne correspond à ces critères.' : 'Aucun cours enregistré.'}
+                    </p>
+                  </td>
+                </tr>
+              ) : filtered.map((c) => {
+                const ens = coursEnseignants[c.idCours] || []
+                return (
+                  <tr
+                    key={c.idCours}
+                    style={{ borderBottom: '1px solid var(--border-light)', transition: 'background .12s' }}
+                    onMouseEnter={(ev) => ev.currentTarget.style.background = 'var(--border-light)'}
+                    onMouseLeave={(ev) => ev.currentTarget.style.background = 'transparent'}
+                  >
+                    <td style={{ padding: '12px 14px' }}>
+                      <div>
+                        <span style={{ fontWeight: 700, fontSize: 14.5, color: 'var(--text-primary)' }}>{c.libelle}</span>
                         {c.description && (
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>
-                            {c.description.slice(0, 55)}{c.description.length > 55 ? '…' : ''}
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 240 }}>
+                            {c.description.slice(0, 60)}{c.description.length > 60 ? '…' : ''}
                           </div>
                         )}
                       </div>
-                      <span style={{
-                        fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                        whiteSpace: 'nowrap', flexShrink: 0, lineHeight: '18px',
-                        background: SECTION_COLORS[c.section]?.bg || 'var(--border-light)',
-                        color: SECTION_COLORS[c.section]?.text || 'var(--text-secondary)',
-                      }}>
-                        {c.classe?.libelle || `#${c.idClasse}`}
-                      </span>
-                    </div>
-
-                    {/* Meta rows */}
-                    <div style={{ marginTop: 13, display: 'flex', flexDirection: 'column', gap: 7 }}>
-                      {ens.length > 0 ? ens.map((p) => (
-                        <div key={p.idPers} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.8, color: 'var(--text-primary)' }}>
-                          <span style={{ fontSize: 13 }}>👤</span>
-                          {p.nom} {p.prenom}
+                    </td>
+                    <td style={{ padding: '12px 14px' }}>
+                      {c.classe?.libelle ? (
+                        <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 999, background: 'var(--accent-light)', color: 'var(--accent)' }}>
+                          {c.classe.libelle}
+                        </span>
+                      ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                    </td>
+                    <td style={{ padding: '12px 14px' }}>
+                      {c.section ? (
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap',
+                          background: SECTION_COLORS[c.section]?.bg || 'var(--border-light)',
+                          color: SECTION_COLORS[c.section]?.text || 'var(--text-secondary)',
+                        }}>
+                          {c.section}
+                        </span>
+                      ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                    </td>
+                    <td style={{ padding: '12px 14px' }}>
+                      {ens.length > 0 ? (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                          {ens.map((p) => (
+                            <span key={p.idPers} style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)' }}>
+                              {p.nom} {p.prenom}{ens.indexOf(p) < ens.length - 1 ? ', ' : ''}
+                            </span>
+                          ))}
                         </div>
-                      )) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.8, color: 'var(--text-muted)' }}>
-                          <span style={{ fontSize: 13 }}>👤</span>
-                          Aucun enseignant affecté
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
-                        {c.section && <span>📖 {c.section}</span>}
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div style={{ marginTop: 13, paddingTop: 11, borderTop: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        {c.coefficient && (
-                          <span style={{ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', color: 'var(--text-secondary)', background: 'var(--border-light)', padding: '3px 8px', borderRadius: 6 }}>
-                            Coeff. {c.coefficient}
-                          </span>
-                        )}
-                        {c.heures && (
-                          <span style={{ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', color: 'var(--text-secondary)', background: 'var(--border-light)', padding: '3px 8px', borderRadius: 6 }}>
-                            {c.heures}h / semaine
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => openEdit(c)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
+                      ) : <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Aucun</span>}
+                    </td>
+                    <td style={{ padding: '12px 14px' }}>
+                      {c.coefficient ? (
+                        <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: 'var(--text-secondary)', background: 'var(--border-light)', padding: '3px 8px', borderRadius: 6 }}>
+                          {c.coefficient}
+                        </span>
+                      ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                    </td>
+                    <td style={{ padding: '12px 14px' }}>
+                      {c.heures ? (
+                        <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
+                          {c.heures}h
+                        </span>
+                      ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                    </td>
+                    <td style={{ padding: '12px 14px' }}>
+                      <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                        <button onClick={() => openEdit(c)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
                           Modifier
                         </button>
-                        <button onClick={() => handleDelete(c)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--danger)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
+                        <button onClick={() => handleDelete(c)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--danger)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
                           Supprimer
                         </button>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '56px 20px', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>📂</div>
-            <p style={{ margin: 0, fontSize: 14 }}>Aucun cours ne correspond à ces critères.</p>
-            <p style={{ margin: '6px 0 0', fontSize: 13 }}>Essayez d'ajuster les filtres.</p>
-          </div>
-        )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ── Modal ── */}
@@ -455,14 +460,4 @@ function StatBlock({ accent, label, value, note }) {
   )
 }
 
-function cardStyle(spineColor) {
-  return {
-    border: '1px solid var(--border)',
-    borderRadius: 11,
-    padding: 0,
-    overflow: 'hidden',
-    background: 'var(--card-bg)',
-    display: 'flex',
-    transition: 'box-shadow .18s ease, transform .18s ease, border-color .18s ease',
-  }
-}
+

@@ -21,6 +21,7 @@ import SallesForm from './pages/classes/SallesForm'
 import Cours from './pages/cours/Cours'
 import EmploiDuTemps from './pages/cours/EmploiDuTemps'
 import Enseignants from './pages/enseignants/Enseignants'
+import EnseignantShow from './pages/enseignants/EnseignantShow'
 
 import Examens from './pages/evaluations/Examens'
 import Notes from './pages/evaluations/Notes'
@@ -31,6 +32,7 @@ import Scolarite from './pages/scolarite/Scolarite'
 import Paiements from './pages/paiements/Paiements'
 
 import Parents from './pages/parents/Parents'
+import ParentShow from './pages/parents/ParentShow'
 import Discipline from './pages/discipline/Discipline'
 
 import Annonces from './pages/messages/Annonces'
@@ -116,6 +118,7 @@ export default function App() {
             <Route path="/cours" element={guarded(ADMIN_SEC, <Cours />)} />
             <Route path="/emploi-du-temps" element={guarded(ADMIN_SEC_ENSEIGNANT, <EmploiDuTemps />)} />
             <Route path="/enseignants" element={guarded(ADMIN_SEC, <Enseignants />)} />
+            <Route path="/enseignants/:id" element={guarded(ADMIN_SEC, <EnseignantShow />)} />
 
             {/* ─── Examens / Notes / Bulletins ─── */}
             <Route path="/examens" element={guarded(ADMIN_SEC_ENSEIGNANT, <Examens />)} />
@@ -134,6 +137,7 @@ export default function App() {
 
             {/* ─── Parents / Personnel / Discipline ─── */}
             <Route path="/parents" element={guarded(ADMIN_SEC, <Parents />)} />
+            <Route path="/parents/:id" element={guarded(ADMIN_SEC, <ParentShow />)} />
             <Route path="/personnes" element={guarded(ADMIN_SEC, <Personnes />)} />
             <Route path="/discipline" element={guarded(ADMIN_SEC, <Discipline />)} />
 

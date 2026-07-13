@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Bulletin élève — Groupe Scolaire Bilingue Excellence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#22271F;
+  --paper:#F7F4EC;
+  --paper-raised:#FDFCF7;
+  --chalk:#1E3932;
+  --chalk-light:#2C4A42;
+  --chalk-lighter:#3C5D53;
+  --line: rgba(34,39,31,0.14);
+  --line-strong: rgba(34,39,31,0.24);
+
+  --fr:#2B4C7E; --fr-tint:#E6ECF4; --fr-text:#1D3A63;
+  --en:#A63D40; --en-tint:#F5E7E6; --en-text:#7C2C2E;
+  --bil:#3E8E7E; --bil-tint:#E4F1EC; --bil-text:#296155;
+  --gold:#C9A227; --gold-tint:#F7EFD6; --gold-text:#7A5A10;
+  --grey:#6B6E60; --grey-tint:#EAE7DA; --grey-text:#54564A;
+
+  --shadow-sm: 0 1px 2px rgba(30,57,50,0.06), 0 1px 1px rgba(30,57,50,0.04);
+  --shadow-md: 0 8px 20px rgba(30,57,50,0.08), 0 2px 6px rgba(30,57,50,0.05);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{ background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+::selection{ background: var(--gold-tint); color: var(--ink); }
+
+.app{ display:grid; grid-template-columns:248px 1fr; min-height:100vh; }
+
+/* ---------- SIDEBAR (identique au tableau de bord) ---------- */
+.sidebar{ background:var(--chalk); color:#EDEFE9; padding:28px 20px; display:flex; flex-direction:column; gap:36px; position:relative; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{ width:40px;height:40px; border-radius:9px; background:linear-gradient(155deg, var(--fr) 0 34%, var(--en) 34% 67%, var(--bil) 67% 100%); flex-shrink:0; position:relative; }
+.brand-mark::after{ content:""; position:absolute; inset:5px; border-radius:5px; background:var(--chalk); opacity:0.14; }
+.brand-name{ font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; line-height:1.25; letter-spacing:0.1px; }
+.brand-sub{ font-size:11px; color:#AEC0B8; margin-top:3px; letter-spacing:0.3px; }
+
+.nav{ display:flex; flex-direction:column; gap:2px; }
+.nav-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:1.2px; color:#8CA79C; margin:6px 10px 8px; font-weight:600; }
+.nav a{ display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; color:#CBD6CE; text-decoration:none; font-size:13.8px; font-weight:500; transition:background .15s ease, color .15s ease; }
+.nav a:hover{ background:var(--chalk-light); color:#fff; }
+.nav a.active{ background:var(--chalk-lighter); color:#fff; }
+.nav a.active svg{ color:var(--gold); }
+.nav svg{ width:17px; height:17px; flex-shrink:0; color:#89A499; }
+.nav a:hover svg{ color:#fff; }
+
+.sidebar-foot{ margin-top:auto; border-top:1px solid rgba(255,255,255,0.1); padding-top:16px; display:flex; align-items:center; gap:10px; }
+.avatar{ width:34px;height:34px;border-radius:50%; background:var(--gold-tint); color:#5B4A0E; display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:600; font-size:13px; flex-shrink:0; }
+.sidebar-foot div p{ margin:0; }
+.sf-name{ font-size:13px; font-weight:600; color:#fff; }
+.sf-role{ font-size:11.5px; color:#9DB3A9; }
+
+/* ---------- MAIN ---------- */
+.main{ display:flex; flex-direction:column; min-height:100vh; }
+
+/* Fil d'ariane — signale qu'on est sur une sous-page de "Bulletins" */
+.crumb{ display:flex; align-items:center; gap:8px; padding:20px 40px 0; font-size:12.5px; color:#8B8E80; font-weight:500; }
+.crumb a{ color:#8B8E80; text-decoration:none; display:flex; align-items:center; gap:6px; }
+.crumb a:hover{ color:var(--ink); }
+.crumb a svg{ width:14px;height:14px; }
+.crumb .sep{ opacity:0.5; }
+.crumb .current{ color:var(--ink); font-weight:600; }
+
+.topbar{ display:flex; align-items:flex-start; justify-content:space-between; padding:10px 40px 0; gap:20px; flex-wrap:wrap; }
+.eyebrow{ font-size:11.5px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--bil-text); margin:0 0 6px; }
+.title-row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.page-title{ font-family:'Fraunces',serif; font-weight:600; font-size:30px; margin:0; color:var(--ink); letter-spacing:-0.2px; }
+.page-sub{ margin:6px 0 0; font-size:14px; color:#5B6155; max-width:560px; }
+
+.class-picker{ font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; color:var(--ink); border:1px solid var(--line-strong); background:var(--paper-raised); border-radius:8px; padding:8px 12px; outline:none; cursor:pointer; margin-top:14px; }
+.class-picker:focus{ border-color:var(--ink); }
+
+.topbar-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; padding-top:2px; }
+.btn{ display:inline-flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; padding:10px 16px; border-radius:9px; cursor:pointer; border:1px solid transparent; transition:transform .1s ease, box-shadow .15s ease; white-space:nowrap; }
+.btn:active{ transform:scale(0.98); }
+.btn-ghost{ background:var(--paper-raised); border-color:var(--line-strong); color:var(--ink); }
+.btn-ghost:hover{ border-color:var(--ink); }
+.btn-primary{ background:var(--chalk); color:#fff; box-shadow:var(--shadow-sm); }
+.btn-primary:hover{ background:var(--chalk-light); }
+.btn-gold{ background:var(--gold); color:#3C2E08; }
+.btn-gold:hover{ filter:brightness(0.96); }
+.btn-bil{ background:var(--bil); color:#fff; }
+.btn-bil:hover{ background:#347364; }
+.btn[disabled]{ opacity:0.4; cursor:default; }
+.btn svg{ width:15px; height:15px; }
+
+.content{ padding:22px 40px 56px; }
+
+/* ---------- SPLIT LAYOUT ---------- */
+.split{ display:grid; grid-template-columns:280px 1fr; gap:20px; align-items:start; }
+
+/* ---------- ROSTER (liste des élèves de la classe) ---------- */
+.roster{ background:var(--paper-raised); border-radius:12px; box-shadow:var(--shadow-md); border-top:3px solid var(--chalk); overflow:hidden; position:sticky; top:20px; }
+.roster-head{ padding:16px 16px 12px; border-bottom:1px dashed var(--line-strong); }
+.roster-head p{ margin:0 0 3px; font-family:'Fraunces',serif; font-weight:600; font-size:14.5px; }
+.roster-head span{ font-size:11.5px; color:#8B8E80; font-family:'IBM Plex Mono',monospace; }
+.roster-search{ position:relative; margin:12px 16px 0; }
+.roster-search svg{ position:absolute; left:10px; top:50%; transform:translateY(-50%); width:14px; height:14px; color:#9A9C8E; }
+.roster-search input{ width:100%; font-family:'Inter',sans-serif; font-size:13px; border:1px solid var(--line-strong); background:var(--paper); border-radius:7px; padding:8px 10px 8px 30px; outline:none; }
+.roster-search input:focus{ border-color:var(--ink); }
+.roster-list{ list-style:none; margin:10px 0 0; padding:0 8px 10px; max-height:calc(100vh - 260px); overflow-y:auto; }
+.roster-item{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; cursor:pointer; margin-bottom:2px; transition:background .12s ease; }
+.roster-item:hover{ background:var(--grey-tint); }
+.roster-item.is-active{ background:var(--bil-tint); }
+.roster-item .r-avatar{ width:28px;height:28px;border-radius:50%; background:var(--grey-tint); color:var(--grey-text); display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:600; font-size:11px; flex-shrink:0; }
+.roster-item.is-active .r-avatar{ background:var(--bil); color:#fff; }
+.roster-item .r-name{ font-size:13px; color:var(--ink); flex:1; line-height:1.25; }
+.roster-item .r-rank{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#8B8E80; }
+.roster-empty{ padding:20px 16px; font-size:12.5px; color:#8B8E80; text-align:center; }
+
+/* ---------- BULLETIN CARD ---------- */
+.bulletin{ background:var(--paper-raised); border-radius:12px; box-shadow:var(--shadow-md); padding:0; overflow:hidden; }
+.bulletin-band{ height:6px; }
+tr[data-sec="fr"] ~ .bulletin .bulletin-band, .bulletin-band.fr{ background:var(--fr); }
+.bulletin-band.en{ background:var(--en); }
+.bulletin-band.bil{ background:var(--bil); }
+
+.bulletin-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; padding:26px 30px 22px; border-bottom:1px dashed var(--line-strong); flex-wrap:wrap; }
+.student-id{ display:flex; align-items:center; gap:16px; }
+.big-avatar{ width:58px;height:58px;border-radius:50%; background:var(--bil-tint); color:var(--bil-text); display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:600; font-size:20px; flex-shrink:0; }
+.student-name{ font-family:'Fraunces',serif; font-weight:600; font-size:22px; margin:0 0 4px; }
+.student-meta{ font-size:13px; color:#5B6155; margin:0; }
+.student-meta .sep{ margin:0 6px; opacity:.5; }
+.student-code{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:#8B8E80; margin-top:4px; }
+
+.header-right{ text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.stamp{ display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:5px 10px 5px 9px; border:1.5px solid currentColor; border-radius:4px; transform:rotate(-1.6deg); white-space:nowrap; }
+.stamp::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+.stamp.st-draft{ color:var(--grey-text); background:var(--grey-tint); }
+.stamp.st-pending{ color:var(--gold-text); background:var(--gold-tint); }
+.stamp.st-validated{ color:var(--bil-text); background:var(--bil-tint); }
+.stamp.st-published{ color:var(--fr-text); background:var(--fr-tint); }
+.term-tag{ font-size:12px; color:#8B8E80; font-family:'IBM Plex Mono',monospace; }
+
+.bulletin-body{ padding:26px 30px; }
+
+.empty-state{ text-align:center; padding:50px 20px 60px; color:#75786C; }
+.empty-state svg{ width:32px;height:32px; margin-bottom:12px; color:#B9BCAC; }
+.empty-state p{ margin:0 0 16px; font-size:13.5px; max-width:360px; margin-left:auto; margin-right:auto; }
+
+.section-label{ font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:600; color:#8B8E80; margin:0 0 12px; }
+
+.grades-table{ width:100%; border-collapse:collapse; font-size:13.5px; margin-bottom:26px; }
+.grades-table thead th{ text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:0.6px; color:#8B8E80; font-weight:600; padding:9px 12px; background:#F1EEE2; border-bottom:1px solid var(--line-strong); }
+.grades-table thead th.num, .grades-table td.num{ text-align:center; }
+.grades-table tbody td{ padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:middle; }
+.grades-table tbody tr:last-child td{ border-bottom:none; }
+.subject-name{ font-weight:600; }
+.grade-value{ font-family:'IBM Plex Mono',monospace; font-weight:600; }
+.grade-value.low{ color:var(--en-text); }
+.grade-value.mid{ color:var(--gold-text); }
+.grade-value.high{ color:var(--bil-text); }
+.grades-table tfoot td{ padding:12px; font-weight:700; border-top:2px solid var(--ink); font-family:'IBM Plex Mono',monospace; }
+
+.summary-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+.summary-card{ border:1px solid var(--line); border-radius:10px; padding:14px 16px; }
+.summary-card p{ margin:0; }
+.summary-label{ font-size:11px; color:#75786C; font-weight:600; letter-spacing:0.2px; margin-bottom:6px !important; }
+.summary-value{ font-family:'Fraunces',serif; font-weight:600; font-size:22px; }
+.summary-note{ font-size:11px; color:#8B8E80; margin-top:3px !important; font-family:'IBM Plex Mono',monospace; }
+
+.appreciation-box{ border:1px solid var(--line); border-radius:10px; padding:18px 20px; background:#FBFAF4; margin-bottom:22px; }
+.appreciation-box p{ margin:0; font-size:13.5px; line-height:1.6; font-style:italic; color:#3C3F34; }
+.appreciation-box .who{ margin-top:10px !important; font-style:normal; font-size:12px; color:#8B8E80; font-weight:600; }
+
+.attendance-row{ display:flex; gap:24px; flex-wrap:wrap; margin-bottom:26px; padding:16px 20px; border:1px dashed var(--line-strong); border-radius:10px; }
+.attendance-item{ font-size:12.5px; color:#5B6155; }
+.attendance-item b{ font-family:'IBM Plex Mono',monospace; color:var(--ink); font-size:14px; display:block; margin-bottom:2px; }
+
+.signatures{ display:grid; grid-template-columns:1fr 1fr; gap:20px; padding-top:20px; border-top:1px dashed var(--line-strong); }
+.sig-block{ font-size:12.5px; color:#8B8E80; }
+.sig-line{ margin-top:34px; border-top:1px solid var(--line-strong); padding-top:6px; font-weight:600; color:var(--ink); }
+
+@media (max-width:960px){
+  .split{ grid-template-columns:1fr; }
+  .roster{ position:static; }
+  .summary-grid{ grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width:880px){
+  .app{ grid-template-columns:1fr; }
+  .sidebar{ display:none; }
+  .content, .topbar, .crumb{ padding-left:18px; padding-right:18px; }
+  .topbar{ flex-direction:column; align-items:flex-start; gap:14px; }
+}
+
+@media print{
+  .sidebar, .crumb, .topbar-actions, .roster, .class-picker, .term-tag{ display:none !important; }
+  .app{ display:block; }
+  .content{ padding:0; }
+  .split{ display:block; }
+  .bulletin{ box-shadow:none; border:1px solid #ccc; }
+  body{ background:#fff; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-arrow-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></symbol>
+  <symbol id="i-students" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="2.6"/><circle cx="17" cy="9" r="2.2"/><path d="M2.5 20c1-3.4 3.2-5 5.5-5s4.5 1.6 5.5 5"/><path d="M14 20c.8-2.7 2.4-4 4.2-4 1.7 0 3.2 1.2 4 3.6"/></symbol>
+  <symbol id="i-teachers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M7 20h10M12 16v4"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 19H6.5A2.5 2.5 0 0 0 4 21.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 5-9 5-9-5 9-5Z"/><path d="M3 13l9 5 9-5"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3H9.8l-.4 2.5a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.3-.9c.6.5 1.3.9 2 1.2l.4 2.5h4.4l.4-2.5c.7-.3 1.4-.7 2-1.2l2.3.9 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 12.5h5M9.5 15.5h5M9.5 18.5h3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2.2-8L3 11Z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7 11l5 5 5-5"/><path d="M4 19h16"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M6 17v4h12v-4"/></symbol>
+  <symbol id="i-empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M5.5 15A8 8 0 0 0 19 17.5M18.5 9A8 8 0 0 0 5 6.5"/></symbol>
+</svg>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name">Excellence<br>Bilingual School</div>
+        <div class="brand-sub">Espace administration</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Général</div>
+      <a href="#"><svg><use href="#i-home"/></svg> Tableau de bord</a>
+      <a href="#"><svg><use href="#i-students"/></svg> Élèves</a>
+      <a href="#"><svg><use href="#i-teachers"/></svg> Enseignants</a>
+
+      <div class="nav-label">Pédagogie</div>
+      <a href="#"><svg><use href="#i-book"/></svg> Cours</a>
+      <a href="#"><svg><use href="#i-calendar"/></svg> Emploi du temps</a>
+      <a href="#"><svg><use href="#i-layers"/></svg> Sections</a>
+      <a href="dashboard-bulletins.html" class="active"><svg><use href="#i-file"/></svg> Bulletins</a>
+
+      <div class="nav-label">Système</div>
+      <a href="#"><svg><use href="#i-settings"/></svg> Paramètres</a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="avatar">DN</div>
+      <div>
+        <p class="sf-name">Mme Nadège Talla</p>
+        <p class="sf-role">Directrice des études</p>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <nav class="crumb">
+      <a href="dashboard-bulletins.html"><svg><use href="#i-arrow-left"/></svg> Bulletins</a>
+      <span class="sep">/</span>
+      <span id="crumb-classe">—</span>
+      <span class="sep">/</span>
+      <span class="current" id="crumb-eleve">—</span>
+    </nav>
+
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">Pédagogie · Trimestre 2 · 2025–2026</p>
+        <div class="title-row">
+          <h1 class="page-title">Bulletin de l'élève</h1>
+        </div>
+        <p class="page-sub">Consultez, validez ou publiez le bulletin d'un élève précis, classe par classe.</p>
+        <select class="class-picker" id="class-picker"></select>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" onclick="window.print()"><svg><use href="#i-print"/></svg> Imprimer</button>
+        <button class="btn btn-ghost" id="btn-download"><svg><use href="#i-download"/></svg> Télécharger</button>
+        <button class="btn btn-primary" id="btn-action"><svg><use href="#i-check"/></svg> Action</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="split">
+
+        <!-- Liste des élèves de la classe sélectionnée -->
+        <aside class="roster">
+          <div class="roster-head">
+            <p id="roster-classname">Classe</p>
+            <span id="roster-meta">— élèves</span>
+          </div>
+          <div class="roster-search">
+            <svg><use href="#i-search"/></svg>
+            <input type="search" id="roster-search" placeholder="Rechercher un élève…">
+          </div>
+          <ul class="roster-list" id="roster-list"></ul>
+        </aside>
+
+        <!-- Bulletin de l'élève sélectionné -->
+        <section class="bulletin" id="bulletin">
+          <div class="bulletin-band" id="bulletin-band"></div>
+
+          <div class="bulletin-header">
+            <div class="student-id">
+              <div class="big-avatar" id="b-avatar">—</div>
+              <div>
+                <p class="student-name" id="b-name">—</p>
+                <p class="student-meta">
+                  <span id="b-classe">—</span><span class="sep">·</span>
+                  <span id="b-titulaire">—</span>
+                </p>
+                <p class="student-code" id="b-matricule">—</p>
+              </div>
+            </div>
+            <div class="header-right">
+              <span class="stamp" id="b-stamp">—</span>
+              <span class="term-tag">Trimestre 2 · 2025–2026</span>
+            </div>
+          </div>
+
+          <div class="bulletin-body" id="bulletin-body">
+            <!-- rempli en JS -->
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   Base de classes — mêmes classes et statuts que le tableau de bord
+   ============================================================ */
+const CLASSES = [
+  { code:"FR-CE2-BUL-T2",  nom:"CE2",              section:"fr",  titulaire:"Mme Marie Ngo Bakoa", effectif:34, statut:"published" },
+  { code:"FR-CM1-BUL-T2",  nom:"CM1",              section:"fr",  titulaire:"M. Jean Ateba",        effectif:31, statut:"validated" },
+  { code:"FR-CP-BUL-T2",   nom:"CP",               section:"fr",  titulaire:"Mme Solange Fouda",    effectif:28, statut:"pending"   },
+  { code:"FR-CM2-BUL-T2",  nom:"CM2",              section:"fr",  titulaire:"M. Paul Mvondo",       effectif:29, statut:"draft"     },
+  { code:"FR-SIL-BUL-T2",  nom:"SIL",              section:"fr",  titulaire:"Mme Grâce Essomba",    effectif:25, statut:"published" },
+  { code:"EN-C4-BUL-T2",   nom:"Class 4",          section:"en",  titulaire:"Mrs Comfort Ashu",     effectif:33, statut:"validated" },
+  { code:"EN-C2-BUL-T2",   nom:"Class 2",          section:"en",  titulaire:"Mr Bernard Tabe",       effectif:30, statut:"pending"   },
+  { code:"EN-C5-BUL-T2",   nom:"Class 5",          section:"en",  titulaire:"Mrs Rose Egbe",         effectif:27, statut:"draft"     },
+  { code:"EN-C3-BUL-T2",   nom:"Class 3",          section:"en",  titulaire:"Mr Samuel Fonki",       effectif:26, statut:"published" },
+  { code:"BIL-N3-BUL-T2",  nom:"CE1 · Class 3",    section:"bil", titulaire:"Mme Brenda Ekwalla",    effectif:22, statut:"validated" },
+  { code:"BIL-N5-BUL-T2",  nom:"CM1 · Class 5",    section:"bil", titulaire:"M. Divine Nkeng",       effectif:24, statut:"pending"   },
+  { code:"BIL-N1-BUL-T2",  nom:"CP · Class 1",     section:"bil", titulaire:"Mme Solange Ateba",     effectif:20, statut:"draft"     },
+];
+
+const SUBJECTS = {
+  fr:  [["Français",4],["Mathématiques",4],["Histoire-Géographie",2],["Sciences (SVT)",2],["Éducation Civique et Morale",1],["Anglais",2],["Éducation Physique et Sportive",1],["Arts Plastiques",1]],
+  en:  [["English Language",4],["Mathematics",4],["Environmental Science",2],["Social Studies",2],["Citizenship Education",1],["French",2],["Physical Education",1],["Arts & Crafts",1]],
+  bil: [["Français",3],["English Language",3],["Mathématiques / Mathematics",4],["Sciences",2],["Histoire-Géo / Social Studies",2],["Éducation Civique",1],["EPS",1]],
+};
+
+const STATUS_LABEL = { draft:"Brouillon", pending:"À valider", validated:"Validé", published:"Publié" };
+const FIRST_M = ["Jean","Paul","Samuel","Divine","Bernard","Emmanuel","Éric","Patrick","Junior","Franck","Cédric","Arnaud","Blaise","Yannick","Serge","Hervé"];
+const FIRST_F = ["Marie","Grâce","Solange","Brenda","Rose","Comfort","Nadège","Divine","Larissa","Christelle","Estelle","Prisca","Joyce","Aurélie","Sandrine","Belinda"];
+const LAST = ["Ngo Bakoa","Ateba","Fouda","Mvondo","Essomba","Ashu","Tabe","Egbe","Fonki","Ekwalla","Nkeng","Talla","Ekotto","Mballa","Ndongo","Fotso","Biya","Enow","Che","Njoya","Abanda","Kamga","Zangue","Owona"];
+
+// ---------- petit générateur pseudo-aléatoire déterministe (seed) ----------
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function hashCode(str){ let h=0; for(let i=0;i<str.length;i++){ h = (h<<5)-h+str.charCodeAt(i); h|=0; } return h; }
+
+function buildStudents(classe){
+  const rng = mulberry32(hashCode(classe.code) + 17);
+  const students = [];
+  for(let i=0;i<classe.effectif;i++){
+    const isM = rng() > 0.48;
+    const first = isM ? FIRST_M[Math.floor(rng()*FIRST_M.length)] : FIRST_F[Math.floor(rng()*FIRST_F.length)];
+    const last = LAST[Math.floor(rng()*LAST.length)];
+    const subjects = SUBJECTS[classe.section].map(([name,coef]) => {
+      const base = 8 + rng()*11; // 8 à 19
+      return { name, coef, note: Math.round(base*2)/2 };
+    });
+    const totalCoef = subjects.reduce((s,x)=>s+x.coef,0);
+    const moyenne = subjects.reduce((s,x)=>s+x.note*x.coef,0) / totalCoef;
+    students.push({
+      matricule: classe.code.split('-')[0] + '-' + String(1000 + i),
+      nom: `${first} ${last}`,
+      initiales: (first[0]+last[0]).toUpperCase(),
+      subjects, moyenne,
+      absencesJust: Math.floor(rng()*4),
+      absencesInjust: Math.floor(rng()*2),
+      retards: Math.floor(rng()*5),
+    });
+  }
+  students.sort((a,b)=>b.moyenne-a.moyenne);
+  students.forEach((s,idx)=> s.rang = idx+1);
+  students.sort((a,b)=>a.nom.localeCompare(b.nom));
+  return students;
+}
+
+function mention(m){
+  if(m>=16) return "Excellent";
+  if(m>=14) return "Très bien";
+  if(m>=12) return "Bien";
+  if(m>=10) return "Assez bien";
+  return "Insuffisant";
+}
+function appreciationTitulaire(m, prenom){
+  if(m>=16) return `${prenom} termine ce trimestre avec un travail remarquable. Sérieux, curiosité et régularité sont au rendez-vous : à féliciter et à encourager vivement.`;
+  if(m>=14) return `Un très bon trimestre pour ${prenom}, avec un travail sérieux dans l'ensemble des matières. Continuez ainsi.`;
+  if(m>=12) return `${prenom} fournit un travail satisfaisant. Quelques efforts supplémentaires dans les matières les plus fragiles permettraient de progresser encore.`;
+  if(m>=10) return `Trimestre correct mais irrégulier pour ${prenom}. Un travail plus soutenu à la maison est nécessaire pour consolider les acquis.`;
+  return `${prenom} rencontre des difficultés ce trimestre. Un accompagnement renforcé et une présence plus assidue sont indispensables.`;
+}
+function gradeClass(note){ if(note<10) return "low"; if(note<14) return "mid"; return "high"; }
+
+/* ============================================================
+   État de la page
+   ============================================================ */
+let currentClasse = null;
+let currentStudents = [];
+let currentStudentIdx = 0;
+
+const params = new URLSearchParams(window.location.search);
+const classPicker = document.getElementById('class-picker');
+CLASSES.forEach(c => {
+  const opt = document.createElement('option');
+  opt.value = c.code;
+  opt.textContent = `${c.nom} — ${c.titulaire}`;
+  classPicker.appendChild(opt);
+});
+
+function loadClasse(code){
+  currentClasse = CLASSES.find(c => c.code === code) || CLASSES[0];
+  classPicker.value = currentClasse.code;
+  currentStudents = buildStudents(currentClasse);
+  currentStudentIdx = 0;
+
+  document.getElementById('roster-classname').textContent = `${currentClasse.nom} · ${currentClasse.titulaire}`;
+  document.getElementById('roster-meta').textContent = `${currentClasse.effectif} élèves — ${currentClasse.code}`;
+  document.getElementById('crumb-classe').textContent = currentClasse.nom;
+  document.getElementById('bulletin-band').className = 'bulletin-band ' + currentClasse.section;
+
+  renderRoster();
+  renderBulletin();
+}
+
+function renderRoster(filter=""){
+  const list = document.getElementById('roster-list');
+  list.innerHTML = "";
+  const f = filter.trim().toLowerCase();
+  const filtered = currentStudents.filter(s => !f || s.nom.toLowerCase().includes(f));
+
+  if(!filtered.length){
+    list.innerHTML = `<li class="roster-empty">Aucun élève ne correspond à cette recherche.</li>`;
+    return;
+  }
+  filtered.forEach(s => {
+    const idx = currentStudents.indexOf(s);
+    const li = document.createElement('li');
+    li.className = 'roster-item' + (idx === currentStudentIdx ? ' is-active' : '');
+    li.innerHTML = `<span class="r-avatar">${s.initiales}</span><span class="r-name">${s.nom}</span><span class="r-rank">${s.rang}${s.rang===1?'ʳᵉ':'ᵉ'}</span>`;
+    li.addEventListener('click', () => { currentStudentIdx = idx; renderRoster(document.getElementById('roster-search').value); renderBulletin(); });
+    list.appendChild(li);
+  });
+}
+
+function renderBulletin(){
+  const classe = currentClasse;
+  const student = currentStudents[currentStudentIdx];
+  if(!student) return;
+
+  document.getElementById('crumb-eleve').textContent = student.nom;
+  document.getElementById('b-avatar').textContent = student.initiales;
+  document.getElementById('b-name').textContent = student.nom;
+  document.getElementById('b-classe').textContent = `${classe.nom} · ${classe.section.toUpperCase()}`;
+  document.getElementById('b-titulaire').textContent = classe.titulaire;
+  document.getElementById('b-matricule').textContent = `Matricule ${student.matricule}`;
+
+  const stamp = document.getElementById('b-stamp');
+  stamp.className = 'stamp st-' + classe.statut;
+  stamp.textContent = STATUS_LABEL[classe.statut];
+
+  // Boutons d'action contextuels au statut de la classe
+  const dl = document.getElementById('btn-download');
+  const act = document.getElementById('btn-action');
+  dl.disabled = classe.statut === 'draft';
+  dl.style.opacity = classe.statut === 'draft' ? '0.4' : '1';
+
+  act.className = 'btn';
+  if(classe.statut === 'draft'){
+    act.classList.add('btn-primary');
+    act.innerHTML = '<svg><use href="#i-refresh"/></svg> Générer ce bulletin';
+  } else if(classe.statut === 'pending'){
+    act.classList.add('btn-gold');
+    act.innerHTML = '<svg><use href="#i-check"/></svg> Valider';
+  } else if(classe.statut === 'validated'){
+    act.classList.add('btn-bil');
+    act.innerHTML = '<svg><use href="#i-send"/></svg> Publier';
+  } else {
+    act.classList.add('btn-ghost');
+    act.innerHTML = '<svg><use href="#i-check"/></svg> Déjà envoyé';
+  }
+
+  const body = document.getElementById('bulletin-body');
+
+  if(classe.statut === 'draft'){
+    body.innerHTML = `
+      <div class="empty-state">
+        <svg><use href="#i-empty"/></svg>
+        <p>Les notes de ${student.nom} n'ont pas encore été saisies pour ce trimestre. Générez le bulletin de la classe pour faire apparaître ses résultats ici.</p>
+        <button class="btn btn-primary" onclick="document.getElementById('btn-action').click()"><svg><use href="#i-refresh"/></svg> Générer ce bulletin</button>
+      </div>`;
+    return;
+  }
+
+  const prenom = student.nom.split(' ')[0];
+  const rows = student.subjects.map(s => `
+    <tr>
+      <td class="subject-name">${s.name}</td>
+      <td class="num">${s.coef}</td>
+      <td class="num grade-value ${gradeClass(s.note)}">${s.note.toFixed(1)}</td>
+      <td class="num">${mention(s.note).toLowerCase()}</td>
+    </tr>`).join("");
+
+  body.innerHTML = `
+    <p class="section-label">Résultats par matière</p>
+    <table class="grades-table">
+      <thead><tr><th>Discipline</th><th class="num">Coeff.</th><th class="num">Note / 20</th><th class="num">Appréciation</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td>Moyenne générale</td><td class="num"></td><td class="num">${student.moyenne.toFixed(2)} / 20</td><td class="num">${mention(student.moyenne)}</td></tr></tfoot>
+    </table>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <p class="summary-label">Moyenne générale</p>
+        <p class="summary-value">${student.moyenne.toFixed(2)}</p>
+        <p class="summary-note">sur 20</p>
+      </div>
+      <div class="summary-card">
+        <p class="summary-label">Rang de classe</p>
+        <p class="summary-value">${student.rang}${student.rang===1?'ʳᵉ':'ᵉ'}</p>
+        <p class="summary-note">sur ${classe.effectif} élèves</p>
+      </div>
+      <div class="summary-card">
+        <p class="summary-label">Mention</p>
+        <p class="summary-value" style="font-size:17px;">${mention(student.moyenne)}</p>
+        <p class="summary-note">trimestre 2</p>
+      </div>
+      <div class="summary-card">
+        <p class="summary-label">Assiduité</p>
+        <p class="summary-value" style="font-size:17px;">${student.absencesJust + student.absencesInjust} abs.</p>
+        <p class="summary-note">${student.retards} retard(s)</p>
+      </div>
+    </div>
+
+    <p class="section-label">Appréciation du titulaire</p>
+    <div class="appreciation-box">
+      <p>« ${appreciationTitulaire(student.moyenne, prenom)} »</p>
+      <p class="who">— ${classe.titulaire}, titulaire de la classe</p>
+    </div>
+
+    <div class="attendance-row">
+      <div class="attendance-item"><b>${student.absencesJust}</b>Absences justifiées</div>
+      <div class="attendance-item"><b>${student.absencesInjust}</b>Absences injustifiées</div>
+      <div class="attendance-item"><b>${student.retards}</b>Retards</div>
+    </div>
+
+    <div class="signatures">
+      <div class="sig-block">
+        <div class="sig-line">${classe.titulaire}</div>
+        Signature du titulaire
+      </div>
+      <div class="sig-block">
+        <div class="sig-line">Mme Nadège Talla</div>
+        Signature de la direction des études
+      </div>
+    </div>
+  `;
+}
+
+document.getElementById('roster-search').addEventListener('input', (e) => renderRoster(e.target.value));
+classPicker.addEventListener('change', (e) => loadClasse(e.target.value));
+
+// Initialisation : classe passée en paramètre (?classe=CODE) sinon la première classe
+loadClasse(params.get('classe') || CLASSES[0].code);
+</script>
+
+</body>
+</html>
