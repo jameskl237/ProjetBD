@@ -9,7 +9,6 @@ import Alert from '../../components/ui/Alert'
 import InputField from '../../components/forms/InputField'
 import SelectField from '../../components/forms/SelectField'
 import Spinner from '../../components/ui/Spinner'
-import Badge from '../../components/ui/Badge'
 import { useResource } from '../../hooks/useResource'
 import { scolariteApi, scolariteClassesApi, tranchesApi, cyclesApi } from '../../api/scolarite.api'
 import { useAuth } from '../../hooks/useAuth'
@@ -37,6 +36,16 @@ export default function Scolarite() {
   useEffect(() => {
     tranchesApi.list().then(setTranches).catch(() => {})
   }, [])
+
+  async function handleDeleteCycle(idCycle) {
+    if (!confirm('Supprimer ce cycle ?')) return
+    try {
+      await cyclesApi.remove(idCycle)
+      cyclesResource.reload()
+    } catch (err) {
+      setFormError(err.response?.data?.error || 'Erreur lors de la suppression')
+    }
+  }
 
   function trancheCount(idScolarite) {
     return tranches.filter((t) => t.idScolarite === idScolarite).length
@@ -95,38 +104,6 @@ export default function Scolarite() {
       />
       <Alert tone="error">{error}</Alert>
       {!canWrite && <Alert tone="info">Lecture seule — la création et la modification sont réservées au directeur.</Alert>}
-      <Card style={{ padding: 0 }}>
-        <Table
-          columns={[
-            { key: 'description', label: 'Description' },
-            { key: 'idCycle', label: 'Cycle', render: (r) => cycles.find((c) => c.idCycle === r.idCycle)?.libelle || `#${r.idCycle}` },
-            { key: 'inscription', label: 'Inscription', render: (r) => `${Number(r.inscription || 0).toLocaleString('fr-FR')} F` },
-            { key: 'pension', label: 'Pension', render: (r) => `${Number(r.pension || 0).toLocaleString('fr-FR')} F` },
-            { key: 'nbreTranche', label: 'Tranches', render: (r) => <Badge tone="info">{trancheCount(r.idScolarite)} tranches</Badge> },
-            { key: 'echeances', label: 'Échéances', render: (r) => {
-              const ts = getTranches(r.idScolarite)
-              if (ts.length === 0) return '—'
-              return <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                {ts.map((t) => `${MOIS[t.delai_mois] || '?'}/${t.delai_jour}`).join(' · ')}
-              </span>
-            }},
-          ]}
-          rows={data}
-          loading={loading}
-          keyField="idScolarite"
-          actions={(row) => (
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              {canWrite && <button onClick={() => {
-                const ts = getTranches(row.idScolarite).map((t) => ({ ...t }))
-                setEcheanceModal({ scolarite: row, tranches: ts })
-                setFormError('')
-              }} style={{ color: '#D4A017', fontSize: 13, fontWeight: 600 }}>Échéances</button>}
-              {canWrite && <button onClick={() => setModal({ mode: 'edit', values: row })} style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Modifier</button>}
-              {canWrite && <button onClick={async () => { if (confirm('Supprimer ?')) { await scolariteApi.remove(row.idScolarite); reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>}
-            </div>
-          )}
-        />
-      </Card>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
         {TABS.map((t) => (
