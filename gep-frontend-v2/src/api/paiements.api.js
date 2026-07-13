@@ -12,6 +12,7 @@ export const paiementsExtra = {
   impayes: () => client.get(ENDPOINTS.paiements.impayes).then((r) => r.data),
   statut: (matricule, idAca) => client.get(ENDPOINTS.paiements.statut(matricule), { params: { idAca } }).then((r) => r.data),
   parEleve: (matricule) => client.get(ENDPOINTS.paiements.parEleve(matricule)).then((r) => r.data),
+  fixTranches: () => client.post(ENDPOINTS.paiements.fixTranches).then((r) => r.data),
   exportUrl: (params) => {
     const qs = new URLSearchParams(params || {}).toString()
     return `${client.defaults.baseURL}${ENDPOINTS.paiements.export}${qs ? `?${qs}` : ''}`

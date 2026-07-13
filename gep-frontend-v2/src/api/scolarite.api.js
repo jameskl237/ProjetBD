@@ -11,4 +11,5 @@ export const scolariteClassesApi = {
 
 export const tranchesApi = {
   list: (params) => client.get(ENDPOINTS.scolarite.tranches, { params }).then((r) => r.data),
+  update: (id, data) => client.put(`${ENDPOINTS.scolarite.tranches}/${id}`, data).then((r) => r.data),
 }
