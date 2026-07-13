@@ -63,7 +63,7 @@ export async function getTrancheStatutForEleve(matricule: number, idClasse: numb
   const idTranches = result.tranches.map((t) => t.idTranche);
   const paiements = idTranches.length === 0
     ? []
-    : await db.select().from(paiementTable).where(and(eq(paiementTable.matricule, matricule), inArray(paiementTable.idTranche, idTranches)));
+    : await db.select().from(paiementTable).where(and(eq(paiementTable.matricule, matricule), eq(paiementTable.idAca, idAca), inArray(paiementTable.idTranche, idTranches)));
   const payeParTranche = new Map<number, number>();
   for (const p of paiements) {
     if (p.idTranche == null) continue;

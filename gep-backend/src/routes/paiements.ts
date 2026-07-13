@@ -9,7 +9,7 @@ import { getParentMatricules, requireEleveScope } from "../middlewares/scope.ts"
 import { getTrancheStatutForEleve } from "../lib/tranches.ts";
 
 const router = Router();
-router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT));
+router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT, ROLES.SECRETAIRE));
 
 /** Classe actuellement fréquentée par l'élève pour une année donnée (dernière inscription connue sinon). */
 async function getEleveClasseId(matricule: number, idAca: number): Promise<number | null> {
@@ -220,8 +220,8 @@ router.get("/impayes", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (
       const scolariteTranches = tranchesByScolarite.get(scolarite.idScolarite) ?? [];
       let echeance: Date | null = null;
       for (const t of scolariteTranches) {
-        const mois = Number(t.delai_mois);
-        const jour = Number(t.delai_jour);
+        const mois = Number((t as any).delai_mois);
+        const jour = Number((t as any).delai_jour);
         if (!mois || !jour) continue;
         const date = new Date(today.getFullYear(), mois - 1, jour);
         if (!echeance || date > echeance) echeance = date;
@@ -299,90 +299,7 @@ router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (req,
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id/recu", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT), async (req, res) => {
-  try {
-    const idPaie = Number(req.params.id);
-    const [p] = await paiementsWithRelations(eq(paiementTable.idPaie, idPaie));
-    if (!p) { res.status(404).json({ error: "Paiement introuvable" }); return; }
-
-    const role = getRole(req.user);
-    if (role === ROLES.PARENT) {
-      const parentMatricules = await getParentMatricules(req.user!.id);
-      if (!parentMatricules.includes(p.matricule)) {
-        res.status(403).json({ error: "Accès refusé" });
-        return;
-      }
-    }
-
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename=recu_${idPaie}.pdf`);
-
-    const doc = new PDFDocument({ size: "A5", layout: "landscape", margin: 25 });
-    doc.pipe(res);
-
-    // Forest green border and Gold interior border
-    doc.rect(12, 12, doc.page.width - 24, doc.page.height - 24).lineWidth(3).stroke("#1b4332");
-    doc.rect(15, 15, doc.page.width - 30, doc.page.height - 30).lineWidth(1).stroke("#d4af37");
-
-    // Header Title
-    doc.fillColor("#1b4332").fontSize(14).font("Helvetica-Bold").text("GROUPE SCOLAIRE BILINGUE GEP", 30, 28);
-    doc.fillColor("#555555").fontSize(7.5).font("Helvetica").text("Email: info@gep-ecole.cm  |  Tél: +237 699 100 000", 30, 42);
-
-    doc.fillColor("#d4af37").fontSize(12).font("Helvetica-Bold").text("REÇU DE PAIEMENT", 30, 60, { align: "center" });
-
-    // Line separator
-    doc.moveTo(30, 78).lineTo(doc.page.width - 30, 78).strokeColor("#1b4332").lineWidth(1).stroke();
-
-    // Data layout
-    const eleve = p.eleve as any;
-    const nomEleve = eleve ? `${eleve.nom || ""} ${eleve.prenom || ""}`.trim() : "-";
-    const mode = p.mode as any;
-    const annee = p.annee as any;
-
-    doc.fillColor("#000000").fontSize(9.5);
-    
-    // Left column
-    doc.font("Helvetica-Bold").text("Reçu N° :", 30, 92);
-    doc.font("Helvetica").text(String(p.idPaie), 110, 92);
-
-    doc.font("Helvetica-Bold").text("Date :", 30, 107);
-    doc.font("Helvetica").text(p.datePaie ? new Date(p.datePaie).toLocaleDateString("fr-FR") : "-", 110, 107);
-
-    doc.font("Helvetica-Bold").text("Élève :", 30, 122);
-    doc.font("Helvetica").text(`${nomEleve} (Matricule: ${String(p.matricule).padStart(8, '0')})`, 110, 122);
-
-    doc.font("Helvetica-Bold").text("Classe :", 30, 137);
-    doc.font("Helvetica").text(p.classe?.libelle || "-", 110, 137);
-
-    // Right column
-    doc.font("Helvetica-Bold").text("Année Acad. :", 260, 92);
-    doc.font("Helvetica").text(annee?.libelle || "-", 340, 92);
-
-    doc.font("Helvetica-Bold").text("Tranche :", 260, 107);
-    doc.font("Helvetica").text(p.comentaire || "-", 340, 107);
-
-    doc.font("Helvetica-Bold").text("Mode Paiement :", 260, 122);
-    doc.font("Helvetica").text(mode?.libelle || "-", 340, 122);
-
-    doc.font("Helvetica-Bold").text("Réf. Opération :", 260, 137);
-    doc.font("Helvetica").text(p.operation_ID || "-", 340, 137);
-
-    // Amount box
-    doc.rect(30, 160, doc.page.width - 60, 28).fill("#1b4332");
-    doc.fillColor("#ffffff").font("Helvetica-Bold").fontSize(11).text(`MONTANT VERSÉ : ${Number(p.montant).toLocaleString("fr-FR")} FCFA`, 40, 169);
-
-    // Signatures
-    doc.fillColor("#666666").fontSize(7.5).font("Helvetica-Oblique").text("Le Service de Comptabilité GEP", 30, 240, { align: "right" });
-
-    doc.end();
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Erreur serveur lors de la génération du reçu" });
-  }
-});
-
-
-router.post("/", authorize(ROLES.COMPTABLE), async (req, res) => {
+router.post("/", authorize(ROLES.COMPTABLE, ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     const { matricule, idAca, montant, idMode, datePaie, idTranche } = req.body;
     if (!matricule || !idAca || !montant || !idMode || !datePaie || !idTranche) {
@@ -412,16 +329,29 @@ router.post("/", authorize(ROLES.COMPTABLE), async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.put("/:id", authorize(ROLES.COMPTABLE), async (req, res) => {
+router.put("/:id", authorize(ROLES.COMPTABLE, ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
-    await db.update(paiementTable).set(req.body).where(eq(paiementTable.idPaie, Number(req.params.id)));
+    const { matricule, idAca, montant, idMode, datePaie, idTranche, url, comentaire, operation_ID } = req.body;
+    const data: Record<string, unknown> = {};
+    if (matricule !== undefined) data.matricule = matricule;
+    if (idAca !== undefined) data.idAca = idAca;
+    if (montant !== undefined) data.montant = montant;
+    if (idMode !== undefined) data.idMode = idMode;
+    if (datePaie !== undefined) data.datePaie = datePaie;
+    if (idTranche !== undefined) data.idTranche = idTranche;
+    if (url !== undefined) data.url = url;
+    if (comentaire !== undefined) data.comentaire = comentaire;
+    if (operation_ID !== undefined) data.operation_ID = operation_ID;
+    if (Object.keys(data).length > 0) {
+      await db.update(paiementTable).set(data).where(eq(paiementTable.idPaie, Number(req.params.id)));
+    }
     const [p] = await paiementsWithRelations(eq(paiementTable.idPaie, Number(req.params.id)));
     if (!p) { res.status(404).json({ error: "Paiement introuvable" }); return; }
     res.json(p);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.delete("/:id", authorize(ROLES.COMPTABLE), async (req, res) => {
+router.delete("/:id", authorize(ROLES.COMPTABLE, ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     await db.delete(paiementTable).where(eq(paiementTable.idPaie, Number(req.params.id)));
     res.json({ message: "Paiement supprimé" });

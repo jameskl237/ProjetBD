@@ -1,10 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
 import PageHeader from '../../components/layout/PageHeader'
 import Card from '../../components/ui/Card'
-import StatCard from '../../components/ui/StatCard'
 import Spinner from '../../components/ui/Spinner'
 import Alert from '../../components/ui/Alert'
-import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
 import InputField from '../../components/forms/InputField'
@@ -13,10 +11,31 @@ import { coursApi, enseignantsApi } from '../../api/cours.api'
 import { classesApi } from '../../api/classes.api'
 
 const SECTION_TONES = {
-  Anglophone: 'info',
-  Francophone: 'success',
-  Bilingue: 'warning',
-  Bilingual: 'warning',
+  Anglophone: 'danger',
+  Francophone: 'info',
+  Bilingue: 'success',
+  Bilingual: 'success',
+}
+
+const SECTION_COLORS = {
+  Anglophone: { bg: 'rgba(225,29,72,0.08)', accent: 'var(--danger)', text: 'var(--danger)' },
+  Francophone: { bg: 'rgba(6,182,212,0.08)', accent: 'var(--info)', text: 'var(--info)' },
+  Bilingue: { bg: 'rgba(5,150,105,0.08)', accent: 'var(--success)', text: 'var(--success)' },
+  Bilingual: { bg: 'rgba(5,150,105,0.08)', accent: 'var(--success)', text: 'var(--success)' },
+}
+
+const SECTION_KEY = {
+  Anglophone: 'anglo',
+  Francophone: 'franco',
+  Bilingue: 'bilingue',
+  Bilingual: 'bilingue',
+}
+
+const TAB_ACCENT = {
+  all: 'var(--accent)',
+  anglo: 'var(--danger)',
+  franco: 'var(--info)',
+  bilingue: 'var(--success)',
 }
 
 export default function Cours() {
@@ -28,6 +47,7 @@ export default function Cours() {
   const [search, setSearch] = useState('')
   const [filterSection, setFilterSection] = useState('')
   const [filterClasse, setFilterClasse] = useState('')
+  const [activeTab, setActiveTab] = useState('all')
   const [modal, setModal] = useState(null)
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -58,7 +78,12 @@ export default function Cours() {
   const filtered = useMemo(() => {
     if (!cours) return []
     let list = cours
-    if (filterSection) list = list.filter((c) => c.section === filterSection)
+    if (activeTab !== 'all') {
+      list = list.filter((c) => {
+        const key = SECTION_KEY[c.section]
+        return key === activeTab
+      })
+    }
     if (filterClasse) list = list.filter((c) => c.classe?.idClasse === Number(filterClasse))
     if (search) {
       const q = search.toLowerCase()
@@ -66,11 +91,12 @@ export default function Cours() {
         c.libelle?.toLowerCase().includes(q) ||
         c.classe?.libelle?.toLowerCase().includes(q) ||
         c.section?.toLowerCase().includes(q) ||
+        c.description?.toLowerCase().includes(q) ||
         coursEnseignants[c.idCours]?.some((p) => `${p.nom} ${p.prenom}`.toLowerCase().includes(q))
       )
     }
     return list
-  }, [cours, filterSection, filterClasse, search, coursEnseignants])
+  }, [cours, activeTab, filterClasse, search, coursEnseignants])
 
   const sections = useMemo(() => {
     if (!cours) return []
@@ -132,117 +158,214 @@ export default function Cours() {
 
   if (loading) return <Spinner label="Chargement des cours…" />
 
-  const sectionIcon = (s) => {
-    if (s?.toLowerCase().includes('anglo')) return '🇬🇧'
-    if (s?.toLowerCase().includes('franc')) return '🇫🇷'
-    if (s?.toLowerCase().includes('bil')) return '🌍'
-    return '📖'
-  }
-
   return (
+    <SimpleCrudPage
+      title="Cours & Matières"
+      subtitle="Matières enseignées, rattachées à une classe"
+      service={coursApi}
+      idField="idCours"
+      columns={[
+        { key: 'libelle', label: 'Libellé' },
+        { key: 'classe', label: 'Classe', render: (r) => classes.find((c) => c.idClasse === r.idClasse)?.libelle || `#${r.idClasse}` },
+        { key: 'coefficient', label: 'Coefficient' },
+        { key: 'heures', label: 'Heures' },
+      ]}
+      fields={[
+        { name: 'libelle', label: 'Libellé', required: true },
+        { name: 'idClasse', label: 'Classe', type: 'select', required: true, options: classes.map((c) => ({ value: c.idClasse, label: c.libelle })) },
+        { name: 'coefficient', label: 'Coefficient', type: 'number', default: 1 },
+        { name: 'heures', label: 'Heures', type: 'number' },
+        { name: 'description', label: 'Description' },
+      ]}
+    />
     <div>
-      <PageHeader
-        title="Cours / Matières"
-        subtitle={`${stats.total} cours répartis sur ${sections.length} sections`}
-        actions={<Button onClick={openCreate}>＋ Ajouter</Button>}
-      />
-      <Alert tone="error">{error}</Alert>
-
-      {/* ── Stats ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 20 }}>
-        <StatCard icon="📚" label="Total cours" value={stats.total} tone="info" />
-        {Object.entries(stats.bySection).map(([section, nb]) => (
-          <StatCard key={section} icon={sectionIcon(section)} label={section} value={nb} tone={SECTION_TONES[section] || 'neutral'} />
-        ))}
+      {/* ── Header ── */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--success)', marginBottom: 6 }}>
+            Pédagogie
+          </div>
+          <h1 style={{ fontFamily: 'var(--font)', fontSize: 26, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            Gestion des cours
+          </h1>
+          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginTop: 6, maxWidth: 520 }}>
+            Consultez, filtrez et organisez les cours des sections francophone, anglophone et bilingue.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+          <Button variant="secondary" onClick={() => window.location.href = '/cours/emploi-du-temps'}>
+            <span style={{ marginRight: 6 }}>📅</span> Emploi du temps
+          </Button>
+          <Button onClick={openCreate}>
+            <span style={{ marginRight: 6 }}>＋</span> Ajouter un cours
+          </Button>
+        </div>
       </div>
 
-      {/* ── Filters ── */}
-      <Card style={{ marginBottom: 16, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-        <InputField
-          placeholder="Rechercher un cours, classe, enseignant…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: '1 1 200px', marginBottom: 0 }}
-        />
-        <SelectField
-          placeholder="Toutes les sections"
-          options={sections.map((s) => ({ value: s, label: s }))}
-          value={filterSection}
-          onChange={(e) => setFilterSection(e.target.value)}
-          style={{ width: 180, marginBottom: 0 }}
-        />
-        <SelectField
-          placeholder="Toutes les classes"
-          options={(classes || []).map((c) => ({ value: c.idClasse, label: c.libelle }))}
-          value={filterClasse}
-          onChange={(e) => setFilterClasse(e.target.value)}
-          style={{ width: 200, marginBottom: 0 }}
-        />
-        {(search || filterSection || filterClasse) && (
-          <button
-            onClick={() => { setSearch(''); setFilterSection(''); setFilterClasse('') }}
-            style={{ fontSize: 13, color: 'var(--danger)', fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none' }}
-          >
-            Effacer filtres
-          </button>
-        )}
-      </Card>
+      <Alert tone="error">{error}</Alert>
 
-      {/* ── Table ── */}
-      <Card style={{ padding: 0, overflow: 'hidden', maxHeight: 520, overflowY: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-          <thead>
-            <tr style={{ background: 'var(--surface-alt, #f9fafb)', textAlign: 'left' }}>
-              <th style={thStyle}>Cours</th>
-              <th style={thStyle}>Classe</th>
-              <th style={thStyle}>Section</th>
-              <th style={thStyle}>Enseignant(s)</th>
-              <th style={{ ...thStyle, textAlign: 'center' }}>Coeff.</th>
-              <th style={{ ...thStyle, textAlign: 'center' }}>Heures</th>
-              <th style={{ ...thStyle, textAlign: 'right', paddingRight: 16 }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: 28, textAlign: 'center', color: 'var(--text-secondary)' }}>Aucun cours trouvé.</td></tr>
-            )}
+      {/* ── Binder Tabs ── */}
+      <div style={{ display: 'flex', gap: 6, marginTop: 22, paddingLeft: 4, alignItems: 'flex-end' }}>
+        <TabButton active={activeTab === 'all'} onClick={() => setActiveTab('all')} accent={TAB_ACCENT.all}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: TAB_ACCENT.all, opacity: 0.6, display: 'inline-block' }} />
+          Toutes les sections
+        </TabButton>
+        {sections.map((s) => {
+          const key = SECTION_KEY[s] || s.toLowerCase()
+          const accent = TAB_ACCENT[key] || 'var(--accent)'
+          return (
+            <TabButton key={s} active={activeTab === key} onClick={() => setActiveTab(key)} accent={accent}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: accent, opacity: 0.6, display: 'inline-block' }} />
+              {s}
+            </TabButton>
+          )
+        })}
+      </div>
+
+      {/* ── Folder panel ── */}
+      <div style={{
+        background: 'var(--card-bg)',
+        borderRadius: '0 var(--radius) var(--radius) var(--radius)',
+        boxShadow: 'var(--shadow-md)',
+        padding: '26px 28px 30px',
+        borderTop: `3px solid ${TAB_ACCENT[activeTab] || 'var(--text-primary)'}`,
+        minHeight: 300,
+      }}>
+
+        {/* ── Stat cards ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(sections.length + 1, 4)}, 1fr)`, gap: 14, marginBottom: 22 }}>
+          <StatBlock accent="var(--text-primary)" label="Total des cours" value={stats.total} note={`${sections.length} section${sections.length > 1 ? 's' : ''}`} />
+          {sections.map((s) => {
+            const c = SECTION_COLORS[s] || { bg: 'var(--border-light)', accent: 'var(--text-secondary)', text: 'var(--text-secondary)' }
+            const classeRange = cours
+              ?.filter((x) => x.section === s && x.classe?.libelle)
+              .map((x) => x.classe.libelle)
+            const note = classeRange && classeRange.length > 0
+              ? [...new Set(classeRange)].slice(0, 2).join(', ') + (classeRange.length > 2 ? '…' : '')
+              : '—'
+            return <StatBlock key={s} accent={c.accent} label={`Section ${s}`} value={stats.bySection[s] || 0} note={note} />
+          })}
+        </div>
+
+        {/* ── Filters ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', paddingBottom: 20, marginBottom: 22, borderBottom: '2px dashed var(--border)' }}>
+          <SelectField
+            placeholder="Toutes les classes"
+            options={(classes || []).map((c) => ({ value: c.idClasse, label: c.libelle }))}
+            value={filterClasse}
+            onChange={(e) => setFilterClasse(e.target.value)}
+            style={{ width: 200, marginBottom: 0 }}
+          />
+          <span style={{
+            fontFamily: 'monospace', fontSize: 12, color: 'var(--text-secondary)',
+            background: 'var(--border-light)', padding: '5px 12px', borderRadius: 20,
+          }}>
+            {filtered.length} cours affiché{filtered.length !== 1 ? 's' : ''}
+          </span>
+          <div style={{ position: 'relative', marginLeft: 'auto', flex: '1 1 220px' }}>
+            <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-muted)' }}>🔍</span>
+            <input
+              type="search"
+              placeholder="Rechercher un cours ou un enseignant…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: '100%', paddingLeft: 32, paddingRight: 12, paddingTop: 9, paddingBottom: 9,
+                border: '1px solid var(--border)', background: 'var(--card-bg)',
+                borderRadius: 8, fontSize: 13.5, color: 'var(--text-primary)', outline: 'none',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* ── Card grid ── */}
+        {filtered.length > 0 ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: 16 }}>
             {filtered.map((c) => {
               const ens = coursEnseignants[c.idCours] || []
+              const sectionKey = SECTION_KEY[c.section] || 'all'
+              const sectionColor = SECTION_COLORS[c.section]?.accent || 'var(--text-muted)'
               return (
-                <tr key={c.idCours} style={{ borderTop: '1px solid var(--border-light)' }}>
-                  <td style={tdStyle}>
-                    <div style={{ fontWeight: 600 }}>{c.libelle}</div>
-                    {c.description && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{c.description.slice(0, 60)}{c.description.length > 60 ? '…' : ''}</div>}
-                  </td>
-                  <td style={tdStyle}>{c.classe?.libelle || `#${c.idClasse}`}</td>
-                  <td style={tdStyle}>
-                    <Badge tone={SECTION_TONES[c.section] || 'neutral'}>
-                      {sectionIcon(c.section)} {c.section || '—'}
-                    </Badge>
-                  </td>
-                  <td style={tdStyle}>
-                    {ens.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>—</span>}
-                    {ens.map((p) => (
-                      <div key={p.idPers} style={{ fontSize: 13 }}>{p.nom} {p.prenom}</div>
-                    ))}
-                  </td>
-                  <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700 }}>{c.coefficient || '—'}</td>
-                  <td style={{ ...tdStyle, textAlign: 'center' }}>{c.heures || '—'}</td>
-                  <td style={{ ...tdStyle, textAlign: 'right', paddingRight: 16 }}>
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                      <button onClick={() => openEdit(c)} style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Modifier</button>
-                      <button onClick={() => handleDelete(c)} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>
+                <div key={c.idCours} className="course-card" style={cardStyle(sectionColor)}>
+                  {/* Spine */}
+                  <div style={{ width: 6, flexShrink: 0, background: sectionColor, borderRadius: '11px 0 0 11px' }} />
+                  {/* Body */}
+                  <div style={{ padding: '16px 18px 15px', flex: 1, minWidth: 0 }}>
+                    {/* Top row: title + badge */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontFamily: 'var(--font)', fontWeight: 700, fontSize: 15.5, margin: 0, lineHeight: 1.3, color: 'var(--text-primary)' }}>
+                          {c.libelle}
+                        </div>
+                        {c.description && (
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>
+                            {c.description.slice(0, 55)}{c.description.length > 55 ? '…' : ''}
+                          </div>
+                        )}
+                      </div>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                        whiteSpace: 'nowrap', flexShrink: 0, lineHeight: '18px',
+                        background: SECTION_COLORS[c.section]?.bg || 'var(--border-light)',
+                        color: SECTION_COLORS[c.section]?.text || 'var(--text-secondary)',
+                      }}>
+                        {c.classe?.libelle || `#${c.idClasse}`}
+                      </span>
                     </div>
-                  </td>
-                </tr>
+
+                    {/* Meta rows */}
+                    <div style={{ marginTop: 13, display: 'flex', flexDirection: 'column', gap: 7 }}>
+                      {ens.length > 0 ? ens.map((p) => (
+                        <div key={p.idPers} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.8, color: 'var(--text-primary)' }}>
+                          <span style={{ fontSize: 13 }}>👤</span>
+                          {p.nom} {p.prenom}
+                        </div>
+                      )) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.8, color: 'var(--text-muted)' }}>
+                          <span style={{ fontSize: 13 }}>👤</span>
+                          Aucun enseignant affecté
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
+                        {c.section && <span>📖 {c.section}</span>}
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div style={{ marginTop: 13, paddingTop: 11, borderTop: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {c.coefficient && (
+                          <span style={{ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', color: 'var(--text-secondary)', background: 'var(--border-light)', padding: '3px 8px', borderRadius: 6 }}>
+                            Coeff. {c.coefficient}
+                          </span>
+                        )}
+                        {c.heures && (
+                          <span style={{ fontSize: 11, fontWeight: 600, fontFamily: 'monospace', color: 'var(--text-secondary)', background: 'var(--border-light)', padding: '3px 8px', borderRadius: 6 }}>
+                            {c.heures}h / semaine
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => openEdit(c)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
+                          Modifier
+                        </button>
+                        <button onClick={() => handleDelete(c)} style={{ fontSize: 12, fontWeight: 600, color: 'var(--danger)', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}>
+                          Supprimer
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )
             })}
-          </tbody>
-        </table>
-      </Card>
-
-      <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--text-secondary)' }}>
-        Affichage {filtered.length} / {stats.total} cours
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '56px 20px', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>📂</div>
+            <p style={{ margin: 0, fontSize: 14 }}>Aucun cours ne correspond à ces critères.</p>
+            <p style={{ margin: '6px 0 0', fontSize: 13 }}>Essayez d'ajuster les filtres.</p>
+          </div>
+        )}
       </div>
 
       {/* ── Modal ── */}
@@ -293,5 +416,53 @@ export default function Cours() {
   )
 }
 
-const thStyle = { padding: '12px 14px', fontSize: 12.5, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.4 }
-const tdStyle = { padding: '11px 14px', verticalAlign: 'top' }
+function TabButton({ active, onClick, accent, children }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontFamily: 'var(--font)', fontWeight: 600, fontSize: 13.5,
+        padding: active ? '11px 22px 10px' : '10px 20px 9px',
+        cursor: 'pointer', userSelect: 'none',
+        borderRadius: '10px 10px 0 0',
+        color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+        background: active ? 'var(--card-bg)' : 'var(--border-light)',
+        position: 'relative', top: active ? 0 : 4,
+        transition: 'top .16s ease, background .16s ease, color .16s ease',
+        display: 'flex', alignItems: 'center', gap: 8,
+        border: 'none', outline: 'none',
+        boxShadow: active ? '0 -4px 10px rgba(0,0,0,0.06)' : 'none',
+        zIndex: active ? 2 : 1,
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+function StatBlock({ accent, label, value, note }) {
+  return (
+    <div style={{
+      border: '1px solid var(--border)', borderRadius: 10,
+      padding: '15px 16px', position: 'relative', overflow: 'hidden',
+      background: 'var(--card-bg)',
+    }}>
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: accent }} />
+      <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 600, margin: '0 0 6px', letterSpacing: 0.2 }}>{label}</p>
+      <p style={{ fontFamily: 'var(--font)', fontWeight: 700, fontSize: 25, margin: 0 }}>{value}</p>
+      {note && <p style={{ fontSize: 11.5, color: 'var(--text-muted)', margin: '4px 0 0', fontFamily: 'monospace' }}>{note}</p>}
+    </div>
+  )
+}
+
+function cardStyle(spineColor) {
+  return {
+    border: '1px solid var(--border)',
+    borderRadius: 11,
+    padding: 0,
+    overflow: 'hidden',
+    background: 'var(--card-bg)',
+    display: 'flex',
+    transition: 'box-shadow .18s ease, transform .18s ease, border-color .18s ease',
+  }
+}

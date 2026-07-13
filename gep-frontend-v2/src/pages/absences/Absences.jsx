@@ -20,7 +20,7 @@ export default function Absences() {
   const { user } = useAuth()
   const roleKey = getRoleKey(user)
   const isEnseignant = roleKey === ROLES.ENSEIGNANT
-  const isAdmin = roleKey === ROLES.ADMINISTRATEUR
+  const isAdmin = roleKey === ROLES.ADMINISTRATEUR || roleKey === ROLES.SECRETAIRE
 
   const [cours, setCours] = useState([])
   const [eleves, setEleves] = useState([])

@@ -12,6 +12,7 @@ export const epreuveTable = mysqlTable("Epreuve", {
   auteur: varchar("auteur", { length: 255 }).notNull().default(""),
   idNature: int("idNature").notNull(),
   idPers: int("idPers").notNull(),
+  valider: tinyint("valider").notNull().default(0),
   created_at: datetime("created_at"),
   isDelete: tinyint("isDelete").default(0),
 });

@@ -6,6 +6,7 @@ export const ENDPOINTS = {
     me: '/auth/me',
   },
   admins: '/admins',
+  adminsMe: '/admins/me',
   dashboard: { stats: '/dashboard/stats' },
   eleves: '/eleves',
   classes: '/classes',
@@ -18,6 +19,7 @@ export const ENDPOINTS = {
   cours: {
     root: '/cours',
     enseignants: '/cours/enseignants',
+    enseignantsLibres: '/cours/enseignants/libres',
     emploiDuTemps: '/cours/emploi-du-temps',
     titulaires: '/cours/titulaires',
     enseignantDashboard: '/cours/enseignant/dashboard',

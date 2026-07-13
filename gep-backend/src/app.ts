@@ -1,6 +1,6 @@
 import express, { type Express } from "express";
 import cors from "cors";
-import pinoHttp from "pino-http";
+import { pinoHttp } from "pino-http";
 import router from "./routes/index.ts";
 import healthRouter from "./routes/health.ts";
 import { logger } from "./lib/logger.ts";
@@ -20,8 +20,8 @@ app.use(
   pinoHttp({
     logger,
     serializers: {
-      req(req) { return { id: req.id, method: req.method, url: req.url?.split("?")[0] }; },
-      res(res) { return { statusCode: res.statusCode }; },
+      req(req: any) { return { id: req.id, method: req.method, url: req.url?.split("?")[0] }; },
+      res(res: any) { return { statusCode: res.statusCode }; },
     },
   }),
 );

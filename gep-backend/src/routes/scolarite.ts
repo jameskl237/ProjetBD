@@ -8,7 +8,7 @@ import { validate } from "../middlewares/validate.ts";
 import { ensureTranchesForClasse } from "../lib/tranches.ts";
 
 const router = Router();
-router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE));
+router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.SECRETAIRE));
 
 router.get("/cycles", async (_req, res) => {
   try {
@@ -28,7 +28,13 @@ router.post("/cycles", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
 
 router.put("/cycles/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
-    await db.update(cycleTable).set(req.body).where(eq(cycleTable.idCycle, Number(req.params.id)));
+    const { libelle, description } = req.body;
+    const data: Record<string, unknown> = {};
+    if (libelle !== undefined) data.libelle = libelle;
+    if (description !== undefined) data.description = description;
+    if (Object.keys(data).length > 0) {
+      await db.update(cycleTable).set(data).where(eq(cycleTable.idCycle, Number(req.params.id)));
+    }
     res.json({ message: "Cycle mis à jour" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
@@ -115,7 +121,14 @@ router.post("/", requireDirecteur, validate(insertScolariteSchema), async (req, 
 
 router.put("/:id", requireDirecteur, async (req, res) => {
   try {
-    await db.update(scolariteTable).set(req.body).where(eq(scolariteTable.idScolarite, Number(req.params.id)));
+    const { montant, idCycle, description } = req.body;
+    const data: Record<string, unknown> = {};
+    if (montant !== undefined) data.montant = montant;
+    if (idCycle !== undefined) data.idCycle = idCycle;
+    if (description !== undefined) data.description = description;
+    if (Object.keys(data).length > 0) {
+      await db.update(scolariteTable).set(data).where(eq(scolariteTable.idScolarite, Number(req.params.id)));
+    }
     const [s] = await db.select().from(scolariteTable).where(eq(scolariteTable.idScolarite, Number(req.params.id))).limit(1);
     if (!s) { res.status(404).json({ error: "Scolarité introuvable" }); return; }
     res.json(s);
