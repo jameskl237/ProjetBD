@@ -47,7 +47,6 @@ export default function Sidebar() {
               background: isActive ? 'var(--accent)' : 'transparent',
             })}
           >
-            <span style={{ width: 18, textAlign: 'center' }}>{item.icon}</span>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
           </NavLink>
         ))}
@@ -62,7 +61,6 @@ export default function Sidebar() {
           fontWeight: 500, marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16,
         }}
       >
-        <span style={{ width: 18, textAlign: 'center' }}>🚪</span>
         Déconnexion
       </button>
     </aside>

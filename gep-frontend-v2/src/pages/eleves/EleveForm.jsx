@@ -12,7 +12,7 @@ import { anneesApi } from '../../api/annees.api'
 
 const empty = {
   nom: '', prenom: '', dateNaissance: '', lieuNaissance: '', sexe: '0',
-  langue: 'FRANCAIS', actif: '1', villeNaissance: '',
+  langue: 'Francophone', actif: '1', villeNaissance: '',
   idSalle: '', idAnnee: '',
   parent: { nom: '', prenom: '', login: '', password: '', email: '', mobile: '' },
   withParent: false,
@@ -98,7 +98,12 @@ export default function EleveForm() {
             <InputField label="Ville de naissance" required value={values.villeNaissance} onChange={(e) => setField('villeNaissance', e.target.value)} />
             <SelectField label="Sexe" value={values.sexe} onChange={(e) => setField('sexe', e.target.value)}
               options={[{ value: '1', label: 'Masculin' }, { value: '0', label: 'Féminin' }]} />
-            <InputField label="Langue" value={values.langue} onChange={(e) => setField('langue', e.target.value)} />
+            <SelectField label="Section" value={values.langue} onChange={(e) => setField('langue', e.target.value)}
+              options={[
+                { value: 'Anglophone', label: 'Anglophone' },
+                { value: 'Francophone', label: 'Francophone' },
+                { value: 'Bilingue', label: 'Bilingue' },
+              ]} />
             <SelectField label="Statut" value={values.actif} onChange={(e) => setField('actif', e.target.value)}
               options={[{ value: '1', label: 'Actif' }, { value: '0', label: 'Inactif' }]} />
           </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import PageHeader from '../components/layout/PageHeader'
 import Card from '../components/ui/Card'
 import StatCard from '../components/ui/StatCard'
@@ -24,6 +24,20 @@ import { Bar, Line, Doughnut } from 'react-chartjs-2'
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, ArcElement, Tooltip, Legend, Filler)
 
 const COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16']
+
+function timeAgo(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const now = new Date()
+  const diffMs = now - d
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 1) return "à l'instant"
+  if (diffMin < 60) return `il y a ${diffMin} min`
+  const diffH = Math.floor(diffMin / 60)
+  if (diffH < 24) return `il y a ${diffH}h`
+  const diffJ = Math.floor(diffH / 24)
+  return `il y a ${diffJ}j`
+}
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null)
@@ -106,7 +120,7 @@ export default function Dashboard() {
           </div>
 
           {/* ── Charts Row ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: monthlyFlowData ? '1.6fr 1fr' : '1fr', gap: 16, marginBottom: 16, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: monthlyFlowData ? '1.6fr 1fr' : '1fr', gap: 16, marginBottom: 16 }}>
             {monthlyFlowData && (
               <Card>
                 <h3 style={{ marginBottom: 10 }}>Flux de paiements (8 mois)</h3>
@@ -114,21 +128,64 @@ export default function Dashboard() {
               </Card>
             )}
             {sectionData && (
-              <Card>
+              <Card style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                 <h3 style={{ marginBottom: 10 }}>Cours par section</h3>
-                <div style={{ maxWidth: 240, margin: '0 auto' }}>
+                <div style={{ maxWidth: 300, width: '100%' }}>
                   <Doughnut data={sectionData} options={{ responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8, font: { size: 12 } } } } }} />
                 </div>
               </Card>
             )}
           </div>
 
-          {performanceData && (
-            <Card style={{ marginBottom: 16 }}>
-              <h3 style={{ marginBottom: 10 }}>Performance par cours</h3>
-              <Bar data={performanceData} options={{ responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 20 } } }} />
-            </Card>
-          )}
+          <div style={{ display: 'grid', gridTemplateColumns: performanceData ? '3fr 2fr' : '1fr', gap: 16, marginBottom: 16 }}>
+            {performanceData && (
+              <Card>
+                <h3 style={{ marginBottom: 10 }}>Performance par cours</h3>
+                <Bar data={performanceData} options={{ responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 20 } } }} />
+              </Card>
+            )}
+            {stats.notices.length > 0 && (
+              <Card style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                  <h3>Annonces récentes</h3>
+                  <Link to="/annonces" style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)' }}>
+                    Voir tout →
+                  </Link>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {stats.notices.map((n, i) => (
+                    <div
+                      key={n.idMessages}
+                      style={{
+                        flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                        padding: '14px 16px', borderRadius: 'var(--radius-sm)',
+                        background: i % 2 === 0 ? 'var(--accent-light)' : 'var(--border-light)',
+                        borderLeft: '3px solid var(--accent)',
+                        transition: 'background .15s', cursor: 'default',
+                      }}
+                      onMouseEnter={(ev) => ev.currentTarget.style.background = 'rgba(76, 29, 149, 0.22)'}
+                      onMouseLeave={(ev) => ev.currentTarget.style.background = i % 2 === 0 ? 'var(--accent-light)' : 'var(--border-light)'}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600 }}>{n.titre}</div>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          {timeAgo(n.date)}
+                        </span>
+                      </div>
+                      {n.contenu && (
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4, lineHeight: 1.4 }}>
+                          {n.contenu.slice(0, 140)}{n.contenu.length > 140 ? '…' : ''}
+                        </div>
+                      )}
+                      <div style={{ marginTop: 6 }}>
+                        <Badge tone="neutral">{n.auteur || 'Administration'}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </div>
 
           {/* ── Quick Actions ── */}
           <Card style={{ marginBottom: 16 }}>
@@ -169,10 +226,36 @@ export default function Dashboard() {
             </Card>
 
             <Card>
-              <h3 style={{ marginBottom: 14 }}>Enseignants</h3>
-              {stats.enseignants?.map((e) => (
-                <div key={e.nom + e.prenom} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid var(--border-light)', fontSize: 14 }}>
-                  <span>{e.nom} {e.prenom}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <h3>Enseignants</h3>
+                <Link to="/enseignants" style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)' }}>
+                  Voir tous →
+                </Link>
+              </div>
+              {stats.enseignants?.map((e, i) => (
+                <div
+                  key={e.nom + e.prenom}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '10px 10px',
+                    borderRadius: 'var(--radius-sm)', marginBottom: 4, fontSize: 14,
+                    transition: 'background .15s', cursor: 'default',
+                  }}
+                  onMouseEnter={(ev) => ev.currentTarget.style.background = 'var(--border-light)'}
+                  onMouseLeave={(ev) => ev.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                    background: COLORS[i % COLORS.length], color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 13, fontWeight: 700,
+                  }}>
+                    {(e.prenom?.[0] || '') + (e.nom?.[0] || '')}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {e.nom} {e.prenom}
+                    </div>
+                  </div>
                   <Badge tone="info">{e.nbCours} cours</Badge>
                 </div>
               ))}
@@ -182,40 +265,125 @@ export default function Dashboard() {
           {/* ── Level distribution + Sessions ── */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <Card>
-              <h3 style={{ marginBottom: 14 }}>Répartition par classe</h3>
-              {stats.levelDistribution.map((l) => (
-                <div key={l.classe} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid var(--border-light)', fontSize: 14 }}>
-                  <span>{l.classe}</span>
-                  <span style={{ fontWeight: 700 }}>{l.effectif}</span>
-                </div>
-              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <h3>Répartition par classe</h3>
+                <Link to="/classes" style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)' }}>
+                  Voir toutes →
+                </Link>
+              </div>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>
+                {fmt(stats.levelDistribution.reduce((s, l) => s + l.effectif, 0))} élèves au total
+              </p>
+              {(() => {
+                const maxEffectif = Math.max(...stats.levelDistribution.map((l) => l.effectif), 1)
+                return stats.levelDistribution.map((l, i) => (
+                  <div
+                    key={l.classe}
+                    style={{
+                      padding: '10px 10px', borderRadius: 'var(--radius-sm)', marginBottom: 4,
+                      transition: 'background .15s', cursor: 'default',
+                    }}
+                    onMouseEnter={(ev) => ev.currentTarget.style.background = 'var(--border-light)'}
+                    onMouseLeave={(ev) => ev.currentTarget.style.background = 'transparent'}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 14, fontWeight: 500 }}>{l.classe}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent)' }}>{l.effectif}</span>
+                    </div>
+                    <div style={{ height: 6, borderRadius: 3, background: 'var(--border-light)', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', borderRadius: 3,
+                        width: `${(l.effectif / maxEffectif) * 100}%`,
+                        background: COLORS[i % COLORS.length],
+                        transition: 'width .4s ease',
+                      }} />
+                    </div>
+                  </div>
+                ))
+              })()}
             </Card>
 
-            <Card>
-              <h3 style={{ marginBottom: 14 }}>Séances du jour</h3>
-              {stats.upcomingSessions.length === 0 && <p style={{ color: 'var(--text-secondary)', fontSize: 13.5 }}>Aucune séance programmée aujourd'hui.</p>}
-              {stats.upcomingSessions.map((s) => (
-                <div key={s.idTemps} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid var(--border-light)', fontSize: 14 }}>
-                  <span>{s.cours} — {s.classe}</span>
-                  <span style={{ color: 'var(--text-secondary)' }}>{s.heure}</span>
-                </div>
-              ))}
+            <Card style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h3>Élèves</h3>
+                <Link to="/eleves" style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent)' }}>
+                  Voir tous →
+                </Link>
+              </div>
+              {(() => {
+                const genreData = stats.studentsByGenre || []
+                const garcons = genreData.find((g) => g.sexe === 1)?.total || 0
+                const filles = genreData.find((g) => g.sexe === 2)?.total || 0
+                const autres = genreData.filter((g) => g.sexe !== 1 && g.sexe !== 2).reduce((s, g) => s + g.total, 0)
+                const total = garcons + filles + autres || stats.totals.eleves
+                const pieData = total > 0 ? {
+                  labels: autres > 0 ? ['Garçons', 'Filles', 'Non défini'] : ['Garçons', 'Filles'],
+                  datasets: [{
+                    data: autres > 0 ? [garcons, filles, autres] : [garcons, filles],
+                    backgroundColor: autres > 0 ? ['#2563eb', '#ec4899', '#9CA3AF'] : ['#2563eb', '#ec4899'],
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                    hoverBorderWidth: 0,
+                  }],
+                } : null
+                return (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    {/* ── Pie chart centré ── */}
+                    <div style={{ position: 'relative', width: 200, height: 200, margin: '0 auto 20px' }}>
+                      {pieData ? (
+                        <Doughnut
+                          data={pieData}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            cutout: '68%',
+                            plugins: { legend: { display: false }, tooltip: { enabled: true } },
+                          }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'var(--border-light)' }} />
+                      )}
+                      <div style={{
+                        position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <span style={{ fontSize: 30, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{fmt(total)}</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>élèves</span>
+                      </div>
+                    </div>
+
+                    {/* ── Légende + barre en bas ── */}
+                    <div style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: 28, marginBottom: 14 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 3, background: '#2563eb' }} />
+                          <span style={{ fontSize: 14, fontWeight: 600 }}>Garçons</span>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: '#2563eb' }}>{fmt(garcons)}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 3, background: '#ec4899' }} />
+                          <span style={{ fontSize: 14, fontWeight: 600 }}>Filles</span>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: '#ec4899' }}>{fmt(filles)}</span>
+                        </div>
+                        {autres > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ width: 10, height: 10, borderRadius: 3, background: '#9CA3AF' }} />
+                            <span style={{ fontSize: 14, fontWeight: 600 }}>Autres</span>
+                            <span style={{ fontSize: 15, fontWeight: 800, color: '#9CA3AF' }}>{fmt(autres)}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ height: 8, borderRadius: 4, background: 'var(--border-light)', overflow: 'hidden', display: 'flex' }}>
+                        {garcons > 0 && <div style={{ width: `${total > 0 ? (garcons / total) * 100 : 0}%`, background: '#2563eb' }} />}
+                        {filles > 0 && <div style={{ width: `${total > 0 ? (filles / total) * 100 : 0}%`, background: '#ec4899' }} />}
+                        {autres > 0 && <div style={{ width: `${total > 0 ? (autres / total) * 100 : 0}%`, background: '#9CA3AF' }} />}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
             </Card>
           </div>
-
-          {/* ── Notices ── */}
-          {stats.notices.length > 0 && (
-            <Card>
-              <h3 style={{ marginBottom: 14 }}>Annonces récentes</h3>
-              {stats.notices.map((n) => (
-                <div key={n.idMessages} style={{ padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{n.titre}</div>
-                  {n.contenu && <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 3 }}>{n.contenu.slice(0, 120)}{n.contenu.length > 120 ? '…' : ''}</div>}
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>{n.auteur || 'Administration'}</div>
-                </div>
-              ))}
-            </Card>
-          )}
         </>
       )}
     </div>

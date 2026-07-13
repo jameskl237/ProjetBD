@@ -1,4 +1,4 @@
-import { mysqlTable, int, float, varchar, datetime } from "drizzle-orm/mysql-core";
+import { mysqlTable, int, float, varchar, datetime, tinyint } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { eleveTable } from "./eleve.ts";
@@ -17,6 +17,7 @@ export const evaluationTable = mysqlTable("Evaluation", {
   idCours: int("idCours").notNull(),
   idSession: int("idSession").notNull(),
   idPers: int("idPers").notNull(),
+  valider: tinyint("valider").notNull().default(0),
   created_at: datetime("created_at"),
 });
 

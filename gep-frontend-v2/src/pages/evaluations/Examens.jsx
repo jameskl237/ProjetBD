@@ -7,11 +7,12 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
 import Alert from '../../components/ui/Alert'
+import Badge from '../../components/ui/Badge'
 import InputField from '../../components/forms/InputField'
 import SelectField from '../../components/forms/SelectField'
 import { useResource } from '../../hooks/useResource'
-import { sessionsApi, epreuvesApi, naturesApi } from '../../api/evaluations.api'
-import { trimestresApi, anneesApi } from '../../api/annees.api'
+import { sessionsApi, epreuvesApi, naturesApi, epreuveValidationApi } from '../../api/evaluations.api'
+import { trimestresApi } from '../../api/annees.api'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleKey, ROLES } from '../../config/navigation'
 
@@ -27,7 +28,7 @@ export default function Examens() {
   const [tab, setTab] = useState('sessions')
   const { user } = useAuth()
   const roleKey = getRoleKey(user)
-  const isAdmin = roleKey === ROLES.ADMINISTRATEUR
+  const isAdmin = roleKey === ROLES.ADMINISTRATEUR || roleKey === ROLES.SECRETAIRE
 
   const sessions = useResource(sessionsApi)
   const epreuves = useResource(epreuvesApi)
@@ -36,6 +37,7 @@ export default function Examens() {
   const [annees, setAnnees] = useState([])
   const [modal, setModal] = useState(null)
   const [formError, setFormError] = useState('')
+  const [message, setMessage] = useState('')
   const [search, setSearch] = useState('')
 
   useEffect(() => { trimestresApi.list().then(setTrimestres).catch(() => {}); anneesApi.list().then(setAnnees).catch(() => {}) }, [])
@@ -91,6 +93,23 @@ export default function Examens() {
     } catch (err) { setFormError(err.response?.data?.error || 'Erreur lors de l\'enregistrement') }
   }
 
+  function flash(msg) { setMessage(msg); setTimeout(() => setMessage(''), 4000) }
+
+  async function handleValiderEpreuve(id) {
+    try {
+      await epreuveValidationApi.valider(id)
+      flash('Épreuve validée avec succès')
+      epreuves.reload()
+    } catch (err) { flash(err.response?.data?.error || 'Erreur lors de la validation') }
+  }
+
+  async function handleRejeterEpreuve(id) {
+    try {
+      await epreuveValidationApi.rejeter(id)
+      flash('Épreuve rejetée')
+      epreuves.reload()
+    } catch (err) { flash(err.response?.data?.error || 'Erreur lors du rejet') }
+  }
   const loading = sessions.loading || epreuves.loading || natures.loading
 
   return (
@@ -105,6 +124,9 @@ export default function Examens() {
         }
       />
 
+      {message && <Alert tone="info">{message}</Alert>}
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
       {/* ── Stat cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14, marginBottom: 20 }}>
         <StatCard icon="📋" label="Sessions" value={stats.sessions} tone="info" />
@@ -155,85 +177,18 @@ export default function Examens() {
       {tab === 'sessions' && (
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <Alert tone="error">{sessions.error}</Alert>
-          {sessions.loading ? <Spinner /> : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                <thead>
-                  <tr>
-                    <th style={thStyle}>#</th>
-                    <th style={thStyle}>Libellé</th>
-                    <th style={thStyle}>Trimestre</th>
-                    <th style={thStyle}>Responsable</th>
-                    <th style={thStyle}>Date</th>
-                    {isAdmin && <th style={{ ...thStyle, textAlign: 'right', paddingRight: 16 }}>Actions</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSessions.length === 0 && (
-                    <tr>
-                      <td colSpan={isAdmin ? 6 : 5} style={{ padding: 48, textAlign: 'center' }}>
-                        <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
-                        <div style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 15 }}>Aucune session trouvée</div>
-                      </td>
-                    </tr>
-                  )}
-                  {filteredSessions.map((s, i) => (
-                    <tr
-                      key={s.idSession}
-                      style={{ borderBottom: '1px solid var(--border-light)', transition: 'background .12s ease' }}
-                      onMouseEnter={(ev) => ev.currentTarget.style.background = 'var(--surface-alt, #f9fafb)'}
-                      onMouseLeave={(ev) => ev.currentTarget.style.background = 'transparent'}
-                    >
-                      <td style={tdStyle}>
-                        <span style={{
-                          width: 26, height: 26, borderRadius: 7, display: 'inline-flex', alignItems: 'center',
-                          justifyContent: 'center', fontSize: 11, fontWeight: 700,
-                          background: 'var(--accent-light)', color: 'var(--accent)',
-                        }}>{i + 1}</span>
-                      </td>
-                      <td style={tdStyle}>
-                        <span style={{ fontWeight: 600 }}>{s.libelle}</span>
-                      </td>
-                      <td style={tdStyle}>
-                        <span style={{
-                          fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 999,
-                          background: 'var(--info-light)', color: 'var(--info)',
-                        }}>{s.trimestre?.libelle || '—'}</span>
-                      </td>
-                      <td style={tdStyle}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{
-                            width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center',
-                            justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0,
-                            background: 'var(--success-light)', color: 'var(--success)',
-                          }}>
-                            {s.responsable ? `${(s.responsable.nom || '?')[0]}${(s.responsable.prenom || '?')[0]}` : '—'}
-                          </span>
-                          <span style={{ fontSize: 13 }}>{s.responsable ? `${s.responsable.nom} ${s.responsable.prenom}` : '—'}</span>
-                        </div>
-                      </td>
-                      <td style={tdStyle}>
-                        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                          {s.date_passage ? new Date(s.date_passage).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                        </span>
-                      </td>
-                      {isAdmin && (
-                        <td style={{ ...tdStyle, textAlign: 'right', paddingRight: 16 }}>
-                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button onClick={() => setModal({ mode: 'edit', kind: 'session', values: s })} style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none' }}>Modifier</button>
-                            <button onClick={async () => { if (confirm('Supprimer cette session ?')) { await sessionsApi.remove(s.idSession); sessions.reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none' }}>Supprimer</button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div style={{ padding: '8px 14px', fontSize: 12.5, color: 'var(--text-secondary)' }}>
-            {filteredSessions.length} session{filteredSessions.length > 1 ? 's' : ''}{search ? ` sur ${sessions.data.length}` : ''}
-          </div>
+          <Table columns={[
+            { key: 'libelle', label: 'Libellé' },
+            { key: 'trimestre', label: 'Trimestre', render: (r) => r.trimestre?.libelle || '—' },
+            { key: 'responsable', label: 'Responsable', render: (r) => r.responsable ? `${r.responsable.nom} ${r.responsable.prenom}` : '—' },
+            { key: 'date_passage', label: 'Date', render: (r) => r.date_passage?.slice(0, 10) || '—' },
+          ]} rows={sessions.data} loading={sessions.loading} keyField="idSession"
+            actions={isAdmin ? (row) => (
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button onClick={() => setModal({ mode: 'edit', kind: 'session', values: row })} style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Modifier</button>
+                <button onClick={async () => { if (confirm('Supprimer cette session ?')) { await sessionsApi.remove(row.idSession); sessions.reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>
+              </div>
+            ) : null} />
         </Card>
       )}
 
@@ -241,75 +196,20 @@ export default function Examens() {
       {tab === 'epreuves' && (
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <Alert tone="error">{epreuves.error}</Alert>
-          {epreuves.loading ? <Spinner /> : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                <thead>
-                  <tr>
-                    <th style={thStyle}>#</th>
-                    <th style={thStyle}>Libellé</th>
-                    <th style={thStyle}>Nature</th>
-                    <th style={thStyle}>Auteur</th>
-                    <th style={{ ...thStyle, textAlign: 'right', paddingRight: 16 }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEpreuves.length === 0 && (
-                    <tr>
-                      <td colSpan={5} style={{ padding: 48, textAlign: 'center' }}>
-                        <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
-                        <div style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 15 }}>Aucune épreuve trouvée</div>
-                      </td>
-                    </tr>
-                  )}
-                  {filteredEpreuves.map((ep, i) => {
-                    const natureIdx = natures.data.findIndex((n) => n.idNature === ep.nature?.idNature)
-                    return (
-                      <tr
-                        key={ep.idEpreuve}
-                        style={{ borderBottom: '1px solid var(--border-light)', transition: 'background .12s ease' }}
-                        onMouseEnter={(ev) => ev.currentTarget.style.background = 'var(--surface-alt, #f9fafb)'}
-                        onMouseLeave={(ev) => ev.currentTarget.style.background = 'transparent'}
-                      >
-                        <td style={tdStyle}>
-                          <span style={{
-                            width: 26, height: 26, borderRadius: 7, display: 'inline-flex', alignItems: 'center',
-                            justifyContent: 'center', fontSize: 11, fontWeight: 700,
-                            background: 'var(--accent-light)', color: 'var(--accent)',
-                          }}>{i + 1}</span>
-                        </td>
-                        <td style={tdStyle}>
-                          <span style={{ fontWeight: 600 }}>{ep.libelle}</span>
-                        </td>
-                        <td style={tdStyle}>
-                          <span style={{
-                            fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 999,
-                            background: natureIdx >= 0 ? NATURE_COLORS[natureIdx % NATURE_COLORS.length] + '18' : 'var(--border-light)',
-                            color: natureIdx >= 0 ? NATURE_COLORS[natureIdx % NATURE_COLORS.length] : 'var(--text-secondary)',
-                            border: `1px solid ${natureIdx >= 0 ? NATURE_COLORS[natureIdx % NATURE_COLORS.length] + '30' : 'transparent'}`,
-                          }}>{ep.nature?.libelle || '—'}</span>
-                        </td>
-                        <td style={tdStyle}>
-                          <span style={{ fontSize: 13, color: ep.auteur ? 'var(--text-primary)' : 'var(--text-muted)' }}>
-                            {ep.auteur || '—'}
-                          </span>
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: 'right', paddingRight: 16 }}>
-                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                            <button onClick={() => setModal({ mode: 'edit', kind: 'epreuve', values: ep })} style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none' }}>Modifier</button>
-                            {isAdmin && <button onClick={async () => { if (confirm('Supprimer cette épreuve ?')) { await epreuvesApi.remove(ep.idEpreuve); epreuves.reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: 'none', border: 'none' }}>Supprimer</button>}
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-          <div style={{ padding: '8px 14px', fontSize: 12.5, color: 'var(--text-secondary)' }}>
-            {filteredEpreuves.length} épreuve{filteredEpreuves.length > 1 ? 's' : ''}{search ? ` sur ${epreuves.data.length}` : ''}
-          </div>
+          <Table columns={[
+            { key: 'libelle', label: 'Libellé' },
+            { key: 'nature', label: 'Nature', render: (r) => r.nature?.libelle || '—' },
+            { key: 'auteur', label: 'Auteur' },
+            { key: 'valider', label: 'Statut', render: (r) => <Badge tone={r.valider ? 'success' : 'warning'}>{r.valider ? 'Validée' : 'En attente'}</Badge> },
+          ]} rows={epreuves.data} loading={epreuves.loading} keyField="idEpreuve"
+            actions={(row) => (
+              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                {isAdmin && !row.valider && <button onClick={() => handleValiderEpreuve(row.idEpreuve)} style={{ color: 'var(--success)', fontSize: 13, fontWeight: 600 }}>Valider</button>}
+                {isAdmin && row.valider && <button onClick={() => handleRejeterEpreuve(row.idEpreuve)} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Rejeter</button>}
+                <button onClick={() => setModal({ mode: 'edit', kind: 'epreuve', values: row })} style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Modifier</button>
+                {isAdmin && <button onClick={async () => { if (confirm('Supprimer cette épreuve ?')) { await epreuvesApi.remove(row.idEpreuve); epreuves.reload() } }} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Supprimer</button>}
+              </div>
+            )} />
         </Card>
       )}
 
