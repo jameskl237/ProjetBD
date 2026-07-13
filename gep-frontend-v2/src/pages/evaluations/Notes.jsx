@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import PageHeader from '../../components/layout/PageHeader'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
-import Table from '../../components/ui/Table'
 import Alert from '../../components/ui/Alert'
 import Badge from '../../components/ui/Badge'
+import StatCard from '../../components/ui/StatCard'
 import SelectField from '../../components/forms/SelectField'
 import Spinner from '../../components/ui/Spinner'
-import { useResource } from '../../hooks/useResource'
-import { evaluationsApi, bulletinApi, evaluationValidationApi } from '../../api/evaluations.api'
-import { coursApi } from '../../api/cours.api'
+import { evaluationsApi, sessionsApi, epreuvesApi, bulletinApi } from '../../api/evaluations.api'
+import { coursApi, enseignantsApi } from '../../api/cours.api'
+import { classesApi } from '../../api/classes.api'
 import { elevesApi } from '../../api/eleves.api'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleKey, ROLES } from '../../config/navigation'
@@ -31,11 +32,21 @@ export default function Notes() {
       <PageHeader title="Notes" subtitle="Consultation, validation et bulletins" />
       <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
         {visibleTabs.map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
-            padding: '8px 16px', borderRadius: 999, fontSize: 13.5, fontWeight: 600,
-            background: tab === t.key ? 'var(--accent)' : 'var(--border-light)',
-            color: tab === t.key ? '#fff' : 'var(--text-secondary)',
-          }}>{t.label}</button>
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', transition: 'all .15s ease',
+              border: tab === t.key ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
+              background: tab === t.key ? 'var(--accent)' : 'transparent',
+              color: tab === t.key ? '#fff' : 'var(--text-secondary)',
+            }}
+          >
+            <span>{t.icon}</span>
+            <span>{t.label}</span>
+          </button>
         ))}
       </div>
       {tab === 'consulter' && <ConsulterTab />}
@@ -125,34 +136,92 @@ function ValiderTab() {
 }
 
 function BulletinsTab() {
-  const [matricule, setMatricule] = useState('')
+  const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [mesCours, setMesCours] = useState([])
+  const [idClasse, setIdClasse] = useState(() => searchParams.get('bclasse') || '')
   const [eleves, setEleves] = useState([])
+  const [loadingEleves, setLoadingEleves] = useState(false)
+  const [search, setSearch] = useState(() => searchParams.get('bsearch') || '')
+  const [matricule, setMatricule] = useState('')
   const [bulletin, setBulletin] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => { elevesApi.list().then(setEleves).catch(() => {}) }, [])
+  const updateParams = useCallback((updates) => {
+    setSearchParams((prev) => {
+      Object.entries(updates).forEach(([k, v]) => { v ? prev.set(k, v) : prev.delete(k) })
+      return prev
+    })
+  }, [setSearchParams])
 
-  async function handleLoad() {
-    if (!matricule) return
+  useEffect(() => {
+    enseignantsApi.list().then((rows) => setMesCours(rows.filter((r) => r.idPers === user.id))).catch(() => {})
+  }, [user])
+
+  const classes = useMemo(() => {
+    const map = new Map()
+    mesCours.forEach((c) => {
+      const cl = c.cours?.classe
+      if (cl?.idClasse) map.set(cl.idClasse, cl.libelle)
+    })
+    return [...map.entries()].map(([id, libelle]) => ({ id, libelle }))
+  }, [mesCours])
+
+  useEffect(() => {
+    if (!idClasse) { setEleves([]); setMatricule(''); setBulletin(null); return }
+    setLoadingEleves(true)
+    classesApi.eleves(Number(idClasse))
+      .then(setEleves)
+      .catch(() => setEleves([]))
+      .finally(() => setLoadingEleves(false))
+  }, [idClasse])
+
+  const filteredEleves = useMemo(() => {
+    if (!search.trim()) return eleves
+    const q = search.toLowerCase()
+    return eleves.filter((e) => `${e.nom || ''} ${e.prenom || ''}`.toLowerCase().includes(q) || String(e.matricule).includes(q))
+  }, [eleves, search])
+
+  async function handleLoadBulletin(el) {
+    setMatricule(el.matricule)
     setLoading(true); setError(''); setBulletin(null)
     try {
-      setBulletin(await bulletinApi.get(matricule))
+      setBulletin(await bulletinApi.get(el.matricule))
     } catch (err) { setError(err.response?.data?.error || 'Élève introuvable') } finally { setLoading(false) }
   }
 
   return (
     <div>
       <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-          <SelectField label="Élève" value={matricule} onChange={(e) => setMatricule(e.target.value)} className="grow" style={{ flex: 1 }}
-            options={eleves.map((e) => ({ value: e.matricule, label: `${e.nom} ${e.prenom} (#${e.matricule})` }))} />
-          <Button onClick={handleLoad}>Afficher le bulletin</Button>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+          <SelectField
+            label="Classe"
+            placeholder="Choisir une classe…"
+            value={idClasse}
+            onChange={(e) => { setIdClasse(e.target.value); setMatricule(''); setBulletin(null); setSearch(''); updateParams({ bclasse: e.target.value, bsearch: '' }) }}
+            options={classes.map((c) => ({ value: c.id, label: c.libelle }))}
+          />
+          <div style={{ flex: '1 1 280px' }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>Rechercher un élève</label>
+            <input
+              type="text"
+              placeholder={idClasse ? 'Nom, prénom ou matricule…' : 'Sélectionnez d\'abord une classe'}
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setBulletin(null); setMatricule(''); updateParams({ bsearch: e.target.value }) }}
+              disabled={!idClasse}
+              style={{
+                width: '100%', padding: '10px 14px', borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--border)', fontSize: 14, boxSizing: 'border-box',
+                opacity: idClasse ? 1 : 0.5,
+              }}
+            />
+          </div>
         </div>
-        <Alert tone="error">{error}</Alert>
       </Card>
 
-      {loading && <Spinner label="Génération du bulletin…" />}
+      {error && <Alert tone="error">{error}</Alert>}
+      {loading && <Spinner label="Chargement du bulletin…" />}
 
       {bulletin && (
         <Card>
@@ -165,25 +234,177 @@ function BulletinsTab() {
               <a href={bulletinApi.exportUrl(matricule) + '?format=pdf'} target="_blank" rel="noreferrer"><Button variant="secondary">Exporter PDF</Button></a>
               <a href={bulletinApi.exportUrl(matricule) + '?format=csv'} target="_blank" rel="noreferrer"><Button variant="secondary">Exporter CSV</Button></a>
             </div>
-          </div>
+          </Card>
 
           {bulletin.sessions.map((s, i) => (
-            <div key={i} style={{ marginBottom: 18 }}>
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>{s.session} — Moyenne {s.moyenne}/20</div>
-              {s.lignes.map((l, j) => (
-                <div key={j} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--border-light)', fontSize: 13.5 }}>
-                  <span>{l.cours} (coef. {l.coef})</span>
-                  <Badge tone={l.note >= 10 ? 'success' : 'danger'}>{l.note}/20</Badge>
+            <Card key={i} style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{
+                    width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', fontSize: 16, background: 'var(--accent-light)',
+                  }}>&#128203;</span>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{s.session}</div>
                 </div>
-              ))}
-            </div>
+                <span style={{
+                  fontSize: 14, fontWeight: 700, padding: '4px 14px', borderRadius: 999,
+                  background: s.moyenne >= 10 ? 'var(--success-light)' : s.moyenne >= 8 ? 'var(--warning-light)' : 'var(--danger-light)',
+                  color: s.moyenne >= 10 ? 'var(--success)' : s.moyenne >= 8 ? 'var(--warning)' : 'var(--danger)',
+                }}>
+                  Moy. {s.moyenne}/20
+                </span>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr>
+                      <th style={thStyle}>Cours</th>
+                      <th style={{ ...thStyle, textAlign: 'center' }}>Coeff.</th>
+                      <th style={{ ...thStyle, textAlign: 'center' }}>Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {s.lignes.map((l, j) => (
+                      <tr key={j} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                        <td style={tdStyle}>{l.cours}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>{l.coef}</td>
+                        <td style={{ ...tdStyle, textAlign: 'center' }}>
+                          <span style={{
+                            display: 'inline-block', padding: '2px 10px', borderRadius: 999, fontWeight: 700, fontSize: 12,
+                            background: l.note >= 10 ? 'var(--success-light)' : l.note >= 8 ? 'var(--warning-light)' : 'var(--danger-light)',
+                            color: l.note >= 10 ? 'var(--success)' : l.note >= 8 ? 'var(--warning)' : 'var(--danger)',
+                          }}>{l.note}/20</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
           ))}
 
-          <div style={{ textAlign: 'right', fontWeight: 800, fontSize: 16, marginTop: 8 }}>
-            Moyenne générale : {bulletin.moyenneGenerale}/20
+          <Card style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: bulletin.moyenneGenerale >= 10 ? 'var(--success-light)' : 'var(--danger-light)',
+            border: `1.5px solid ${bulletin.moyenneGenerale >= 10 ? 'var(--success)' : 'var(--danger)'}30`,
+          }}>
+            <span style={{ fontWeight: 700, fontSize: 16 }}>Moyenne générale</span>
+            <span style={{
+              fontWeight: 800, fontSize: 20,
+              color: bulletin.moyenneGenerale >= 10 ? 'var(--success)' : 'var(--danger)',
+            }}>
+              {bulletin.moyenneGenerale}/20
+            </span>
+          </Card>
+        </div>
+      )}
+
+      {idClasse && !bulletin && !loading && !error && (
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
+          <div style={{
+            padding: '14px 18px', borderBottom: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <span style={{
+              width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontSize: 18, background: 'var(--accent-light)', flexShrink: 0,
+            }}>&#128221;</span>
+            <div style={{ fontWeight: 700, fontSize: 14 }}>
+              Bulletins — {classes.find((c) => c.id === Number(idClasse))?.libelle || ''}
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>
+                {filteredEleves.length} élève{filteredEleves.length > 1 ? 's' : ''}
+              </span>
+            </div>
+          </div>
+
+          {loadingEleves ? <Spinner label="Chargement des élèves…" /> : filteredEleves.length > 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                <thead>
+                  <tr>
+                    <th style={thStyle}>#</th>
+                    <th style={thStyle}>Élève</th>
+                    <th style={thStyle}>Matricule</th>
+                    <th style={{ ...thStyle, textAlign: 'right', paddingRight: 16 }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEleves.map((el, i) => (
+                    <tr
+                      key={el.matricule}
+                      style={{ borderBottom: '1px solid var(--border-light)', transition: 'background .12s ease', cursor: 'pointer' }}
+                      onMouseEnter={(ev) => ev.currentTarget.style.background = 'var(--surface-alt, #f9fafb)'}
+                      onMouseLeave={(ev) => ev.currentTarget.style.background = 'transparent'}
+                      onClick={() => handleLoadBulletin(el)}
+                    >
+                      <td style={tdStyle}>
+                        <span style={{
+                          width: 24, height: 24, borderRadius: 6, display: 'inline-flex', alignItems: 'center',
+                          justifyContent: 'center', fontSize: 11, fontWeight: 700,
+                          background: 'var(--accent-light)', color: 'var(--accent)',
+                        }}>{i + 1}</span>
+                      </td>
+                      <td style={tdStyle}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{
+                            width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0,
+                            background: el.sexe === 2
+                              ? 'linear-gradient(135deg, #fce7f3, #fbcfe8)'
+                              : 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
+                            color: el.sexe === 2 ? '#be185d' : '#1d4ed8',
+                          }}>{(el.nom || '?')[0]}{(el.prenom || '?')[0]}</span>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: 13 }}>{el.nom || '—'}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{el.prenom || '—'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={tdStyle}>
+                        <span style={{
+                          fontFamily: 'monospace', fontSize: 12, fontWeight: 600,
+                          padding: '2px 8px', borderRadius: 6, background: 'var(--border-light)',
+                        }}>{el.matricule}</span>
+                      </td>
+                      <td style={{ ...tdStyle, textAlign: 'right', paddingRight: 16 }}>
+                        <Button
+                          variant="secondary"
+                          style={{ padding: '5px 12px', fontSize: 12 }}
+                          onClick={(e) => { e.stopPropagation(); handleLoadBulletin(el) }}
+                        >
+                          Voir bulletin
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={{ padding: 48, textAlign: 'center' }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>&#128269;</div>
+              <div style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 15 }}>
+                {search ? 'Aucun élève ne correspond à la recherche' : 'Aucun élève dans cette classe'}
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {!idClasse && !bulletin && !loading && !error && (
+        <Card style={{ padding: 48, textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>&#127979;</div>
+          <div style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
+            Sélectionnez une classe
+          </div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+            Choisissez une classe pour afficher la liste des élèves et leurs bulletins
           </div>
         </Card>
       )}
     </div>
   )
 }
+
+const thStyle = { padding: '12px 14px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.4, textAlign: 'left', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }
+const tdStyle = { padding: '12px 14px', verticalAlign: 'middle' }

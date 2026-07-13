@@ -13,6 +13,24 @@ import { classesApi, sallesApi } from '../../api/classes.api'
 
 const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
 
+const CRENEAUX = [
+  { value: '07:30', label: '07h30 – 08h00' },
+  { value: '08:00', label: '08h00 – 08h30' },
+  { value: '08:30', label: '08h30 – 09h00' },
+  { value: '09:00', label: '09h00 – 09h30' },
+  { value: '10:00', label: '10h00 – 10h30 (après pause)' },
+  { value: '10:30', label: '10h30 – 11h00' },
+  { value: '11:00', label: '11h00 – 11h30' },
+  { value: '11:30', label: '11h30 – 12h00' },
+  { value: '12:30', label: '12h30 – 13h00 (après pause)' },
+  { value: '13:00', label: '13h00 – 13h30' },
+  { value: '13:30', label: '13h30 – 14h00' },
+  { value: '14:00', label: '14h00 – 14h30' },
+  { value: '14:30', label: '14h30 – 15h00' },
+  { value: '15:00', label: '15h00 – 15h30' },
+  { value: '15:30', label: '15h30 – 16h00' },
+]
+
 export default function EmploiDuTemps() {
   const { data, loading, error, reload } = useResource(emploiDuTempsApi)
   const [classes, setClasses] = useState([])
@@ -81,7 +99,8 @@ export default function EmploiDuTemps() {
             <Alert tone="error">{formError}</Alert>
             <SelectField label="Jour" required value={modal.values.jour} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, jour: e.target.value } }))}
               options={JOURS.map((j) => ({ value: j, label: j }))} />
-            <InputField label="Heure (ex: 08:00)" required value={modal.values.heure} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, heure: e.target.value } }))} />
+            <SelectField label="Créneau horaire" required value={modal.values.heure} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, heure: e.target.value } }))}
+              options={CRENEAUX} />
             <SelectField label="Classe" required value={modal.values.idClasse} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, idClasse: e.target.value } }))}
               options={classes.map((c) => ({ value: c.idClasse, label: c.libelle }))} />
             <SelectField label="Cours" required value={modal.values.idCours} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, idCours: e.target.value } }))}

@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import PageHeader from '../../components/layout/PageHeader'
 import Card from '../../components/ui/Card'
+import StatCard from '../../components/ui/StatCard'
+import Spinner from '../../components/ui/Spinner'
+import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
-import Table from '../../components/ui/Table'
 import Modal from '../../components/ui/Modal'
 import Alert from '../../components/ui/Alert'
 import Badge from '../../components/ui/Badge'
@@ -15,10 +17,12 @@ import { useAuth } from '../../hooks/useAuth'
 import { getRoleKey, ROLES } from '../../config/navigation'
 
 const TABS = [
-  { key: 'sessions', label: 'Sessions d\'examen' },
-  { key: 'epreuves', label: 'Épreuves' },
-  { key: 'natures', label: 'Natures d\'épreuve' },
+  { key: 'sessions', label: 'Sessions d\'examen', icon: '📋' },
+  { key: 'epreuves', label: 'Épreuves', icon: '📝' },
+  { key: 'natures', label: 'Natures d\'épreuve', icon: '🏷️' },
 ]
+
+const NATURE_COLORS = ['#4C1D95', '#0369a1', '#047857', '#b45309', '#be123c']
 
 export default function Examens() {
   const [tab, setTab] = useState('sessions')
@@ -30,11 +34,43 @@ export default function Examens() {
   const epreuves = useResource(epreuvesApi)
   const natures = useResource(naturesApi)
   const [trimestres, setTrimestres] = useState([])
+  const [annees, setAnnees] = useState([])
   const [modal, setModal] = useState(null)
   const [formError, setFormError] = useState('')
   const [message, setMessage] = useState('')
+  const [search, setSearch] = useState('')
 
-  useEffect(() => { trimestresApi.list().then(setTrimestres).catch(() => {}) }, [])
+  useEffect(() => { trimestresApi.list().then(setTrimestres).catch(() => {}); anneesApi.list().then(setAnnees).catch(() => {}) }, [])
+
+  const filteredSessions = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return sessions.data
+    return sessions.data.filter((s) =>
+      `${s.libelle} ${s.responsable?.nom || ''} ${s.responsable?.prenom || ''} ${s.trimestre?.libelle || ''}`.toLowerCase().includes(q)
+    )
+  }, [sessions.data, search])
+
+  const filteredEpreuves = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return epreuves.data
+    return epreuves.data.filter((e) =>
+      `${e.libelle} ${e.nature?.libelle || ''} ${e.auteur || ''}`.toLowerCase().includes(q)
+    )
+  }, [epreuves.data, search])
+
+  const filteredNatures = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return natures.data
+    return natures.data.filter((n) =>
+      `${n.libelle} ${n.description || ''}`.toLowerCase().includes(q)
+    )
+  }, [natures.data, search])
+
+  const stats = useMemo(() => ({
+    sessions: sessions.data.length,
+    epreuves: epreuves.data.length,
+    natures: natures.data.length,
+  }), [sessions.data, epreuves.data, natures.data])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -49,7 +85,7 @@ export default function Examens() {
         if (modal.mode === 'edit') await epreuvesApi.update(modal.values.idEpreuve, p); else await epreuvesApi.create(p)
         epreuves.reload()
       } else {
-        const p = { libelle: modal.values.libelle, description: modal.values.description }
+        const p = { libelle: modal.values.libelle, description: modal.values.description, idAnnee: modal.values.idAnnee ? Number(modal.values.idAnnee) : null }
         await naturesApi.create(p)
         natures.reload()
       }
@@ -74,6 +110,7 @@ export default function Examens() {
       epreuves.reload()
     } catch (err) { flash(err.response?.data?.error || 'Erreur lors du rejet') }
   }
+  const loading = sessions.loading || epreuves.loading || natures.loading
 
   return (
     <div>
@@ -83,24 +120,62 @@ export default function Examens() {
         actions={
           tab === 'sessions' && isAdmin ? <Button onClick={() => setModal({ mode: 'create', kind: 'session', values: { libelle: '', description: '', idTrimestre: '', date_passage: '' } })}>＋ Session</Button> :
           tab === 'epreuves' ? <Button onClick={() => setModal({ mode: 'create', kind: 'epreuve', values: { libelle: '', idNature: '', urlDoc: '', auteur: '' } })}>＋ Épreuve</Button> :
-          tab === 'natures' && isAdmin ? <Button onClick={() => setModal({ mode: 'create', kind: 'nature', values: { libelle: '', description: '' } })}>＋ Nature</Button> : null
+          tab === 'natures' && isAdmin ? <Button onClick={() => setModal({ mode: 'create', kind: 'nature', values: { libelle: '', description: '', idAnnee: '' } })}>＋ Nature</Button> : null
         }
       />
 
       {message && <Alert tone="info">{message}</Alert>}
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
-        {TABS.map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
-            padding: '8px 16px', borderRadius: 999, fontSize: 13.5, fontWeight: 600,
-            background: tab === t.key ? 'var(--accent)' : 'var(--border-light)',
-            color: tab === t.key ? '#fff' : 'var(--text-secondary)',
-          }}>{t.label}</button>
-        ))}
+      {/* ── Stat cards ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 14, marginBottom: 20 }}>
+        <StatCard icon="📋" label="Sessions" value={stats.sessions} tone="info" />
+        <StatCard icon="📝" label="Épreuves" value={stats.epreuves} tone="warning" />
+        <StatCard icon="🏷️" label="Natures" value={stats.natures} tone="success" />
       </div>
 
+      {/* ── Tabs ── */}
+      <Card style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => { setTab(t.key); setSearch('') }}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', transition: 'all .15s ease',
+              border: tab === t.key ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
+              background: tab === t.key ? 'var(--accent)' : 'transparent',
+              color: tab === t.key ? '#fff' : 'var(--text-secondary)',
+            }}
+          >
+            <span>{t.icon}</span>
+            <span>{t.label}</span>
+          </button>
+        ))}
+
+        <div style={{ flex: 1 }} />
+
+        <div style={{ position: 'relative', width: 260 }}>
+          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'var(--text-muted)', pointerEvents: 'none' }}>🔍</span>
+          <input
+            placeholder="Rechercher…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: '100%', padding: '8px 12px 8px 32px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border)', fontSize: 13, background: 'var(--surface-alt, #f9fafb)',
+              transition: 'border-color .15s',
+            }}
+            onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
+            onBlur={(e) => e.target.style.borderColor = 'var(--border)'}
+          />
+        </div>
+      </Card>
+
+      {/* ── Sessions ── */}
       {tab === 'sessions' && (
-        <Card style={{ padding: 0 }}>
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
           <Alert tone="error">{sessions.error}</Alert>
           <Table columns={[
             { key: 'libelle', label: 'Libellé' },
@@ -117,8 +192,9 @@ export default function Examens() {
         </Card>
       )}
 
+      {/* ── Épreuves ── */}
       {tab === 'epreuves' && (
-        <Card style={{ padding: 0 }}>
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
           <Alert tone="error">{epreuves.error}</Alert>
           <Table columns={[
             { key: 'libelle', label: 'Libellé' },
@@ -137,13 +213,77 @@ export default function Examens() {
         </Card>
       )}
 
+      {/* ── Natures ── */}
       {tab === 'natures' && (
-        <Card style={{ padding: 0 }}>
+        <Card style={{ padding: 0, overflow: 'hidden' }}>
           <Alert tone="error">{natures.error}</Alert>
-          <Table columns={[{ key: 'libelle', label: 'Libellé' }, { key: 'description', label: 'Description' }]} rows={natures.data} loading={natures.loading} keyField="idNature" />
+          {natures.loading ? <Spinner /> : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                <thead>
+                  <tr>
+                    <th style={thStyle}>#</th>
+                    <th style={thStyle}>Libellé</th>
+                    <th style={thStyle}>Description</th>
+                    <th style={thStyle}>Année Acad.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredNatures.length === 0 && (
+                    <tr>
+                      <td colSpan={4} style={{ padding: 48, textAlign: 'center' }}>
+                        <div style={{ fontSize: 36, marginBottom: 8 }}>📭</div>
+                        <div style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 15 }}>Aucune nature trouvée</div>
+                      </td>
+                    </tr>
+                  )}
+                  {filteredNatures.map((n, i) => (
+                    <tr
+                      key={n.idNature}
+                      style={{ borderBottom: '1px solid var(--border-light)', transition: 'background .12s ease' }}
+                      onMouseEnter={(ev) => ev.currentTarget.style.background = 'var(--surface-alt, #f9fafb)'}
+                      onMouseLeave={(ev) => ev.currentTarget.style.background = 'transparent'}
+                    >
+                      <td style={tdStyle}>
+                        <span style={{
+                          width: 26, height: 26, borderRadius: 7, display: 'inline-flex', alignItems: 'center',
+                          justifyContent: 'center', fontSize: 11, fontWeight: 700,
+                          background: NATURE_COLORS[i % NATURE_COLORS.length] + '18',
+                          color: NATURE_COLORS[i % NATURE_COLORS.length],
+                        }}>{i + 1}</span>
+                      </td>
+                      <td style={tdStyle}>
+                        <span style={{
+                          fontWeight: 600, padding: '4px 12px', borderRadius: 999,
+                          background: NATURE_COLORS[i % NATURE_COLORS.length] + '18',
+                          color: NATURE_COLORS[i % NATURE_COLORS.length],
+                          border: `1px solid ${NATURE_COLORS[i % NATURE_COLORS.length]}30`,
+                          fontSize: 13,
+                        }}>{n.libelle}</span>
+                      </td>
+                      <td style={tdStyle}>
+                        <span style={{ fontSize: 13, color: n.description ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                          {n.description || '—'}
+                        </span>
+                      </td>
+                      <td style={tdStyle}>
+                        <span style={{ fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 999, background: 'var(--info-light)', color: 'var(--info)' }}>
+                          {n.annee?.libelle || '—'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <div style={{ padding: '8px 14px', fontSize: 12.5, color: 'var(--text-secondary)' }}>
+            {filteredNatures.length} nature{filteredNatures.length > 1 ? 's' : ''}{search ? ` sur ${natures.data.length}` : ''}
+          </div>
         </Card>
       )}
 
+      {/* ── Modal ── */}
       <Modal open={!!modal} title={modal?.mode === 'create' ? 'Ajouter' : 'Modifier'} onClose={() => setModal(null)}>
         {modal && (
           <form onSubmit={handleSubmit}>
@@ -164,11 +304,15 @@ export default function Examens() {
               </>
             )}
             {modal.kind !== 'epreuve' && (
-              <InputField label="Description" value={modal.values.description} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, description: e.target.value } }))} />
+              <>
+                <InputField label="Description" value={modal.values.description} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, description: e.target.value } }))} />
+                <SelectField label="Année académique" value={modal.values.idAnnee || ''} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, idAnnee: e.target.value } }))}
+                  options={annees.map((a) => ({ value: a.idAnnee, label: a.libelle }))} placeholder="Facultatif" />
+              </>
             )}
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 8 }}>
               <Button type="button" variant="secondary" onClick={() => setModal(null)}>Annuler</Button>
-              <Button type="submit">Enregistrer</Button>
+              <Button type="submit">{modal.mode === 'create' ? 'Créer' : 'Enregistrer'}</Button>
             </div>
           </form>
         )}
@@ -176,3 +320,6 @@ export default function Examens() {
     </div>
   )
 }
+
+const thStyle = { padding: '12px 14px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: 0.4, textAlign: 'left', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }
+const tdStyle = { padding: '12px 14px', verticalAlign: 'middle' }

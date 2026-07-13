@@ -74,7 +74,7 @@ export default function EleveIndex() {
   }, [filtered, groupedByClass])
 
   const columns = [
-    { key: 'matricule', label: 'Matricule' },
+    { key: 'matricule', label: 'Matricule', render: (r) => r.matriculeCode || r.matricule },
     { key: 'nom', label: 'Nom' },
     { key: 'prenom', label: 'Prénom' },
     { key: 'classe', label: 'Classe', render: (row) => row.inscriptions?.[0]?.classe?.libelle || '—' },

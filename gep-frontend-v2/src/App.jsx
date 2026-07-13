@@ -40,15 +40,27 @@ import Transport from './pages/transport/Transport'
 
 import Personnes from './pages/personnes/Personnes'
 import Compte from './pages/personnes/Compte'
+import Comptes from './pages/admin/Comptes'
+import BulletinsAdmin from './pages/admin/BulletinsAdmin'
+import Appreciations from './pages/admin/Appreciations'
 
 import EnseignantDashboard from './pages/enseignant/EnseignantDashboard'
+import EnseignantCours from './pages/enseignant/EnseignantCours'
+import EnseignantEleves from './pages/enseignant/EnseignantEleves'
+import EnseignantEmploiDuTemps from './pages/enseignant/EnseignantEmploiDuTemps'
+import EnseignantAbsences from './pages/enseignant/EnseignantAbsences'
+import EnseignantAnnonces from './pages/enseignant/EnseignantAnnonces'
+import EnseignantNouvelleAnnonce from './pages/enseignant/EnseignantNouvelleAnnonce'
+import EnseignantCompte from './pages/enseignant/EnseignantCompte'
 
 import ParentDashboard from './pages/parent/ParentDashboard'
+import ParentEnfants from './pages/parent/ParentEnfants'
 import ParentNotes from './pages/parent/Notes'
 import ParentAbsences from './pages/parent/Absences'
 import ParentEmploiDuTemps from './pages/parent/EmploiDuTemps'
 import ParentTransport from './pages/parent/Transport'
 import ParentPaiements from './pages/parent/Paiements'
+import ParentAppreciations from './pages/parent/Appreciations'
 
 const ADMIN = [ROLES.ADMINISTRATEUR]
 const SEC = [ROLES.SECRETAIRE]
@@ -79,7 +91,10 @@ export default function App() {
             {/* ─── Tableaux de bord ─── */}
             <Route path="/dashboard" element={guarded(ADMIN_SEC, <Dashboard />)} />
             <Route path="/enseignant" element={guarded(ENSEIGNANT, <EnseignantDashboard />)} />
+            <Route path="/enseignant/cours" element={guarded(ENSEIGNANT, <EnseignantCours />)} />
+            <Route path="/enseignant/eleves" element={guarded(ENSEIGNANT, <EnseignantEleves />)} />
             <Route path="/parent" element={guarded(PARENT, <ParentDashboard />)} />
+            <Route path="/parent/enfants" element={guarded(PARENT, <ParentEnfants />)} />
 
             {/* ─── Élèves ─── */}
             <Route path="/eleves" element={guarded(ADMIN_SEC_COMPTABLE, <EleveIndex />)} />
@@ -103,6 +118,10 @@ export default function App() {
             <Route path="/examens" element={guarded(ADMIN_SEC_ENSEIGNANT, <Examens />)} />
             <Route path="/notes" element={guarded(ADMIN_SEC_ENSEIGNANT, <Notes />)} />
             <Route path="/bulletins" element={guarded(ADMIN_SEC, <Bulletins />)} />
+            <Route path="/cours" element={guarded(ADMIN, <Cours />)} />
+            <Route path="/emploi-du-temps" element={guarded(ADMIN, <EmploiDuTemps />)} />
+            <Route path="/enseignant/emploi-du-temps" element={guarded(ENSEIGNANT, <EnseignantEmploiDuTemps />)} />
+            <Route path="/enseignants" element={guarded(ADMIN, <Enseignants />)} />
 
             {/* ─── Scolarité ─── */}
             <Route path="/scolarite" element={guarded(ADMIN_SEC, <Scolarite />)} />
@@ -125,6 +144,24 @@ export default function App() {
 
             {/* ─── Mon compte ─── */}
             <Route path="/compte" element={guarded(ALL_ROLES, <Compte />)} />
+            <Route path="/parents" element={guarded(ADMIN, <Parents />)} />
+            <Route path="/personnes" element={guarded(ADMIN, <Personnes />)} />
+            <Route path="/discipline" element={guarded(ADMIN, <Discipline />)} />
+
+            <Route path="/absences" element={guarded(ADMIN, <Absences />)} />
+            <Route path="/enseignant/absences" element={guarded(ENSEIGNANT, <EnseignantAbsences />)} />
+            <Route path="/transport" element={guarded(ADMIN, <Transport />)} />
+            <Route path="/quartiers" element={guarded(ADMIN, <Quartiers />)} />
+            <Route path="/bibliotheque" element={guarded(ADMIN, <Livres />)} />
+            <Route path="/annonces" element={guarded([ROLES.ADMINISTRATEUR, ROLES.PARENT], <Annonces />)} />
+            <Route path="/enseignant/annonces" element={guarded(ENSEIGNANT, <EnseignantAnnonces />)} />
+            <Route path="/enseignant/annonces/nouvelle" element={guarded(ENSEIGNANT, <EnseignantNouvelleAnnonce />)} />
+
+            <Route path="/comptes" element={guarded(ADMIN, <Comptes />)} />
+            <Route path="/bulletins-admin" element={guarded(ADMIN, <BulletinsAdmin />)} />
+            <Route path="/appreciations" element={guarded(ADMIN, <Appreciations />)} />
+            <Route path="/compte" element={guarded([ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT], <Compte />)} />
+            <Route path="/enseignant/compte" element={guarded(ENSEIGNANT, <EnseignantCompte />)} />
 
             {/* ─── Espace Parent ─── */}
             <Route path="/parent/notes" element={guarded(PARENT, <ParentNotes />)} />
@@ -132,6 +169,7 @@ export default function App() {
             <Route path="/parent/emploi-du-temps" element={guarded(PARENT, <ParentEmploiDuTemps />)} />
             <Route path="/parent/transport" element={guarded(PARENT, <ParentTransport />)} />
             <Route path="/parent/paiements" element={guarded(PARENT, <ParentPaiements />)} />
+            <Route path="/parent/appreciations" element={guarded(PARENT, <ParentAppreciations />)} />
 
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Route>

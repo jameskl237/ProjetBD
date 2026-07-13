@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import PageHeader from '../../components/layout/PageHeader'
 import Card from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -16,10 +16,30 @@ import { elevesApi } from '../../api/eleves.api'
 import { anneesApi } from '../../api/annees.api'
 import { useAuth } from '../../hooks/useAuth'
 import { getRoleKey, ROLES } from '../../config/navigation'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js'
+import { Bar } from 'react-chartjs-2'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+)
 
 const TABS = [
   { key: 'liste', label: 'Paiements' },
   { key: 'impayes', label: 'Impayés' },
+  { key: 'stats', label: 'Évolution Graphique' },
 ]
 
 export default function Paiements() {
@@ -81,7 +101,57 @@ export default function Paiements() {
     } catch (err) { setFormError(err.response?.data?.error || 'Erreur lors de l\'enregistrement') } finally { setSaving(false) }
   }
 
-  const totalPeriode = data.reduce((s, p) => s + Number(p.montant || 0), 0)
+  const totalPeriode = data ? data.reduce((s, p) => s + Number(p.montant || 0), 0) : 0
+
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) return null
+
+    // Sort by payment date
+    const sorted = [...data].sort((a, b) => new Date(a.datePaie).getTime() - new Date(b.datePaie).getTime())
+
+    // Group by month
+    const groups = {}
+    sorted.forEach((p) => {
+      if (!p.datePaie) return
+      const date = new Date(p.datePaie)
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const label = date.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
+
+      if (!groups[key]) {
+        groups[key] = { label, t1: 0, t2: 0, t3: 0, autres: 0 }
+      }
+
+      const comment = (p.comentaire || '').toLowerCase()
+      const montant = Number(p.montant || 0)
+
+      if (comment.includes('1ère') || comment.includes('1ere') || comment.includes('première') || comment.includes('tranche 1') || p.idTranche === 1) {
+        groups[key].t1 += montant
+      } else if (comment.includes('2ème') || comment.includes('2eme') || comment.includes('deuxième') || comment.includes('tranche 2') || p.idTranche === 2) {
+        groups[key].t2 += montant
+      } else if (comment.includes('3ème') || comment.includes('3eme') || comment.includes('troisième') || comment.includes('tranche 3') || p.idTranche === 3) {
+        groups[key].t3 += montant
+      } else {
+        groups[key].autres += montant
+      }
+    })
+
+    const sortedKeys = Object.keys(groups).sort()
+    const labels = sortedKeys.map((k) => groups[k].label)
+    const t1Data = sortedKeys.map((k) => groups[k].t1)
+    const t2Data = sortedKeys.map((k) => groups[k].t2)
+    const t3Data = sortedKeys.map((k) => groups[k].t3)
+    const autresData = sortedKeys.map((k) => groups[k].autres)
+
+    return {
+      labels,
+      datasets: [
+        { label: '1ère Tranche', data: t1Data, backgroundColor: '#1b4332' },
+        { label: '2ème Tranche', data: t2Data, backgroundColor: '#d4af37' },
+        { label: '3ème Tranche', data: t3Data, backgroundColor: '#52b788' },
+        { label: 'Inscriptions / Autres', data: autresData, backgroundColor: '#8fce00' },
+      ],
+    }
+  }, [data])
 
   return (
     <div>
@@ -114,11 +184,12 @@ export default function Paiements() {
           <Alert tone="error">{error}</Alert>
           <Table
             columns={[
-              { key: 'eleve', label: 'Élève', render: (r) => r.eleve ? `${r.eleve.nom} ${r.eleve.prenom}` : `#${r.matricule}` },
+              { key: 'eleve', label: 'Élève', render: (r) => r.eleve ? `${r.eleve.nom} ${r.eleve.prenom}` : `#${r.eleve?.matriculeCode || r.matricule}` },
               { key: 'classe', label: 'Classe', render: (r) => r.classe?.libelle || '—' },
               { key: 'montant', label: 'Montant', render: (r) => `${Number(r.montant).toLocaleString('fr-FR')} FCFA` },
               { key: 'mode', label: 'Mode', render: (r) => r.mode?.libelle || '—' },
               { key: 'datePaie', label: 'Date', render: (r) => r.datePaie?.slice(0, 10) },
+              { key: 'recu', label: 'Reçu', render: (r) => <button onClick={() => paiementsExtra.openRecu(r.idPaie)} style={{ background: 'none', border: 'none', color: 'var(--accent)', fontWeight: 600, textDecoration: 'underline', cursor: 'pointer', padding: 0, fontSize: 'inherit' }}>Reçu PDF 🧾</button> },
             ]}
             rows={data}
             loading={loading}
@@ -146,13 +217,49 @@ export default function Paiements() {
         </Card>
       )}
 
+      {tab === 'stats' && (
+        <Card style={{ padding: 24 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 18, color: 'var(--primary)' }}>
+            Évolution des paiements par tranche
+          </h3>
+          {chartData ? (
+            <div style={{ height: 350, position: 'relative' }}>
+              <Bar
+                data={chartData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    x: { stacked: true },
+                    y: { stacked: true, ticks: { callback: (val) => `${val.toLocaleString()} F` } },
+                  },
+                  plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx) => `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString()} FCFA`,
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
+          ) : (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
+              Aucun paiement enregistré pour afficher les statistiques.
+            </div>
+          )}
+        </Card>
+      )}
+
+
       <Modal open={!!modal} title="Nouveau paiement" onClose={() => setModal(null)} width={560}>
         {modal && (
           <form onSubmit={handleSubmit}>
             <Alert tone="error">{formError}</Alert>
             <SelectField label="Élève" required value={modal.values.matricule}
               onChange={(e) => { const matricule = e.target.value; setModal((m) => ({ ...m, values: { ...m.values, matricule } })); loadStatut(matricule, modal.values.idAca) }}
-              options={eleves.map((e) => ({ value: e.matricule, label: `${e.nom} ${e.prenom} (#${e.matricule})` }))} />
+              options={eleves.map((e) => ({ value: e.matricule, label: `${e.nom} ${e.prenom} (#${e.matriculeCode || e.matricule})` }))} />
             <SelectField label="Année académique" required value={modal.values.idAca}
               onChange={(e) => { const idAca = e.target.value; setModal((m) => ({ ...m, values: { ...m.values, idAca } })); loadStatut(modal.values.matricule, idAca) }}
               options={annees.map((a) => ({ value: a.idAnnee, label: a.libelle }))} />

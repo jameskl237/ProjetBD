@@ -14,7 +14,8 @@ export const messagesTable = mysqlTable("Messages", {
   receiverRole: varchar("receiverRole", { length: 30 }),
   receiverId: varchar("receiverId", { length: 120 }),
   receiverLabel: varchar("receiverLabel", { length: 160 }),
-  idParent: int("idParent").notNull(),
+  idParent: int("idParent"),
+  recipientPersId: int("recipientPersId"),
   objet: varchar("objet", { length: 255 }).notNull().default(""),
   subject: varchar("subject", { length: 255 }).notNull().default(""),
   content: text("content"),
@@ -31,6 +32,7 @@ export const messagesTable = mysqlTable("Messages", {
 export const messagesRelations = relations(messagesTable, ({ one }) => ({
   expediteur: one(personneTable, { fields: [messagesTable.idExp_Pers], references: [personneTable.idPers] }),
   parent: one(parentsTable, { fields: [messagesTable.idParent], references: [parentsTable.idParent] }),
+  destinataire: one(personneTable, { fields: [messagesTable.recipientPersId], references: [personneTable.idPers] }),
 }));
 
 export const insertMessagesSchema = createInsertSchema(messagesTable).omit({ idMessages: true, created_at: true });

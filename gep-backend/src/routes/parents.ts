@@ -9,7 +9,7 @@ import { validate } from "../middlewares/validate.ts";
 const router = Router();
 router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE));
 
-router.get("/rapports", async (_req, res) => {
+router.get("/rapports", authorize(ROLES.ADMINISTRATEUR), async (_req, res) => {
   try {
     const rows = await db
       .select({ rapport: rapportTable, eleve: eleveTable, discipline: disciplineTable, auteur: personneTable })
@@ -23,7 +23,7 @@ router.get("/rapports", async (_req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/rapports/:id", async (req, res) => {
+router.get("/rapports/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     const [r] = await db.select().from(rapportTable).where(eq(rapportTable.idRap, Number(req.params.id))).limit(1);
     if (!r) { res.status(404).json({ error: "Rapport introuvable" }); return; }
@@ -31,7 +31,7 @@ router.get("/rapports/:id", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.post("/rapports", async (req, res) => {
+router.post("/rapports", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     const { matricule, idAca, commentaire, event_date, idDiscipline } = req.body;
     if (!matricule || !idAca || !commentaire || !event_date) {
@@ -42,35 +42,35 @@ router.post("/rapports", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.put("/rapports/:id", async (req, res) => {
+router.put("/rapports/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     await db.update(rapportTable).set(req.body).where(eq(rapportTable.idRap, Number(req.params.id)));
     res.json({ message: "Rapport mis à jour" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.delete("/rapports/:id", async (req, res) => {
+router.delete("/rapports/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     await db.update(rapportTable).set({ isDelete: 1 }).where(eq(rapportTable.idRap, Number(req.params.id)));
     res.json({ message: "Rapport supprimé" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/disciplines", async (_req, res) => {
+router.get("/disciplines", authorize(ROLES.ADMINISTRATEUR), async (_req, res) => {
   try {
     const disciplines = await db.select().from(disciplineTable);
     res.json(disciplines);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.post("/disciplines", validate(insertDisciplineSchema), async (req, res) => {
+router.post("/disciplines", authorize(ROLES.ADMINISTRATEUR), validate(insertDisciplineSchema), async (req, res) => {
   try {
     await db.insert(disciplineTable).values(req.body);
     res.status(201).json({ message: "Type de discipline créé" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.put("/disciplines/:id", async (req, res) => {
+router.put("/disciplines/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     await db.update(disciplineTable).set(req.body).where(eq(disciplineTable.ID, Number(req.params.id)));
     res.json({ message: "Discipline mis à jour" });
@@ -90,7 +90,7 @@ router.get("/", async (_req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     const [p] = await db.select().from(parentsTable).where(eq(parentsTable.idParent, Number(req.params.id))).limit(1);
     if (!p) { res.status(404).json({ error: "Lien parent introuvable" }); return; }
@@ -98,14 +98,14 @@ router.get("/:id", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.post("/", validate(insertParentsSchema), async (req, res) => {
+router.post("/", authorize(ROLES.ADMINISTRATEUR), validate(insertParentsSchema), async (req, res) => {
   try {
     await db.insert(parentsTable).values({ ...req.body, idAdmin: req.user!.id, created_at: new Date() });
     res.status(201).json({ message: "Lien parent-élève créé" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     await db.update(parentsTable).set({ isDelete: 1 }).where(eq(parentsTable.idParent, Number(req.params.id)));
     res.json({ message: "Lien supprimé" });

@@ -13,6 +13,9 @@ import {
   anneeAcademiqueTable,
   messagesTable,
   emploiDuTempsTable,
+  absenceTable,
+  titulaireTable,
+  cycleTable,
 } from "@workspace/db/schema";
 import { eq, and, gte, desc, sql, count } from "drizzle-orm";
 import { authenticate } from "../middlewares/auth.ts";
@@ -42,11 +45,16 @@ router.get("/stats", async (_req, res) => {
       [{ value: totalClasses }],
       [{ value: totalCours }],
       [{ total: thisMonthTotal }],
+      [{ total: totalEncaisse }],
       monthlyFlowRows,
       topStudentsRows,
       performanceRows,
       levelDistributionRows,
       noticesRows,
+      latestAnnee,
+      coursBySectionRows,
+      absencesTodayRows,
+      enseignantsWithCoursRows,
     ] = await Promise.all([
       db.select({ value: count() }).from(eleveTable).where(eq(eleveTable.isDelete, 0)),
       db.select({ value: count() }).from(enseignantTable).where(eq(enseignantTable.isDelete, 0)),
@@ -56,6 +64,9 @@ router.get("/stats", async (_req, res) => {
         .select({ total: sql<number>`coalesce(sum(${paiementTable.montant}), 0)` })
         .from(paiementTable)
         .where(gte(paiementTable.datePaie, startOfMonth)),
+      db
+        .select({ total: sql<number>`coalesce(sum(${paiementTable.montant}), 0)` })
+        .from(paiementTable),
       db
         .select({
           month: sql<string>`date_format(${paiementTable.datePaie}, '%Y-%m')`,
@@ -90,7 +101,7 @@ router.get("/stats", async (_req, res) => {
         .where(eq(coursTable.isDelete, 0))
         .groupBy(coursTable.idCours, coursTable.libelle)
         .orderBy(desc(sql`avg(${evaluationTable.note})`))
-        .limit(4),
+        .limit(8),
       db
         .select({
           classe: classeTable.libelle,
@@ -110,6 +121,33 @@ router.get("/stats", async (_req, res) => {
         .where(eq(messagesTable.valider, 1))
         .orderBy(desc(messagesTable.created_at))
         .limit(3),
+      db.select().from(anneeAcademiqueTable).where(eq(anneeAcademiqueTable.isDelete, 0)).orderBy(desc(anneeAcademiqueTable.idAnnee)).limit(1),
+      db
+        .select({
+          section: cycleTable.libelle,
+          nb: count(coursTable.idCours),
+        })
+        .from(coursTable)
+        .innerJoin(classeTable, eq(coursTable.idClasse, classeTable.idClasse))
+        .innerJoin(cycleTable, eq(classeTable.idCycle, cycleTable.idCycle))
+        .where(eq(coursTable.isDelete, 0))
+        .groupBy(cycleTable.libelle),
+      db
+        .select({ value: count() })
+        .from(absenceTable)
+        .where(sql`${absenceTable.date} = curdate() AND ${absenceTable.isDelete} = 0`),
+      db
+        .select({
+          nom: personneTable.nom,
+          prenom: personneTable.prenom,
+          nbCours: count(enseignantTable.idCours),
+        })
+        .from(enseignantTable)
+        .innerJoin(personneTable, eq(enseignantTable.idPers, personneTable.idPers))
+        .where(eq(enseignantTable.isDelete, 0))
+        .groupBy(enseignantTable.idPers, personneTable.nom, personneTable.prenom)
+        .orderBy(desc(count(enseignantTable.idCours)))
+        .limit(8),
     ]);
 
     const today = JOURS_FR[now.getDay()];
@@ -132,6 +170,7 @@ router.get("/stats", async (_req, res) => {
       },
       paiements: {
         thisMonthTotal: Number(thisMonthTotal ?? 0),
+        totalEncaisse: Number(totalEncaisse ?? 0),
         monthlyFlow: monthlyFlowRows.map((r) => ({ month: r.month, total: Number(r.total) })),
       },
       topStudents: topStudentsRows.map((r) => ({
@@ -162,6 +201,13 @@ router.get("/stats", async (_req, res) => {
         .from(messagesTable)
         .where(eq(messagesTable.valider, 0))
         .then((r) => Number(r[0]?.value ?? 0)),
+      absencesAujourdhui: Number(absencesTodayRows[0]?.value ?? 0),
+      coursBySection: coursBySectionRows.map((r) => ({ section: r.section, nb: Number(r.nb) })),
+      enseignants: enseignantsWithCoursRows.map((r) => ({
+        nom: r.nom,
+        prenom: r.prenom,
+        nbCours: Number(r.nbCours),
+      })),
       upcomingSessions: upcomingSessions.map(({ emploi, classe, cours }) => ({
         idTemps: emploi.idTemps,
         jour: emploi.jour,

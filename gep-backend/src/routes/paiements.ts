@@ -246,8 +246,12 @@ router.get("/impayes", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (
 router.get("/statut/:matricule", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT), requireEleveScope("matricule"), async (req, res) => {
   try {
     const matricule = Number(req.params.matricule);
-    const idAca = Number(req.query.idAca);
-    if (!idAca) { res.status(400).json({ error: "idAca requis" }); return; }
+    let idAca = Number(req.query.idAca);
+    if (!idAca) {
+      const [latest] = await db.select().from(anneeAcademiqueTable).orderBy(desc(anneeAcademiqueTable.idAnnee)).limit(1);
+      if (!latest) { res.status(404).json({ error: "Aucune année académique trouvée" }); return; }
+      idAca = latest.idAnnee;
+    }
     const idClasse = await getEleveClasseId(matricule, idAca);
     if (!idClasse) { res.status(404).json({ error: "Aucune inscription trouvée pour cet élève" }); return; }
     const statut = await getTrancheStatutForEleve(matricule, idClasse, idAca);

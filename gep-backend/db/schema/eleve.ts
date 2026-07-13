@@ -6,6 +6,7 @@ import { z } from "zod/v4";
 
 export const eleveTable = mysqlTable("Eleve", {
   matricule: int("matricule").autoincrement().primaryKey(),
+  matriculeCode: varchar("matriculeCode", { length: 20 }),
   nom: varchar("nom", { length: 60 }).notNull(),
   prenom: varchar("prenom", { length: 60 }).notNull(),
   dateNaissance: date("dateNaissance").notNull(),
@@ -26,6 +27,6 @@ export const eleveRelations = relations(eleveTable, ({ one }) => ({
 
 export const insertEleveSchema = createInsertSchema(eleveTable, {
   dateNaissance: z.coerce.date(),
-}).omit({ matricule: true, created_at: true, idAdmin: true });
+}).omit({ matricule: true, matriculeCode: true, created_at: true, idAdmin: true });
 export type InsertEleve = z.infer<typeof insertEleveSchema>;
 export type Eleve = typeof eleveTable.$inferSelect;

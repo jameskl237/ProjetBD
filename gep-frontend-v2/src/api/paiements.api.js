@@ -16,4 +16,11 @@ export const paiementsExtra = {
     const qs = new URLSearchParams(params || {}).toString()
     return `${client.defaults.baseURL}${ENDPOINTS.paiements.export}${qs ? `?${qs}` : ''}`
   },
+  openRecu: (id) => {
+    client.get(ENDPOINTS.paiements.recu(id), { responseType: 'blob' }).then((res) => {
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      window.open(url, '_blank')
+    })
+  },
 }

@@ -49,7 +49,7 @@ export default function Inscriptions() {
       <Card style={{ padding: 0 }}>
         <Table
           columns={[
-            { key: 'eleve', label: 'Élève', render: (r) => r.eleve ? `${r.eleve.nom} ${r.eleve.prenom}` : `#${r.matricule}` },
+            { key: 'eleve', label: 'Élève', render: (r) => r.eleve ? `${r.eleve.nom} ${r.eleve.prenom}` : `#${r.eleve?.matriculeCode || r.matricule}` },
             { key: 'classe', label: 'Classe', render: (r) => r.classe?.libelle || '—' },
             { key: 'annee', label: 'Année', render: (r) => r.annee?.libelle || '—' },
           ]}
@@ -69,7 +69,7 @@ export default function Inscriptions() {
           <form onSubmit={handleSubmit}>
             <Alert tone="error">{formError}</Alert>
             <SelectField label="Élève" required value={modal.values.matricule} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, matricule: e.target.value } }))}
-              options={eleves.map((e) => ({ value: e.matricule, label: `${e.nom} ${e.prenom} (#${e.matricule})` }))} />
+              options={eleves.map((e) => ({ value: e.matricule, label: `${e.nom} ${e.prenom} (#${e.matriculeCode || e.matricule})` }))} />
             <SelectField label="Salle / Classe" required value={modal.values.idSalle} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, idSalle: e.target.value } }))}
               options={salles.map((s) => ({ value: s.idSalle, label: s.libelle }))} />
             <SelectField label="Année académique" required value={modal.values.idAnnee} onChange={(e) => setModal((m) => ({ ...m, values: { ...m.values, idAnnee: e.target.value } }))}
