@@ -21,16 +21,24 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,
+  PointElement,
+  Filler,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
 } from 'chart.js'
-import { Bar } from 'react-chartjs-2'
+import { Line, Doughnut } from 'react-chartjs-2'
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,
+  PointElement,
+  Filler,
+  ArcElement,
   Title,
   Tooltip,
   Legend
@@ -67,10 +75,9 @@ export default function Paiements() {
   }, [])
 
   useEffect(() => {
-    if (tab !== 'impayes') return
     setImpayesLoading(true)
     paiementsExtra.impayes().then(setImpayesData).catch(() => setImpayesData([])).finally(() => setImpayesLoading(false))
-  }, [tab])
+  }, [])
 
   async function openCreate() {
     setModal({ values: { matricule: '', idAca: '', idTranche: '', idMode: '', montant: '', datePaie: new Date().toISOString().slice(0, 10) } })
@@ -103,13 +110,20 @@ export default function Paiements() {
 
   const totalPeriode = data ? data.reduce((s, p) => s + Number(p.montant || 0), 0) : 0
 
+  const nbImpayes = impayesData.length
+  const nbEcheancesDepassees = impayesData.filter((i) => i.retard > 0).length
+  const tauxRecouvrement = useMemo(() => {
+    if (!impayesData.length) return 0
+    const totalAttendu = impayesData.reduce((s, i) => s + Number(i.montantAttendu || 0), 0)
+    const totalPaye = impayesData.reduce((s, i) => s + Number(i.montantPaye || 0), 0)
+    return totalAttendu > 0 ? Math.round((totalPaye / totalAttendu) * 100) : 0
+  }, [impayesData])
+
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return null
 
-    // Sort by payment date
     const sorted = [...data].sort((a, b) => new Date(a.datePaie).getTime() - new Date(b.datePaie).getTime())
 
-    // Group by month
     const groups = {}
     sorted.forEach((p) => {
       if (!p.datePaie) return
@@ -145,13 +159,94 @@ export default function Paiements() {
     return {
       labels,
       datasets: [
-        { label: '1ère Tranche', data: t1Data, backgroundColor: '#1b4332' },
-        { label: '2ème Tranche', data: t2Data, backgroundColor: '#d4af37' },
-        { label: '3ème Tranche', data: t3Data, backgroundColor: '#52b788' },
-        { label: 'Inscriptions / Autres', data: autresData, backgroundColor: '#8fce00' },
+        {
+          label: '1ère Tranche',
+          data: t1Data,
+          borderColor: '#1A6B3C',
+          backgroundColor: 'rgba(26,107,60,0.15)',
+          hoverBackgroundColor: 'rgba(26,107,60,0.3)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#1A6B3C',
+          pointBorderWidth: 2.5,
+          pointHoverBorderColor: '#fff',
+          pointHoverBackgroundColor: '#1A6B3C',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: '2ème Tranche',
+          data: t2Data,
+          borderColor: '#D4A017',
+          backgroundColor: 'rgba(212,160,23,0.15)',
+          hoverBackgroundColor: 'rgba(212,160,23,0.3)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#D4A017',
+          pointBorderWidth: 2.5,
+          pointHoverBorderColor: '#fff',
+          pointHoverBackgroundColor: '#D4A017',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: '3ème Tranche',
+          data: t3Data,
+          borderColor: '#0891B2',
+          backgroundColor: 'rgba(8,145,178,0.15)',
+          hoverBackgroundColor: 'rgba(8,145,178,0.3)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#0891B2',
+          pointBorderWidth: 2.5,
+          pointHoverBorderColor: '#fff',
+          pointHoverBackgroundColor: '#0891B2',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Inscriptions / Autres',
+          data: autresData,
+          borderColor: '#6B7280',
+          backgroundColor: 'rgba(107,114,128,0.15)',
+          hoverBackgroundColor: 'rgba(107,114,128,0.3)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#fff',
+          pointBorderColor: '#6B7280',
+          pointBorderWidth: 2.5,
+          pointHoverBorderColor: '#fff',
+          pointHoverBackgroundColor: '#6B7280',
+          tension: 0.4,
+          fill: true,
+        },
       ],
     }
   }, [data])
+
+  const doughnutData = useMemo(() => {
+    if (!impayesData.length) return null
+    const totalAttendu = impayesData.reduce((s, i) => s + Number(i.montantAttendu || 0), 0)
+    const totalPaye = impayesData.reduce((s, i) => s + Number(i.montantPaye || 0), 0)
+    const totalRestant = Math.max(0, totalAttendu - totalPaye)
+    return {
+      labels: ['Total payé', 'Total restant'],
+      datasets: [{
+        data: [totalPaye, totalRestant],
+        backgroundColor: ['#1A6B3C', '#F87171'],
+        borderColor: ['#16a34a', '#dc2626'],
+        borderWidth: 2,
+        hoverOffset: 8,
+      }],
+    }
+  }, [impayesData])
 
   return (
     <div>
@@ -167,6 +262,9 @@ export default function Paiements() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 20 }}>
         <StatCard icon="💳" label="Total enregistré" value={`${totalPeriode.toLocaleString('fr-FR')} FCFA`} tone="success" />
         <StatCard icon="🧾" label="Nombre de paiements" value={data.length} />
+        <StatCard icon="⚠️" label="Élèves impayés" value={nbImpayes} tone="danger" />
+        <StatCard icon="⏰" label="Échéances dépassées" value={nbEcheancesDepassees} tone={nbEcheancesDepassees > 0 ? 'danger' : 'success'} />
+        <StatCard icon="📊" label="Taux de recouvrement" value={`${tauxRecouvrement}%`} tone={tauxRecouvrement >= 80 ? 'success' : tauxRecouvrement >= 50 ? 'warning' : 'danger'} />
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
@@ -206,8 +304,13 @@ export default function Paiements() {
               columns={[
                 { key: 'eleve', label: 'Élève', render: (r) => `${r.eleve.nom} ${r.eleve.prenom}` },
                 { key: 'classe', label: 'Classe', render: (r) => r.classe?.libelle },
-                { key: 'montantDu', label: 'Solde dû', render: (r) => `${Number(r.montantDu).toLocaleString('fr-FR')} FCFA` },
-                { key: 'retard', label: 'Retard', render: (r) => r.retard > 0 ? <Badge tone="danger">{r.retard} j.</Badge> : <Badge tone="success">À jour</Badge> },
+                { key: 'montantAttendu', label: 'Total dû', render: (r) => `${Number(r.montantAttendu).toLocaleString('fr-FR')} FCFA` },
+                { key: 'montantPaye', label: 'Déjà payé', render: (r) => <span style={{ color: 'var(--success, #16a34a)' }}>{Number(r.montantPaye).toLocaleString('fr-FR')} FCFA</span> },
+                { key: 'montantDu', label: 'Reste dû', render: (r) => <span style={{ color: '#dc2626', fontWeight: 600 }}>{Number(r.montantDu).toLocaleString('fr-FR')} FCFA</span> },
+                { key: 'tranches', label: 'Tranches', render: (r) => <span>{r.nbreTranchesPayees}/{r.nbreTranchesTotal} <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>({r.pctPaye}%)</span></span> },
+                { key: 'dernierPaiement', label: 'Dernier paiement', render: (r) => r.dernierPaiement ? new Date(r.dernierPaiement).toLocaleDateString('fr-FR') : <span style={{ color: '#dc2626' }}>Aucun</span> },
+                { key: 'echeance', label: 'Échéance', render: (r) => r.echeance ? new Date(r.echeance).toLocaleDateString('fr-FR') : '—' },
+                { key: 'retard', label: 'Retard', render: (r) => r.retard > 0 ? <Badge tone="danger">{r.retard} jour{r.retard > 1 ? 's' : ''}</Badge> : <Badge tone="success">À jour</Badge> },
               ]}
               rows={impayesData}
               keyField="matricule"
@@ -218,38 +321,146 @@ export default function Paiements() {
       )}
 
       {tab === 'stats' && (
-        <Card style={{ padding: 24 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 18, color: 'var(--primary)' }}>
-            Évolution des paiements par tranche
-          </h3>
-          {chartData ? (
-            <div style={{ height: 350, position: 'relative' }}>
-              <Bar
-                data={chartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    x: { stacked: true },
-                    y: { stacked: true, ticks: { callback: (val) => `${val.toLocaleString()} F` } },
-                  },
-                  plugins: {
-                    legend: { position: 'bottom' },
-                    tooltip: {
-                      callbacks: {
-                        label: (ctx) => `${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString()} FCFA`,
+        <div style={{ maxHeight: 'calc(100vh - 280px)', overflowY: 'auto', overflowX: 'hidden' }}>
+          <Card style={{ padding: 24 }}>
+            <div style={{ marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4, color: 'var(--primary)' }}>
+                Évolution mensuelle des paiements par tranche
+              </h3>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+                Année académique {annees.length > 0 ? annees[annees.length - 1].libelle : ''}
+              </p>
+            </div>
+            {chartData ? (
+              <div style={{ height: 380, position: 'relative' }}>
+                <Line
+                  data={chartData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                      x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 12, weight: '500' }, color: '#64748b', padding: 8 },
+                        border: { color: '#e2e8f0' },
+                      },
+                      y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9', drawTicks: false },
+                        ticks: {
+                          font: { size: 12 },
+                          color: '#64748b',
+                          padding: 12,
+                          callback: (val) => `${(val / 1000).toLocaleString()}k`,
+                        },
+                        border: { display: false },
                       },
                     },
-                  },
-                }}
-              />
-            </div>
-          ) : (
-            <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
-              Aucun paiement enregistré pour afficher les statistiques.
-            </div>
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                        labels: {
+                          padding: 20,
+                          usePointStyle: true,
+                          pointStyle: 'circle',
+                          font: { size: 12.5, weight: '500' },
+                        },
+                      },
+                      tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                        titleFont: { size: 13, weight: '600' },
+                        bodyFont: { size: 13 },
+                        bodySpacing: 8,
+                        padding: { top: 12, right: 16, bottom: 12, left: 16 },
+                        cornerRadius: 10,
+                        boxPadding: 6,
+                        usePointStyle: true,
+                        callbacks: {
+                          label: (ctx) => ` ${ctx.dataset.label} : ${Number(ctx.raw).toLocaleString('fr-FR')} FCFA`,
+                        },
+                      },
+                    },
+                  }}
+                />
+              </div>
+            ) : (
+              <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-secondary)' }}>
+                Aucun paiement enregistré pour afficher les statistiques.
+              </div>
+            )}
+          </Card>
+
+          {doughnutData && (
+            <Card style={{ padding: 24, marginTop: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', alignItems: 'center', gap: 32 }}>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4, color: 'var(--primary)' }}>
+                    Répartition du recouvrement
+                  </h3>
+                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+                    Comparaison entre les montants perçus et les soldes restants
+                  </p>
+                  <div style={{ display: 'flex', gap: 20 }}>
+                    <div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 2 }}>Total attendu</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)' }}>
+                        {impayesData.reduce((s, i) => s + Number(i.montantAttendu || 0), 0).toLocaleString('fr-FR')} FCFA
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 2 }}>Total payé</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#1A6B3C' }}>
+                        {impayesData.reduce((s, i) => s + Number(i.montantPaye || 0), 0).toLocaleString('fr-FR')} FCFA
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 2 }}>Total restant</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#dc2626' }}>
+                        {Math.max(0, impayesData.reduce((s, i) => s + Number(i.montantAttendu || 0), 0) - impayesData.reduce((s, i) => s + Number(i.montantPaye || 0), 0)).toLocaleString('fr-FR')} FCFA
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ height: 240, display: 'flex', justifyContent: 'center' }}>
+                  <Doughnut
+                    data={doughnutData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      cutout: '68%',
+                      plugins: {
+                        legend: {
+                          position: 'bottom',
+                          labels: {
+                            padding: 16,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: { size: 12.5, weight: '500' },
+                          },
+                        },
+                        tooltip: {
+                          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                          titleFont: { size: 13, weight: '600' },
+                          bodyFont: { size: 13 },
+                          padding: { top: 10, right: 14, bottom: 10, left: 14 },
+                          cornerRadius: 10,
+                          callbacks: {
+                            label: (ctx) => {
+                              const total = ctx.dataset.data.reduce((a, b) => a + b, 0)
+                              const pct = total > 0 ? Math.round((ctx.raw / total) * 100) : 0
+                              return ` ${ctx.label} : ${Number(ctx.raw).toLocaleString('fr-FR')} FCFA (${pct}%)`
+                            },
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+            </Card>
           )}
-        </Card>
+        </div>
       )}
 
 

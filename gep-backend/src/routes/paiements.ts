@@ -228,12 +228,28 @@ router.get("/impayes", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (
       }
       const retard = echeance && today > echeance ? Math.floor((today.getTime() - echeance.getTime()) / 86400000) : 0;
 
+      const nbreTranches = scolarite.nbreTranche;
+      const trancheMontant = Number(scolarite.pension) / nbreTranches;
+      const nbreTranchesPayees = trancheMontant > 0 ? Math.floor(paye / trancheMontant) : 0;
+      const pctPaye = attendu > 0 ? Math.round((paye / attendu) * 100) : 0;
+
+      const paiementsEleve = paiements.filter((p) => p.matricule === row.eleve.matricule);
+      const dernierPaiement = paiementsEleve.length > 0
+        ? paiementsEleve.reduce((latest, p) => new Date(p.datePaie) > new Date(latest.datePaie) ? p : latest).datePaie
+        : null;
+
       impayes.push({
         matricule: row.eleve.matricule,
         eleve: row.eleve,
         classe: row.classe,
+        montantAttendu: attendu,
+        montantPaye: paye,
         montantDu: solde,
+        nbreTranchesPayees,
+        nbreTranchesTotal: nbreTranches,
+        pctPaye,
         echeance,
+        dernierPaiement,
         retard,
       });
     }
@@ -339,6 +355,69 @@ router.delete("/:id", authorize(ROLES.COMPTABLE, ROLES.ADMINISTRATEUR), async (r
   try {
     await db.delete(paiementTable).where(eq(paiementTable.idPaie, Number(req.params.id)));
     res.json({ message: "Paiement supprimé" });
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.post("/fix-tranches", authorize(ROLES.ADMINISTRATEUR), async (_req, res) => {
+  try {
+    const allPaiements = await db.select().from(paiementTable);
+    const allTranches = await db.select().from(tranchesTable);
+    const trancheById = new Map(allTranches.map((t) => [t.idTranche, t]));
+
+    const scolRows = await db.select().from(scolariteTable);
+    const trancheByScolarite = new Map<number, typeof allTranches>();
+    for (const t of allTranches) {
+      const arr = trancheByScolarite.get(t.idScolarite) ?? [];
+      arr.push(t);
+      trancheByScolarite.set(t.idScolarite, arr);
+    }
+    const scolByIdCycle = new Map(scolRows.map((s) => [s.idCycle, s]));
+
+    const classeRows = await db.select().from(classeTable);
+    const cycleByIdClasse = new Map(classeRows.map((c) => [c.idClasse, c.idCycle]));
+
+    const freqRows = await db.select().from(frequenteTable).innerJoin(salleTable, eq(frequenteTable.idSalle, salleTable.idSalle));
+    const classByPair = new Map<string, number>();
+    for (const fr of freqRows) {
+      classByPair.set(`${fr.frequente.matricule}-${fr.frequente.idAcademi}`, fr.salle.idClasse);
+    }
+
+    const missing = allPaiements.filter((p) => !p.idTranche);
+    if (missing.length === 0) { res.json({ updated: 0, message: "Aucun paiement à corriger" }); return; }
+
+    const byStudentYear = new Map<string, typeof missing>();
+    for (const p of missing) {
+      const key = `${p.matricule}-${p.idAca}`;
+      const arr = byStudentYear.get(key) ?? [];
+      arr.push(p);
+      byStudentYear.set(key, arr);
+    }
+
+    let updated = 0;
+    for (const [, group] of byStudentYear) {
+      const sorted = group.sort((a, b) => new Date(a.datePaie).getTime() - new Date(b.datePaie).getTime());
+      const first = sorted[0];
+      const classeId = classByPair.get(`${first.matricule}-${first.idAca}`);
+      if (!classeId) continue;
+      const cycleId = cycleByIdClasse.get(classeId);
+      if (!cycleId) continue;
+      const scol = scolByIdCycle.get(cycleId);
+      if (!scol) continue;
+      const tranches = (trancheByScolarite.get(scol.idScolarite) ?? []).sort((a, b) => a.idTranche - b.idTranche);
+
+      for (let i = 0; i < sorted.length; i++) {
+        const tIdx = i % tranches.length;
+        const tranche = tranches[tIdx];
+        if (!tranche) continue;
+        await db.update(paiementTable).set({
+          idTranche: tranche.idTranche,
+          comentaire: tranche.libelle,
+        }).where(eq(paiementTable.idPaie, sorted[i].idPaie));
+        updated++;
+      }
+    }
+
+    res.json({ updated, message: `${updated} paiement(s) corrigé(s)` });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
