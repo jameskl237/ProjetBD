@@ -3,24 +3,27 @@
 // qu'un seul et même composant Sidebar puisse servir tous les rôles.
 export const ROLES = {
   ADMINISTRATEUR: 'administrateur',
+  SECRETAIRE: 'secretaire',
   COMPTABLE: 'comptable',
   ENSEIGNANT: 'enseignant',
   PARENT: 'parent',
 }
 
 export const ROLE_LABELS = {
-  [ROLES.ADMINISTRATEUR]: 'Administrateur',
+  [ROLES.ADMINISTRATEUR]: 'Directeur',
+  [ROLES.SECRETAIRE]: 'Secrétaire',
   [ROLES.COMPTABLE]: 'Comptable',
   [ROLES.ENSEIGNANT]: 'Enseignant',
   [ROLES.PARENT]: 'Parent',
 }
 
-// Le backend renvoie un libellé "role" au login, mais /auth/me (rechargement)
-// ne renvoie que type/typeAdmin/typePersonne : on retombe dessus si absent.
 export function getRoleKey(user) {
   if (!user) return null
   if (user.type === 'admin') {
-    return user.typeAdmin === 3 ? ROLES.COMPTABLE : ROLES.ADMINISTRATEUR
+    if (user.typeAdmin === 1) return ROLES.ADMINISTRATEUR
+    if (user.typeAdmin === 2) return ROLES.SECRETAIRE
+    if (user.typeAdmin === 3) return ROLES.COMPTABLE
+    return ROLES.ADMINISTRATEUR
   }
   if (user.type === 'personne') {
     return user.typePersonne === 1 ? ROLES.ENSEIGNANT : ROLES.PARENT
@@ -29,12 +32,17 @@ export function getRoleKey(user) {
   if (label.includes('comptable')) return ROLES.COMPTABLE
   if (label.includes('enseignant')) return ROLES.ENSEIGNANT
   if (label.includes('parent')) return ROLES.PARENT
-  if (label.includes('directeur') || label.includes('secr')) return ROLES.ADMINISTRATEUR
+  if (label.includes('secr')) return ROLES.SECRETAIRE
+  if (label.includes('directeur')) return ROLES.ADMINISTRATEUR
   return null
 }
 
 export function isDirecteur(user) {
   return user?.type === 'admin' && user?.typeAdmin === 1
+}
+
+export function isSecretaire(user) {
+  return user?.type === 'admin' && user?.typeAdmin === 2
 }
 
 export function getDashboardPath(roleKey) {
@@ -46,57 +54,62 @@ export function getDashboardPath(roleKey) {
   }
 }
 
-// Liste unique des sections, utilisée par la Sidebar réutilisable pour
-// construire un menu propre à chaque rôle sans jamais dupliquer de code.
+const ADM = [ROLES.ADMINISTRATEUR]
+const SEC = [ROLES.SECRETAIRE]
+const ADM_SEC = [ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE]
+const ADM_SEC_CPT = [ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE, ROLES.COMPTABLE]
+const ADM_SEC_ENC = [ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE, ROLES.ENSEIGNANT]
+const ALL = [ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE, ROLES.COMPTABLE, ROLES.ENSEIGNANT, ROLES.PARENT]
+
 export const NAV_ITEMS = [
-  { to: '/dashboard', icon: '⊞', label: 'Tableau de bord', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/paiements', icon: '⊞', label: 'Tableau de bord', roles: [ROLES.COMPTABLE] },
-  { to: '/enseignant', icon: '⊞', label: 'Tableau de bord', roles: [ROLES.ENSEIGNANT] },
-  { to: '/enseignant/cours', icon: '📖', label: 'Mes cours', roles: [ROLES.ENSEIGNANT] },
-  { to: '/enseignant/eleves', icon: '👦', label: 'Mes élèves', roles: [ROLES.ENSEIGNANT] },
-  { to: '/parent', icon: '⊞', label: 'Tableau de bord', roles: [ROLES.PARENT] },
+  { to: '/dashboard', label: 'Tableau de bord', roles: ADM },
+  { to: '/paiements', label: 'Tableau de bord', roles: [ROLES.COMPTABLE] },
+  { to: '/enseignant', label: 'Tableau de bord', roles: [ROLES.ENSEIGNANT] },
+  { to: '/parent', label: 'Tableau de bord', roles: [ROLES.PARENT] },
 
-  { to: '/eleves', icon: '👦', label: 'Élèves', roles: [ROLES.ADMINISTRATEUR, ROLES.COMPTABLE] },
-  { to: '/inscriptions', icon: '📋', label: 'Inscriptions', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/annees', icon: '🗓️', label: 'Années académiques', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/classes', icon: '🏫', label: 'Classes', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/salles', icon: '🚪', label: 'Salles', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/cours', icon: '📖', label: 'Cours / Matières', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/enseignants', icon: '🎓', label: 'Enseignants', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/parents', icon: '👨‍👩‍👧', label: 'Parents', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/personnes', icon: '👥', label: 'Comptes (Personnes)', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/paiements', icon: '💳', label: 'Paiements', roles: [ROLES.ADMINISTRATEUR, ROLES.COMPTABLE] },
-  { to: '/paiements/modes', icon: '🏦', label: 'Modes de paiement', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/scolarite', icon: '🏷️', label: 'Scolarité', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/scolarite/cycles', icon: '🎯', label: 'Cycles', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/examens', icon: '📝', label: 'Examens', roles: [ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT] },
-  { to: '/notes', icon: '📊', label: 'Notes', roles: [ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT] },
-  { to: '/emploi-du-temps', icon: '📅', label: 'Emploi du temps', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/enseignant/emploi-du-temps', icon: '📅', label: 'Emploi du temps', roles: [ROLES.ENSEIGNANT] },
-  { to: '/absences', icon: '🗓️', label: 'Absences', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/enseignant/absences', icon: '🗓️', label: 'Absences', roles: [ROLES.ENSEIGNANT] },
-  { to: '/discipline', icon: '🛡️', label: 'Discipline', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/transport', icon: '🚌', label: 'Transport', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/quartiers', icon: '📍', label: 'Quartiers', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/bibliotheque', icon: '📚', label: 'Bibliothèque', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/annonces', icon: '📢', label: 'Annonces', roles: [ROLES.ADMINISTRATEUR, ROLES.PARENT] },
-  { to: '/enseignant/annonces', icon: '📢', label: 'Annonces', roles: [ROLES.ENSEIGNANT] },
-  { to: '/comptes', icon: '🔑', label: 'Comptes admin', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/bulletins-admin', icon: '📄', label: 'Bulletins', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/appreciations', icon: '⭐', label: 'Appréciations', roles: [ROLES.ADMINISTRATEUR] },
-  { to: '/compte', icon: '👤', label: 'Mon compte', roles: [ROLES.ADMINISTRATEUR, ROLES.COMPTABLE, ROLES.PARENT] },
-  { to: '/enseignant/compte', icon: '👤', label: 'Mon compte', roles: [ROLES.ENSEIGNANT] },
+  { to: '/eleves', label: 'Élèves', roles: ADM_SEC_CPT },
+  { to: '/eleves/nouveau', label: 'Nouvel élève', roles: ADM },
+  { to: '/classes', label: 'Classes', roles: ADM_SEC_ENC },
+  { to: '/salles', label: 'Salles', roles: ADM },
 
-  { to: '/parent/notes', icon: '📊', label: 'Notes / Bulletins', roles: [ROLES.PARENT] },
-  { to: '/parent/absences', icon: '🗓️', label: 'Absences', roles: [ROLES.PARENT] },
-  { to: '/parent/emploi-du-temps', icon: '📅', label: 'Emploi du temps', roles: [ROLES.PARENT] },
-  { to: '/parent/transport', icon: '🚌', label: 'Transport', roles: [ROLES.PARENT] },
-  { to: '/parent/paiements', icon: '💳', label: 'Paiements', roles: [ROLES.PARENT] },
-  { to: '/parent/appreciations', icon: '⭐', label: 'Appréciations', roles: [ROLES.PARENT] },
+  { to: '/cours', label: 'Cours & Matières', roles: ADM_SEC },
+  { to: '/enseignants', label: 'Enseignants', roles: ADM_SEC },
+  { to: '/emploi-du-temps', label: 'Emploi du temps', roles: ADM_SEC_ENC },
+
+  { to: '/parents', label: 'Parents', roles: ADM_SEC },
+  { to: '/personnes', label: 'Comptes (Personnes)', roles: ADM_SEC },
+
+  { to: '/paiements', label: 'Paiements', roles: ADM_SEC_CPT },
+
+  { to: '/scolarite', label: 'Scolarité & Cycles', roles: ADM_SEC },
+
+  { to: '/examens', label: 'Examens', roles: ADM_SEC_ENC },
+  { to: '/notes', label: 'Notes', roles: ADM_SEC_ENC },
+  { to: '/bulletins', label: 'Bulletins', roles: ADM_SEC },
+
+  { to: '/discipline', label: 'Discipline', roles: ADM_SEC },
+
+  { to: '/transport', label: 'Transport', roles: SEC },
+  { to: '/quartiers', label: 'Quartiers', roles: ADM_SEC },
+
+  { to: '/bibliotheque', label: 'Bibliothèque', roles: ADM },
+  { to: '/annonces', label: 'Annonces', roles: [ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE, ROLES.ENSEIGNANT, ROLES.PARENT] },
+
+  { to: '/compte', label: 'Mon compte', roles: ALL },
+
+  { to: '/parent/notes', label: 'Notes & Bulletins', roles: [ROLES.PARENT] },
+  { to: '/parent/absences', label: 'Absences', roles: [ROLES.PARENT] },
+  { to: '/parent/emploi-du-temps', label: 'Emploi du temps', roles: [ROLES.PARENT] },
+  { to: '/parent/transport', label: 'Transport', roles: [ROLES.PARENT] },
+  { to: '/parent/paiements', label: 'Paiements', roles: [ROLES.PARENT] },
 ]
 
-// Si le rôle n'est pas encore résolu (session en cours de chargement), on
-// n'affiche rien plutôt que de montrer un menu incohérent.
 export function getNavForRole(roleKey) {
-  return NAV_ITEMS.filter(item => roleKey && item.roles.includes(roleKey))
+  const items = NAV_ITEMS.filter(item => roleKey && item.roles.includes(roleKey))
+  const seen = new Set()
+  return items.filter(item => {
+    if (seen.has(item.to)) return false
+    seen.add(item.to)
+    return true
+  })
 }

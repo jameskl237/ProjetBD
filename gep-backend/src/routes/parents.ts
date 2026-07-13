@@ -7,7 +7,7 @@ import { authorize, ROLES } from "../middlewares/rbac.ts";
 import { validate } from "../middlewares/validate.ts";
 
 const router = Router();
-router.use(authenticate);
+router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE));
 
 router.get("/rapports", authorize(ROLES.ADMINISTRATEUR), async (_req, res) => {
   try {

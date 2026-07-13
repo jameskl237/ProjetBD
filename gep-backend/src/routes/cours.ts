@@ -33,25 +33,28 @@ async function findEmploiConflict(jour: string, heure: string, idCours: number, 
   return sameSlot.find((row) => row.emploi.idSalle !== idSalle && row.emploi.idTemps !== excludeIdTemps) ?? null;
 }
 
-router.get("/enseignants", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
+router.get("/enseignants", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (_req, res) => {
   try {
     const rows = await db
-      .select({ enseignant: enseignantTable, personne: personneTable, cours: coursTable, classe: classeTable })
+      .select({ enseignant: enseignantTable, personne: personneTable, cours: coursTable, classe: classeTable, titulaire: titulaireTable, salle: salleTable })
       .from(enseignantTable)
       .leftJoin(personneTable, eq(enseignantTable.idPers, personneTable.idPers))
       .leftJoin(coursTable, eq(enseignantTable.idCours, coursTable.idCours))
       .leftJoin(classeTable, eq(coursTable.idClasse, classeTable.idClasse))
+      .leftJoin(titulaireTable, eq(enseignantTable.idPers, titulaireTable.idPers))
+      .leftJoin(salleTable, eq(titulaireTable.idSalle, salleTable.idSalle))
       .where(eq(enseignantTable.isDelete, 0));
-    const ens = rows.map(({ enseignant, personne, cours, classe }) => ({
+    const ens = rows.map(({ enseignant, personne, cours, classe, salle }) => ({
       ...enseignant,
       personne,
       cours: cours ? { ...cours, classe } : null,
+      salle: salle || null,
     }));
     res.json(ens);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (req, res) => {
+router.get("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const [e] = await db.select().from(enseignantTable).where(eq(enseignantTable.idEnseignant, Number(req.params.id))).limit(1);
     if (!e) { res.status(404).json({ error: "Enseignant introuvable" }); return; }
@@ -68,12 +71,13 @@ router.post("/enseignants", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), v
 
 router.put("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (req, res) => {
   try {
-    const idEnseignant = Number(req.params.id);
-    if (req.user!.typePersonne === 1) {
-      const [row] = await db.select().from(enseignantTable).where(eq(enseignantTable.idEnseignant, idEnseignant)).limit(1);
-      if (!row || row.idPers !== req.user!.id) { res.status(403).json({ error: "Accès refusé" }); return; }
+    const { idPers, idCours } = req.body;
+    const data: Record<string, unknown> = {};
+    if (idPers !== undefined) data.idPers = idPers;
+    if (idCours !== undefined) data.idCours = idCours;
+    if (Object.keys(data).length > 0) {
+      await db.update(enseignantTable).set(data).where(eq(enseignantTable.idEnseignant, Number(req.params.id)));
     }
-    await db.update(enseignantTable).set(req.body).where(eq(enseignantTable.idEnseignant, idEnseignant));
     res.json({ message: "Enseignant mis à jour" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
@@ -90,6 +94,7 @@ router.delete("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNA
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
+router.get("/emploi-du-temps", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE), async (req, res) => {
 router.get("/enseignant/dashboard", authorize(ROLES.ENSEIGNANT), async (req, res) => {
   try {
     const idPers = req.user!.id;
@@ -383,7 +388,7 @@ router.delete("/emploi-du-temps/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSE
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/titulaires", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
+router.get("/titulaires", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (_req, res) => {
   try {
     const tit = await db.select().from(titulaireTable);
     res.json(tit);
@@ -397,7 +402,7 @@ router.post("/titulaires", authorize(ROLES.ADMINISTRATEUR), validate(insertTitul
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/titulaires/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (req, res) => {
+router.get("/titulaires/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const [t] = await db.select().from(titulaireTable).where(eq(titulaireTable.idTitulaire, Number(req.params.id))).limit(1);
     if (!t) { res.status(404).json({ error: "Titulaire introuvable" }); return; }
@@ -407,7 +412,15 @@ router.get("/titulaires/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT),
 
 router.put("/titulaires/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
-    await db.update(titulaireTable).set(req.body).where(eq(titulaireTable.idTitulaire, Number(req.params.id)));
+    const { idPers, idCours, idClasse, idAnnee } = req.body;
+    const data: Record<string, unknown> = {};
+    if (idPers !== undefined) data.idPers = idPers;
+    if (idCours !== undefined) data.idCours = idCours;
+    if (idClasse !== undefined) data.idClasse = idClasse;
+    if (idAnnee !== undefined) data.idAnnee = idAnnee;
+    if (Object.keys(data).length > 0) {
+      await db.update(titulaireTable).set(data).where(eq(titulaireTable.idTitulaire, Number(req.params.id)));
+    }
     const [t] = await db.select().from(titulaireTable).where(eq(titulaireTable.idTitulaire, Number(req.params.id))).limit(1);
     if (!t) { res.status(404).json({ error: "Titulaire introuvable" }); return; }
     res.json(t);
@@ -421,7 +434,7 @@ router.delete("/titulaires/:id", authorize(ROLES.ADMINISTRATEUR), async (req, re
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT), async (_req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (_req, res) => {
   try {
     const rows = await db
       .select({
@@ -452,7 +465,7 @@ router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT),
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (req, res) => {
+router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const [c] = await db.select().from(coursTable).where(eq(coursTable.idCours, Number(req.params.id))).limit(1);
     if (!c) { res.status(404).json({ error: "Cours introuvable" }); return; }
@@ -469,7 +482,15 @@ router.post("/", authorize(ROLES.ADMINISTRATEUR), validate(insertCoursSchema), a
 
 router.put("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
-    await db.update(coursTable).set(req.body).where(eq(coursTable.idCours, Number(req.params.id)));
+    const { libelle, description, coefficient, idCycle } = req.body;
+    const data: Record<string, unknown> = {};
+    if (libelle !== undefined) data.libelle = libelle;
+    if (description !== undefined) data.description = description;
+    if (coefficient !== undefined) data.coefficient = coefficient;
+    if (idCycle !== undefined) data.idCycle = idCycle;
+    if (Object.keys(data).length > 0) {
+      await db.update(coursTable).set(data).where(eq(coursTable.idCours, Number(req.params.id)));
+    }
     const [c] = await db.select().from(coursTable).where(eq(coursTable.idCours, Number(req.params.id))).limit(1);
     if (!c) { res.status(404).json({ error: "Cours introuvable" }); return; }
     res.json(c);

@@ -9,9 +9,7 @@ import { requireDirecteur } from "../middlewares/rbac.ts";
 import { validate } from "../middlewares/validate.ts";
 
 const router = Router();
-// Managing admin accounts (create/deactivate/etc.) is reserved to the directeur (typeAdmin=1);
-// secrétaire (typeAdmin=2) has every other Administrateur privilege but not this one.
-router.use(authenticate, requireDirecteur);
+router.use(authenticate);
 
 const createAdminSchema = z.object({
   login: z.string().min(3),
@@ -31,6 +29,30 @@ const safeFields = {
   createdAt: adminTable.createdAt,
   langue: adminTable.langue,
 };
+
+// ─── Mon compte (accessible à tout admin authentifié) ───
+router.get("/me", async (req, res) => {
+  try {
+    const [admin] = await db.select(safeFields).from(adminTable).where(eq(adminTable.ID, req.user!.id)).limit(1);
+    if (!admin) { res.status(404).json({ error: "Compte introuvable" }); return; }
+    res.json(admin);
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.put("/me", async (req, res) => {
+  try {
+    const { password, ...rest } = req.body;
+    const updateData: any = { ...rest, updatedAt: new Date() };
+    if (password) updateData.password = await bcrypt.hash(password, 12);
+    await db.update(adminTable).set(updateData).where(eq(adminTable.ID, req.user!.id));
+    const [admin] = await db.select(safeFields).from(adminTable).where(eq(adminTable.ID, req.user!.id)).limit(1);
+    if (!admin) { res.status(404).json({ error: "Compte introuvable" }); return; }
+    res.json(admin);
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+// ─── Gestion des comptes admin (réservée au directeur typeAdmin=1) ───
+router.use(requireDirecteur);
 
 router.get("/", async (_req, res) => {
   try {

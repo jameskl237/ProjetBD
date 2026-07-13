@@ -52,7 +52,16 @@ router.put("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
       res.status(400).json({ error: "L'affectation d'une salle à une classe se fait depuis la page Classes" });
       return;
     }
-    await db.update(salleTable).set(req.body).where(eq(salleTable.idSalle, Number(req.params.id)));
+    const { libelle, position, surface, actif, capacite } = req.body;
+    const data: Record<string, unknown> = {};
+    if (libelle !== undefined) data.libelle = libelle;
+    if (position !== undefined) data.position = position;
+    if (surface !== undefined) data.surface = surface;
+    if (actif !== undefined) data.actif = actif;
+    if (capacite !== undefined) data.capacite = capacite;
+    if (Object.keys(data).length > 0) {
+      await db.update(salleTable).set(data).where(eq(salleTable.idSalle, Number(req.params.id)));
+    }
     const rows = await db
       .select({ salle: salleTable, classe: classeTable })
       .from(salleTable)

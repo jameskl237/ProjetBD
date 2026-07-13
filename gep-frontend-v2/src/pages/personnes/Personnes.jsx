@@ -11,7 +11,7 @@ import SelectField from '../../components/forms/SelectField'
 import { useResource } from '../../hooks/useResource'
 import { personnesApi } from '../../api/personnes.api'
 import { useAuth } from '../../hooks/useAuth'
-import { isDirecteur } from '../../config/navigation'
+import { isDirecteur, isSecretaire } from '../../config/navigation'
 
 // Comptes "Personne" (enseignants et parents) — la création/modification est
 // réservée au directeur (requireDirecteur côté backend), conformément à la
@@ -19,7 +19,7 @@ import { isDirecteur } from '../../config/navigation'
 export default function Personnes() {
   const { data, loading, error, reload } = useResource(personnesApi)
   const { user } = useAuth()
-  const canWrite = isDirecteur(user)
+  const canWrite = isDirecteur(user) || isSecretaire(user)
   const [modal, setModal] = useState(null)
   const [formError, setFormError] = useState('')
 
@@ -53,7 +53,7 @@ export default function Personnes() {
         actions={canWrite ? <Button onClick={openCreate}>＋ Nouveau compte</Button> : null}
       />
       <Alert tone="error">{error}</Alert>
-      {!canWrite && <Alert tone="info">Lecture seule — la gestion des comptes est réservée au directeur.</Alert>}
+      {!canWrite && <Alert tone="info">Lecture seule — la gestion des comptes nécessite les droits Directeur ou Secrétaire.</Alert>}
       <Card style={{ padding: 0 }}>
         <Table
           columns={[

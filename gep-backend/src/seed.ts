@@ -172,9 +172,9 @@ async function seed() {
   console.log("📅 Années académiques et Trimestres...");
   const currentYear = now.getFullYear();
   const academicYears = [
-    { libelle: `${currentYear - 2}-${currentYear - 1}`, periode: `Septembre ${currentYear - 2} – Juin ${currentYear - 1}`, created_at: `${currentYear - 2}-09-01`, idAdmin: adminId },
-    { libelle: `${currentYear - 1}-${currentYear}`, periode: `Septembre ${currentYear - 1} – Juin ${currentYear}`, created_at: `${currentYear - 1}-09-01`, idAdmin: adminId },
-    { libelle: `${currentYear}-${currentYear + 1}`, periode: `Septembre ${currentYear} – Juin ${currentYear + 1}`, created_at: `${currentYear}-09-01`, idAdmin: adminId },
+    { libelle: `${currentYear - 2}-${currentYear - 1}`, periode: `Septembre ${currentYear - 2} – Juin ${currentYear - 1}`, created_at: new Date(currentYear - 2, 8, 1), idAdmin: adminId },
+    { libelle: `${currentYear - 1}-${currentYear}`, periode: `Septembre ${currentYear - 1} – Juin ${currentYear}`, created_at: new Date(currentYear - 1, 8, 1), idAdmin: adminId },
+    { libelle: `${currentYear}-${currentYear + 1}`, periode: `Septembre ${currentYear} – Juin ${currentYear + 1}`, created_at: new Date(currentYear, 8, 1), idAdmin: adminId },
   ];
   for (const a of academicYears) {
     try {

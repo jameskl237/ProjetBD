@@ -11,7 +11,7 @@ import { validate } from "../middlewares/validate.ts";
 const router = Router();
 router.use(authenticate);
 
-router.get("/sessions", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
+router.get("/sessions", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (_req, res) => {
   try {
     const rows = await db
       .select({ session: sessionTable, trimestre: trimestreTable, personne: personneTable })
@@ -36,7 +36,14 @@ router.post("/sessions", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
 
 router.put("/sessions/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
-    await db.update(sessionTable).set(req.body).where(eq(sessionTable.idSession, Number(req.params.id)));
+    const { libelle, description, date_passage } = req.body;
+    const data: Record<string, unknown> = {};
+    if (libelle !== undefined) data.libelle = libelle;
+    if (description !== undefined) data.description = description;
+    if (date_passage !== undefined) data.date_passage = date_passage;
+    if (Object.keys(data).length > 0) {
+      await db.update(sessionTable).set(data).where(eq(sessionTable.idSession, Number(req.params.id)));
+    }
     res.json({ message: "Session mise à jour" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
@@ -48,7 +55,7 @@ router.delete("/sessions/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res)
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/epreuves", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
+router.get("/epreuves", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (_req, res) => {
   try {
     const rows = await db
       .select({ epreuve: epreuveTable, nature: natureEpreuveTable })
@@ -71,7 +78,15 @@ router.post("/epreuves", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), asyn
 
 router.put("/epreuves/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (req, res) => {
   try {
-    await db.update(epreuveTable).set(req.body).where(eq(epreuveTable.idEpreuve, Number(req.params.id)));
+    const { libelle, idNature, urlDoc, auteur } = req.body;
+    const data: Record<string, unknown> = {};
+    if (libelle !== undefined) data.libelle = libelle;
+    if (idNature !== undefined) data.idNature = idNature;
+    if (urlDoc !== undefined) data.urlDoc = urlDoc;
+    if (auteur !== undefined) data.auteur = auteur;
+    if (Object.keys(data).length > 0) {
+      await db.update(epreuveTable).set(data).where(eq(epreuveTable.idEpreuve, Number(req.params.id)));
+    }
     const [ep] = await db.select().from(epreuveTable).where(eq(epreuveTable.idEpreuve, Number(req.params.id))).limit(1);
     if (!ep) { res.status(404).json({ error: "Épreuve introuvable" }); return; }
     res.json(ep);
@@ -85,7 +100,21 @@ router.delete("/epreuves/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res)
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/natures", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT), async (_req, res) => {
+router.put("/epreuves/:id/valider", authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE), async (req, res) => {
+  try {
+    await db.update(epreuveTable).set({ valider: 1 }).where(eq(epreuveTable.idEpreuve, Number(req.params.id)));
+    res.json({ message: "Épreuve validée" });
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.put("/epreuves/:id/rejeter", authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE), async (req, res) => {
+  try {
+    await db.update(epreuveTable).set({ valider: 0 }).where(eq(epreuveTable.idEpreuve, Number(req.params.id)));
+    res.json({ message: "Épreuve rejetée" });
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.get("/natures", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (_req, res) => {
   try {
     const rows = await db
       .select({ nature: natureEpreuveTable, annee: anneeAcademiqueTable })
@@ -166,7 +195,7 @@ async function buildBulletin(matricule: number) {
   };
 }
 
-router.get("/bulletin/:matricule", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.COMPTABLE), requireEleveScope("matricule"), async (req, res) => {
+router.get("/bulletin/:matricule", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.COMPTABLE, ROLES.SECRETAIRE), requireEleveScope("matricule"), async (req, res) => {
   try {
     const bulletin = await buildBulletin(Number(req.params.matricule));
     if (!bulletin) { res.status(404).json({ error: "Élève introuvable" }); return; }
@@ -174,7 +203,7 @@ router.get("/bulletin/:matricule", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGN
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/bulletin/:matricule/export", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.COMPTABLE), requireEleveScope("matricule"), async (req, res) => {
+router.get("/bulletin/:matricule/export", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.COMPTABLE, ROLES.SECRETAIRE), requireEleveScope("matricule"), async (req, res) => {
   try {
     const { format = "pdf", lang } = req.query as { format?: string; lang?: string };
     const bulletin = await buildBulletin(Number(req.params.matricule));
@@ -297,7 +326,7 @@ router.get("/bulletin/:matricule/export", authorize(ROLES.ADMINISTRATEUR, ROLES.
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT), async (req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const evs = await db.select().from(evaluationTable);
     const role = getRole(req.user);
@@ -311,7 +340,7 @@ router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT),
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT), async (req, res) => {
+router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const [ev] = await db.select().from(evaluationTable).where(eq(evaluationTable.idEval, Number(req.params.id))).limit(1);
     if (!ev) { res.status(404).json({ error: "Évaluation introuvable" }); return; }
@@ -343,7 +372,14 @@ router.put("/:id", authorize(ROLES.ENSEIGNANT), async (req, res) => {
     const [existing] = await db.select().from(evaluationTable).where(eq(evaluationTable.idEval, Number(req.params.id))).limit(1);
     if (!existing) { res.status(404).json({ error: "Évaluation introuvable" }); return; }
     if (existing.idPers !== req.user!.id) { res.status(403).json({ error: "Vous ne pouvez modifier que vos propres évaluations" }); return; }
-    await db.update(evaluationTable).set(req.body).where(eq(evaluationTable.idEval, Number(req.params.id)));
+    const { note, appreciation, valider } = req.body;
+    const data: Record<string, unknown> = {};
+    if (note !== undefined) data.note = note;
+    if (appreciation !== undefined) data.appreciation = appreciation;
+    if (valider !== undefined) data.valider = valider;
+    if (Object.keys(data).length > 0) {
+      await db.update(evaluationTable).set(data).where(eq(evaluationTable.idEval, Number(req.params.id)));
+    }
     const [ev] = await db.select().from(evaluationTable).where(eq(evaluationTable.idEval, Number(req.params.id))).limit(1);
     res.json(ev);
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
@@ -356,6 +392,20 @@ router.delete("/:id", authorize(ROLES.ENSEIGNANT), async (req, res) => {
     if (existing.idPers !== req.user!.id) { res.status(403).json({ error: "Vous ne pouvez supprimer que vos propres évaluations" }); return; }
     await db.delete(evaluationTable).where(eq(evaluationTable.idEval, Number(req.params.id)));
     res.json({ message: "Évaluation supprimée" });
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.put("/:id/valider", authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE), async (req, res) => {
+  try {
+    await db.update(evaluationTable).set({ valider: 1 }).where(eq(evaluationTable.idEval, Number(req.params.id)));
+    res.json({ message: "Note validée" });
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
+router.put("/:id/rejeter", authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE), async (req, res) => {
+  try {
+    await db.update(evaluationTable).set({ valider: 0 }).where(eq(evaluationTable.idEval, Number(req.params.id)));
+    res.json({ message: "Note rejetée" });
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 

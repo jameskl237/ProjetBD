@@ -16,28 +16,21 @@ import { useAuth } from '../../hooks/useAuth'
 import { getRoleKey, ROLES } from '../../config/navigation'
 
 const TABS = [
-  { key: 'notes', label: 'Saisie & Consultation', icon: '📝' },
-  { key: 'bulletins', label: 'Bulletins', icon: '📄' },
+  { key: 'consulter', label: 'Notes', roles: [ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE, ROLES.ENSEIGNANT] },
+  { key: 'valider', label: 'Valider les notes', roles: [ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE] },
+  { key: 'bulletins', label: 'Bulletins', roles: [ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE, ROLES.ENSEIGNANT, ROLES.PARENT] },
 ]
 
 export default function Notes() {
   const { user } = useAuth()
   const roleKey = getRoleKey(user)
-  const [searchParams, setSearchParams] = useSearchParams()
-  const tab = searchParams.get('tab') || 'notes'
-
-  const visibleTabs = TABS.filter((t) => {
-    if (t.key === 'bulletins') return [ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT].includes(roleKey)
-    return true
-  })
-
-  const setTab = (key) => setSearchParams((prev) => { prev.set('tab', key); return prev })
+  const [tab, setTab] = useState('consulter')
+  const visibleTabs = TABS.filter((t) => t.roles.includes(roleKey))
 
   return (
     <div>
-      <PageHeader title="Notes" subtitle="Saisie et consultation des évaluations" />
-
-      <Card style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <PageHeader title="Notes" subtitle="Consultation, validation et bulletins" />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
         {visibleTabs.map((t) => (
           <button
             key={t.key}
@@ -55,344 +48,93 @@ export default function Notes() {
             <span>{t.label}</span>
           </button>
         ))}
-      </Card>
-
-      {tab === 'notes' && <NotesTab />}
+      </div>
+      {tab === 'consulter' && <ConsulterTab />}
+      {tab === 'valider' && <ValiderTab />}
       {tab === 'bulletins' && <BulletinsTab />}
     </div>
   )
 }
 
-/* ═══════════════════════════════════════════════════════════
-   NotesTab — unified saisie + consultation
-   ═══════════════════════════════════════════════════════════ */
-function NotesTab() {
-  const { user } = useAuth()
-  const [searchParams, setSearchParams] = useSearchParams()
+function ConsulterTab() {
+  const { data, loading, error } = useResource(evaluationsApi)
+  const [cours, setCours] = useState([])
+  useEffect(() => { coursApi.list().then(setCours).catch(() => {}) }, [])
 
-  const [mesCours, setMesCours] = useState([])
-  const [sessions, setSessions] = useState([])
-  const [epreuves, setEpreuves] = useState([])
-  const [evaluations, setEvaluations] = useState([])
+  return (
+    <Card style={{ padding: 0 }}>
+      <Alert tone="error">{error}</Alert>
+      <Table
+        columns={[
+          { key: 'matricule', label: 'Matricule élève' },
+          { key: 'idCours', label: 'Cours', render: (r) => cours.find((c) => c.idCours === r.idCours)?.libelle || `#${r.idCours}` },
+          { key: 'note', label: 'Note', render: (r) => <Badge tone={r.note >= 10 ? 'success' : 'danger'}>{r.note}/20</Badge> },
+          { key: 'appreciation', label: 'Appréciation' },
+          { key: 'valider', label: 'Statut', render: (r) => <Badge tone={r.valider ? 'success' : 'warning'}>{r.valider ? 'Validée' : 'En attente'}</Badge> },
+        ]}
+        rows={data}
+        loading={loading}
+        keyField="idEval"
+        emptyLabel="Aucune évaluation enregistrée"
+      />
+    </Card>
+  )
+}
 
-  const [idClasse, setIdClasse] = useState(() => searchParams.get('classe') || '')
-  const [idCours, setIdCours] = useState(() => searchParams.get('cours') || '')
-  const [idSession, setIdSession] = useState(() => searchParams.get('session') || '')
-
-  const [eleves, setEleves] = useState([])
-  const [loadingEleves, setLoadingEleves] = useState(false)
-
-  const [notes, setNotes] = useState({})
-  const [saving, setSaving] = useState(null)
+function ValiderTab() {
+  const { data, loading, error, reload } = useResource(evaluationsApi)
+  const [cours, setCours] = useState([])
   const [message, setMessage] = useState('')
 
-  useEffect(() => {
-    enseignantsApi.list().then((rows) => setMesCours(rows.filter((r) => r.idPers === user.id))).catch(() => {})
-    sessionsApi.list().then(setSessions).catch(() => {})
-    epreuvesApi.list().then(setEpreuves).catch(() => {})
-    evaluationsApi.list().then(setEvaluations).catch(() => {})
-  }, [user])
+  useEffect(() => { coursApi.list().then(setCours).catch(() => {}) }, [])
 
-  const classes = useMemo(() => {
-    const map = new Map()
-    mesCours.forEach((c) => {
-      const cl = c.cours?.classe
-      if (cl?.idClasse) map.set(cl.idClasse, cl.libelle)
-    })
-    return [...map.entries()].map(([id, libelle]) => ({ id, libelle }))
-  }, [mesCours])
+  function flash(msg) { setMessage(msg); setTimeout(() => setMessage(''), 4000) }
 
-  const coursForClasse = useMemo(() => {
-    if (!idClasse) return []
-    return mesCours
-      .filter((c) => c.cours?.classe?.idClasse === Number(idClasse))
-      .map((c) => ({ idCours: c.cours?.idCours, libelle: c.cours?.libelle, coefficient: c.cours?.coefficient }))
-      .filter((c) => c.idCours)
-  }, [mesCours, idClasse])
-
-  useEffect(() => {
-    if (!idClasse) { setEleves([]); return }
-    setLoadingEleves(true)
-    classesApi.eleves(Number(idClasse))
-      .then(setEleves)
-      .catch(() => setEleves([]))
-      .finally(() => setLoadingEleves(false))
-  }, [idClasse])
-
-  useEffect(() => {
-    if (!idClasse || !idCours || !idSession) { setNotes({}); return }
-    const evMap = {}
-    evaluations.forEach((ev) => {
-      if (ev.idCours === Number(idCours) && ev.idSession === Number(idSession)) {
-        evMap[ev.matricule] = { idEval: ev.idEval, note: ev.note != null ? String(ev.note) : '', appreciation: ev.appreciation || '' }
-      }
-    })
-    setNotes(evMap)
-  }, [idClasse, idCours, idSession, evaluations])
-
-  const filledCount = useMemo(() => Object.keys(notes).filter((k) => notes[k]?.note !== '' && notes[k]?.note != null).length, [notes])
-
-  const average = useMemo(() => {
-    const vals = Object.values(notes).filter((e) => e?.note !== '' && e?.note != null).map((e) => Number(e.note)).filter((n) => !isNaN(n))
-    return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '—'
-  }, [notes])
-
-  const selectedCours = coursForClasse.find((c) => c.idCours === Number(idCours))
-  const selectedSession = sessions.find((s) => s.idSession === Number(idSession))
-
-  const handleNoteChange = useCallback((matricule, value) => {
-    setNotes((prev) => {
-      const existing = prev[matricule] || { idEval: null, note: '', appreciation: '' }
-      return { ...prev, [matricule]: { ...existing, note: value } }
-    })
-  }, [])
-
-  async function handleSave(matricule) {
-    const entry = notes[matricule]
-    if (!entry || entry.note === '' || entry.note == null) return
-    setSaving(matricule)
-    setMessage('')
+  async function handleValider(id) {
     try {
-      if (entry.idEval) {
-        await evaluationsApi.update(entry.idEval, { note: Number(entry.note) })
-      } else {
-        const defaultEpreuve = epreuves.length > 0 ? epreuves[0].idEpreuve : null
-        if (!defaultEpreuve) { setMessage("Aucune épreuve disponible"); setSaving(null); return }
-        const res = await evaluationsApi.create({
-          matricule, idEpreuve: defaultEpreuve, idCours: Number(idCours),
-          idSession: Number(idSession), note: Number(entry.note),
-        })
-        if (res?.idEval) {
-          setNotes((prev) => ({ ...prev, [matricule]: { ...prev[matricule], idEval: res.idEval } }))
-        }
-      }
-      setMessage(`Note enregistrée pour #${eleves.find((e) => e.matricule == matricule)?.matriculeCode || matricule}`)
-      evaluationsApi.list().then(setEvaluations).catch(() => {})
-    } catch (err) {
-      setMessage(err.response?.data?.error || 'Erreur lors de l\'enregistrement')
-    } finally { setSaving(null) }
+      await evaluationValidationApi.valider(id)
+      flash('Note validée avec succès')
+      reload()
+    } catch (err) { flash(err.response?.data?.error || 'Erreur lors de la validation') }
   }
 
-  async function handleSaveAll() {
-    setMessage('')
-    const defaultEpreuve = epreuves.length > 0 ? epreuves[0].idEpreuve : null
-    if (!defaultEpreuve) { setMessage("Aucune épreuve disponible"); return }
-    let count = 0
-    for (const matricule of eleves.map((e) => e.matricule)) {
-      const entry = notes[matricule]
-      if (!entry || entry.note === '' || entry.note == null) continue
-      if (entry.idEval) {
-        await evaluationsApi.update(entry.idEval, { note: Number(entry.note) })
-      } else {
-        await evaluationsApi.create({
-          matricule, idEpreuve: defaultEpreuve, idCours: Number(idCours),
-          idSession: Number(idSession), note: Number(entry.note),
-        })
-        count++
-      }
-    }
-    setMessage(`${count > 0 ? count + ' nouvelle(s) note(s) enregistrée(s)' : 'Notes mises à jour'}`)
-    evaluationsApi.list().then(setEvaluations).catch(() => {})
+  async function handleRejeter(id) {
+    try {
+      await evaluationValidationApi.rejeter(id)
+      flash('Note rejetée')
+      reload()
+    } catch (err) { flash(err.response?.data?.error || 'Erreur lors du rejet') }
   }
-
-  const updateParams = useCallback((updates) => {
-    setSearchParams((prev) => {
-      Object.entries(updates).forEach(([k, v]) => { v ? prev.set(k, v) : prev.delete(k) })
-      return prev
-    })
-  }, [setSearchParams])
 
   return (
     <div>
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-          <SelectField
-            label="Classe"
-            placeholder="Choisir une classe…"
-            value={idClasse}
-            onChange={(e) => { setIdClasse(e.target.value); setIdCours(''); setIdSession(''); updateParams({ classe: e.target.value, cours: '', session: '' }) }}
-            options={classes.map((c) => ({ value: c.id, label: c.libelle }))}
-          />
-          <SelectField
-            label="Matière"
-            placeholder={idClasse ? 'Choisir une matière…' : 'Sélectionnez d\'abord une classe'}
-            value={idCours}
-            onChange={(e) => { setIdCours(e.target.value); setIdSession(''); updateParams({ cours: e.target.value, session: '' }) }}
-            options={coursForClasse.map((c) => ({ value: c.idCours, label: `${c.libelle} (coef. ${c.coefficient || '—'})` }))}
-            disabled={!idClasse}
-          />
-          <SelectField
-            label="Évaluation / Séquence"
-            placeholder={idCours ? 'Choisir une évaluation…' : 'Sélectionnez une matière'}
-            value={idSession}
-            onChange={(e) => { setIdSession(e.target.value); updateParams({ session: e.target.value }) }}
-            options={sessions.map((s) => ({ value: s.idSession, label: s.libelle }))}
-            disabled={!idCours}
-          />
-        </div>
-      </Card>
-
-      {idClasse && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginBottom: 16 }}>
-          <StatCard icon="👨‍🎓" label="Élèves" value={eleves.length} tone="info" />
-          <StatCard icon="✏️" label="Notes saisies" value={filledCount} tone="warning" />
-          <StatCard icon="📊" label="Moyenne" value={average} tone={average !== '—' && Number(average) >= 10 ? 'success' : 'danger'} />
-        </div>
-      )}
-
-      {message && (
-        <Alert tone={message.includes('Erreur') ? 'error' : 'success'}>{message}</Alert>
-      )}
-
-      {idClasse && idCours && idSession ? (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          <div style={{
-            padding: '14px 18px', borderBottom: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{
-                width: 36, height: 36, borderRadius: 8, display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontSize: 18, background: 'var(--accent-light)', flexShrink: 0,
-              }}>📖</span>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>
-                  {selectedCours?.libelle || '—'}
-                  <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 8 }}>
-                    {classes.find((c) => c.id === Number(idClasse))?.libelle || ''}
-                  </span>
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  {selectedSession?.libelle || ''}
-                </div>
-              </div>
-            </div>
-            <Button onClick={handleSaveAll} disabled={filledCount === 0} style={{ fontSize: 12, padding: '6px 14px' }}>
-              Enregistrer tout ({filledCount})
-            </Button>
-          </div>
-
-          {loadingEleves ? <Spinner label="Chargement des élèves…" /> : eleves.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-                <thead>
-                  <tr>
-                    <th style={thStyle}>#</th>
-                    <th style={thStyle}>Élève</th>
-                    <th style={thStyle}>Matricule</th>
-                    <th style={{ ...thStyle, textAlign: 'center' }}>Note /20</th>
-                    <th style={{ ...thStyle, textAlign: 'right', paddingRight: 16 }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {eleves.map((el, i) => {
-                    const entry = notes[el.matricule]
-                    const hasExisting = entry?.idEval != null
-                    const hasNote = entry?.note !== '' && entry?.note != null
-                    return (
-                      <tr
-                        key={el.matricule}
-                        style={{ borderBottom: '1px solid var(--border-light)', transition: 'background .12s ease' }}
-                        onMouseEnter={(ev) => ev.currentTarget.style.background = 'var(--surface-alt, #f9fafb)'}
-                        onMouseLeave={(ev) => ev.currentTarget.style.background = 'transparent'}
-                      >
-                        <td style={tdStyle}>
-                          <span style={{
-                            width: 24, height: 24, borderRadius: 6, display: 'inline-flex', alignItems: 'center',
-                            justifyContent: 'center', fontSize: 11, fontWeight: 700,
-                            background: 'var(--accent-light)', color: 'var(--accent)',
-                          }}>{i + 1}</span>
-                        </td>
-                        <td style={tdStyle}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{
-                              width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center',
-                              justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0,
-                              background: el.sexe === 2
-                                ? 'linear-gradient(135deg, #fce7f3, #fbcfe8)'
-                                : 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
-                              color: el.sexe === 2 ? '#be185d' : '#1d4ed8',
-                            }}>{(el.nom || '?')[0]}{(el.prenom || '?')[0]}</span>
-                            <div>
-                              <div style={{ fontWeight: 600, fontSize: 13 }}>{el.nom || '—'}</div>
-                              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{el.prenom || '—'}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={tdStyle}>
-                          <span style={{
-                            fontFamily: 'monospace', fontSize: 12, fontWeight: 600,
-                            padding: '2px 8px', borderRadius: 6, background: 'var(--border-light)',
-                          }}>{el.matriculeCode || el.matricule}</span>
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: 'center' }}>
-                          <input
-                            type="number" min="0" max="20" step="0.25" placeholder="—"
-                            value={entry?.note ?? ''}
-                            onChange={(ev) => handleNoteChange(el.matricule, ev.target.value)}
-                            style={{
-                              width: 72, padding: '7px 10px', borderRadius: 'var(--radius-sm)',
-                              border: `1px solid ${hasNote ? 'var(--accent)' : 'var(--border)'}`,
-                              fontSize: 13, textAlign: 'center', fontWeight: 700,
-                              background: hasNote ? 'var(--accent-light)' : '#fff',
-                              color: hasNote ? 'var(--accent)' : 'var(--text-primary)',
-                              transition: 'all .15s',
-                            }}
-                            onFocus={(e) => e.target.style.borderColor = 'var(--accent)'}
-                            onBlur={(e) => e.target.style.borderColor = hasNote ? 'var(--accent)' : 'var(--border)'}
-                          />
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: 'right', paddingRight: 16 }}>
-                          <Button
-                            variant="secondary"
-                            disabled={!hasNote || saving === el.matricule}
-                            onClick={() => handleSave(el.matricule)}
-                            style={{ padding: '5px 12px', fontSize: 12 }}
-                          >
-                            {saving === el.matricule ? '…' : hasExisting ? 'Modifier' : 'Enregistrer'}
-                          </Button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div style={{ padding: 48, textAlign: 'center' }}>
-              <div style={{ fontSize: 36, marginBottom: 8 }}>&#128466;</div>
-              <div style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 15 }}>Aucun élève dans cette classe</div>
+      <Alert tone="info">{message}</Alert>
+      <Card style={{ padding: 0 }}>
+        <Alert tone="error">{error}</Alert>
+        <Table
+          columns={[
+            { key: 'matricule', label: 'Matricule élève' },
+            { key: 'idCours', label: 'Cours', render: (r) => cours.find((c) => c.idCours === r.idCours)?.libelle || `#${r.idCours}` },
+            { key: 'note', label: 'Note', render: (r) => <Badge tone={r.note >= 10 ? 'success' : 'danger'}>{r.note}/20</Badge> },
+            { key: 'appreciation', label: 'Appréciation' },
+            { key: 'valider', label: 'Statut', render: (r) => <Badge tone={r.valider ? 'success' : 'warning'}>{r.valider ? 'Validée' : 'En attente'}</Badge> },
+          ]}
+          rows={data}
+          loading={loading}
+          keyField="idEval"
+          emptyLabel="Aucune note à valider"
+          actions={(row) => (
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              {!row.valider && <button onClick={() => handleValider(row.idEval)} style={{ color: 'var(--success)', fontSize: 13, fontWeight: 600 }}>Valider</button>}
+              {row.valider && <button onClick={() => handleRejeter(row.idEval)} style={{ color: 'var(--danger)', fontSize: 13, fontWeight: 600 }}>Rejeter</button>}
             </div>
           )}
-        </Card>
-      ) : idClasse ? (
-        <Card style={{ padding: 48, textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>&#128221;</div>
-          <div style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
-            Sélectionnez une matière et une évaluation
-          </div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-            pour afficher la liste des élèves et saisir les notes
-          </div>
-        </Card>
-      ) : (
-        <Card style={{ padding: 48, textAlign: 'center' }}>
-          <div style={{ fontSize: 40, marginBottom: 8 }}>&#127979;</div>
-          <div style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
-            Sélectionnez une classe
-          </div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-            Commencez par choisir une classe pour afficher les matières que vous y enseignez
-          </div>
-        </Card>
-      )}
+        />
+      </Card>
     </div>
   )
 }
 
-/* ═══════════════════════════════════════════════════════════
-   BulletinsTab — consultation de bulletins
-   ═══════════════════════════════════════════════════════════ */
 function BulletinsTab() {
   const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -482,34 +224,15 @@ function BulletinsTab() {
       {loading && <Spinner label="Chargement du bulletin…" />}
 
       {bulletin && (
-        <div>
-          <Card style={{ marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <span style={{
-                width: 56, height: 56, borderRadius: '50%', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontSize: 22, fontWeight: 700, flexShrink: 0,
-                background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)', color: '#1d4ed8',
-              }}>
-                {filteredEleves.find((e) => String(e.matricule) === String(matricule))
-                  ? `${(filteredEleves.find((e) => String(e.matricule) === String(matricule)).nom || '?')[0]}${(filteredEleves.find((e) => String(e.matricule) === String(matricule)).prenom || '?')[0]}`
-                  : '—'}
-              </span>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 2 }}>
-                  {bulletin.eleve.nom} {bulletin.eleve.prenom}
-                </h3>
-                <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-                  Matricule {bulletin.eleve.matriculeCode || bulletin.eleve.matricule}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <a href={bulletinApi.exportUrl(matricule) + '?format=pdf'} target="_blank" rel="noreferrer">
-                  <Button variant="secondary" style={{ fontSize: 12 }}>PDF</Button>
-                </a>
-                <a href={bulletinApi.exportUrl(matricule) + '?format=csv'} target="_blank" rel="noreferrer">
-                  <Button variant="secondary" style={{ fontSize: 12 }}>CSV</Button>
-                </a>
-              </div>
+        <Card>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <div>
+              <h3>{bulletin.eleve.nom} {bulletin.eleve.prenom}</h3>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Matricule {bulletin.eleve.matricule}</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <a href={bulletinApi.exportUrl(matricule) + '?format=pdf'} target="_blank" rel="noreferrer"><Button variant="secondary">Exporter PDF</Button></a>
+              <a href={bulletinApi.exportUrl(matricule) + '?format=csv'} target="_blank" rel="noreferrer"><Button variant="secondary">Exporter CSV</Button></a>
             </div>
           </Card>
 

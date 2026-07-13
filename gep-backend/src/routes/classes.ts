@@ -144,7 +144,7 @@ async function attachClassStats(classes: (typeof classeTable.$inferSelect)[]) {
   });
 }
 
-router.get("/:id/eleves", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE), async (req, res) => {
+router.get("/:id/eleves", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE, ROLES.SECRETAIRE), async (req, res) => {
   try {
     if (getRole(req.user) === ROLES.ENSEIGNANT) {
       const classeIds = await getEnseignantClasseIds(req.user!.id);
@@ -177,7 +177,7 @@ router.get("/:id/eleves", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLE
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE, ROLES.PARENT), async (req, res) => {
+router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const role = getRole(req.user);
     let classFilter = eq(classeTable.isDelete, 0);
@@ -196,7 +196,7 @@ router.get("/", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABL
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE), async (req, res) => {
+router.get("/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.COMPTABLE, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const rows = await db
       .select({ classe: classeTable, cycle: cycleTable })
@@ -242,7 +242,7 @@ router.post("/", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
 router.put("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
     const classId = Number(req.params.id);
-    const { idSalle, ...classeData } = req.body;
+    const { idSalle, libelle, idCycle, titulaire, isDelete } = req.body;
 
     if (idSalle !== undefined && idSalle !== null) {
       const newSalleId = Number(idSalle);
@@ -255,6 +255,12 @@ router.put("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
       await db.update(salleTable).set({ idClasse: null }).where(eq(salleTable.idClasse, classId));
       await db.update(salleTable).set({ idClasse: classId }).where(eq(salleTable.idSalle, newSalleId));
     }
+
+    const classeData: Record<string, unknown> = {};
+    if (libelle !== undefined) classeData.libelle = libelle;
+    if (idCycle !== undefined) classeData.idCycle = idCycle;
+    if (titulaire !== undefined) classeData.titulaire = titulaire;
+    if (isDelete !== undefined) classeData.isDelete = isDelete;
 
     if (Object.keys(classeData).length > 0) {
       await db.update(classeTable).set(classeData).where(eq(classeTable.idClasse, classId));

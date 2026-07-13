@@ -7,7 +7,7 @@ import { authorize, ROLES, getRole } from "../middlewares/rbac.ts";
 import { getParentMatricules } from "../middlewares/scope.ts";
 
 const router = Router();
-router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.PARENT));
+router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.PARENT, ROLES.SECRETAIRE));
 
 async function abonnementsWithRelations(where?: SQL) {
   const rows = await db
@@ -61,7 +61,16 @@ router.post("/abonnements", authorize(ROLES.ADMINISTRATEUR), async (req, res) =>
 
 router.put("/abonnements/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
   try {
-    await db.update(abonnementTable).set(req.body).where(eq(abonnementTable.idAbonnement, Number(req.params.id)));
+    const { matricule, type, dateDebut, dateFin, actif } = req.body;
+    const data: Record<string, unknown> = {};
+    if (matricule !== undefined) data.matricule = matricule;
+    if (type !== undefined) data.type = type;
+    if (dateDebut !== undefined) data.dateDebut = dateDebut;
+    if (dateFin !== undefined) data.dateFin = dateFin;
+    if (actif !== undefined) data.actif = actif;
+    if (Object.keys(data).length > 0) {
+      await db.update(abonnementTable).set(data).where(eq(abonnementTable.idAbonnement, Number(req.params.id)));
+    }
     const [a] = await abonnementsWithRelations(eq(abonnementTable.idAbonnement, Number(req.params.id)));
     if (!a) { res.status(404).json({ error: "Abonnement introuvable" }); return; }
     res.json(a);

@@ -17,12 +17,12 @@ import {
   titulaireTable,
   cycleTable,
 } from "@workspace/db/schema";
-import { eq, gte, desc, sql, count } from "drizzle-orm";
+import { eq, and, gte, desc, sql, count } from "drizzle-orm";
 import { authenticate } from "../middlewares/auth.ts";
 import { authorize, ROLES } from "../middlewares/rbac.ts";
 
 const router = Router();
-router.use(authenticate, authorize(ROLES.ADMINISTRATEUR));
+router.use(authenticate, authorize(ROLES.ADMINISTRATEUR, ROLES.SECRETAIRE));
 
 const JOURS_FR = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 
@@ -31,6 +31,13 @@ router.get("/stats", async (_req, res) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const eightMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 7, 1);
+
+    const [latestAnnee] = await db
+      .select()
+      .from(anneeAcademiqueTable)
+      .where(eq(anneeAcademiqueTable.isDelete, 0))
+      .orderBy(desc(anneeAcademiqueTable.idAnnee))
+      .limit(1);
 
     const [
       [{ value: totalEleves }],
@@ -103,7 +110,7 @@ router.get("/stats", async (_req, res) => {
         .from(frequenteTable)
         .innerJoin(salleTable, eq(frequenteTable.idSalle, salleTable.idSalle))
         .innerJoin(classeTable, eq(salleTable.idClasse, classeTable.idClasse))
-        .where(eq(classeTable.isDelete, 0))
+        .where(and(eq(classeTable.isDelete, 0), eq(frequenteTable.idAcademi, latestAnnee?.idAnnee)))
         .groupBy(classeTable.libelle)
         .orderBy(desc(sql`count(distinct ${frequenteTable.matricule})`))
         .limit(6),
@@ -154,7 +161,7 @@ router.get("/stats", async (_req, res) => {
       .limit(5);
 
     res.json({
-      annee: latestAnnee[0] ?? null,
+      annee: latestAnnee ?? null,
       totals: {
         eleves: Number(totalEleves),
         enseignants: Number(totalEnseignants),
