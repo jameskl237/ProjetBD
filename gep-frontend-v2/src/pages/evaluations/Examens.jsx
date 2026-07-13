@@ -154,6 +154,7 @@ export default function Examens() {
   }
 
   const loading = sessions.loading || epreuves.loading || natures.loading
+  const error = sessions.error || epreuves.error || natures.error
 
   return (
     <div>
