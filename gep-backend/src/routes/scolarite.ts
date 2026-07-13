@@ -72,6 +72,22 @@ router.get("/tranches", async (req, res) => {
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
+router.put("/tranches/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.COMPTABLE), async (req, res) => {
+  try {
+    const { delai_mois, delai_jour, montant, libelle } = req.body;
+    const update: Record<string, any> = {};
+    if (delai_mois !== undefined) update.delai_mois = Number(delai_mois);
+    if (delai_jour !== undefined) update.delai_jour = Number(delai_jour);
+    if (montant !== undefined) update.montant = Number(montant);
+    if (libelle !== undefined) update.libelle = libelle;
+    if (Object.keys(update).length === 0) { res.status(400).json({ error: "Aucun champ à modifier" }); return; }
+    await db.update(tranchesTable).set(update).where(eq(tranchesTable.idTranche, Number(req.params.id)));
+    const [t] = await db.select().from(tranchesTable).where(eq(tranchesTable.idTranche, Number(req.params.id))).limit(1);
+    if (!t) { res.status(404).json({ error: "Tranche introuvable" }); return; }
+    res.json(t);
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
 router.get("/", async (_req, res) => {
   try {
     const scols = await db.select().from(scolariteTable);

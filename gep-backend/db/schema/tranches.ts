@@ -14,6 +14,8 @@ export const tranchesTable = mysqlTable("Tranches", {
   idTranche: int("idTranche").autoincrement().primaryKey(),
   libelle: varchar("libelle", { length: 255 }).notNull(),
   montant: float("montant").notNull(),
+  delai_mois: int("delai_mois").notNull().default(1),
+  delai_jour: int("delai_jour").notNull().default(15),
   idScolarite: int("idScolarite").notNull(),
   idTrimestre: int("idTrimestre").notNull(),
   actif: tinyint("actif").notNull().default(1),
