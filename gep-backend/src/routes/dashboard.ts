@@ -55,6 +55,7 @@ router.get("/stats", async (_req, res) => {
       coursBySectionRows,
       absencesTodayRows,
       enseignantsWithCoursRows,
+      studentsByGenreRows,
     ] = await Promise.all([
       db.select({ value: count() }).from(eleveTable).where(eq(eleveTable.isDelete, 0)),
       db.select({ value: count() }).from(enseignantTable).where(eq(enseignantTable.isDelete, 0)),
@@ -120,7 +121,7 @@ router.get("/stats", async (_req, res) => {
         .leftJoin(personneTable, eq(messagesTable.idExp_Pers, personneTable.idPers))
         .where(eq(messagesTable.valider, 1))
         .orderBy(desc(messagesTable.created_at))
-        .limit(3),
+        .limit(5),
       db.select().from(anneeAcademiqueTable).where(eq(anneeAcademiqueTable.isDelete, 0)).orderBy(desc(anneeAcademiqueTable.idAnnee)).limit(1),
       db
         .select({
@@ -148,6 +149,14 @@ router.get("/stats", async (_req, res) => {
         .groupBy(enseignantTable.idPers, personneTable.nom, personneTable.prenom)
         .orderBy(desc(count(enseignantTable.idCours)))
         .limit(8),
+      db
+        .select({
+          sexe: eleveTable.sexe,
+          total: count(),
+        })
+        .from(eleveTable)
+        .where(eq(eleveTable.isDelete, 0))
+        .groupBy(eleveTable.sexe),
     ]);
 
     const today = JOURS_FR[now.getDay()];
@@ -207,6 +216,10 @@ router.get("/stats", async (_req, res) => {
         nom: r.nom,
         prenom: r.prenom,
         nbCours: Number(r.nbCours),
+      })),
+      studentsByGenre: studentsByGenreRows.map((r) => ({
+        sexe: Number(r.sexe),
+        total: Number(r.total),
       })),
       upcomingSessions: upcomingSessions.map(({ emploi, classe, cours }) => ({
         idTemps: emploi.idTemps,

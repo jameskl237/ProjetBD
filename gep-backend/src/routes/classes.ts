@@ -275,7 +275,7 @@ router.put("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
     if (!rows[0]) { res.status(404).json({ error: "Classe introuvable" }); return; }
     const [stats] = await attachClassStats([rows[0].classe]);
     res.json({ ...stats, cycle: rows[0].cycle });
-  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+  } catch (e) { console.error("PUT /classes/:id error:", e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
 router.delete("/:id", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {

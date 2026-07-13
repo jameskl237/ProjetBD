@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { coursTable, insertCoursSchema, enseignantTable, insertEnseignantSchema, emploiDuTempsTable, insertEmploiDuTempsSchema, titulaireTable, insertTitulaireSchema, personneTable, classeTable, cycleTable, frequenteTable, salleTable, anneeAcademiqueTable, evaluationTable, eleveTable, messagesTable } from "@workspace/db/schema";
-import { eq, and, inArray, sql, desc } from "drizzle-orm";
+import { eq, and, inArray, not, sql, desc } from "drizzle-orm";
 import { authenticate } from "../middlewares/auth.ts";
 import { authorize, ROLES, getRole } from "../middlewares/rbac.ts";
 import { getEnseignantCoursIds, getParentClasseIds } from "../middlewares/scope.ts";
@@ -54,6 +54,41 @@ router.get("/enseignants", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROL
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
+router.get("/enseignants/libres", authorize(ROLES.ADMINISTRATEUR), async (req, res) => {
+  try {
+    const excludeClassId = req.query.excludeClassId ? Number(req.query.excludeClassId) : null;
+
+    const occupiedRows = await db
+      .select({ idPers: classeTable.titulaire })
+      .from(classeTable)
+      .where(and(
+        sql`${classeTable.titulaire} IS NOT NULL`,
+        excludeClassId ? sql`${classeTable.idClasse} != ${excludeClassId}` : undefined,
+      ));
+    const occupiedIds = occupiedRows.map((t) => t.idPers).filter((id): id is number => id != null);
+
+    const rows = await db
+      .select({
+        idPers: enseignantTable.idPers,
+        nom: personneTable.nom,
+        prenom: personneTable.prenom,
+        cycleId: cycleTable.idCycle,
+        cycleNom: cycleTable.libelle,
+      })
+      .from(enseignantTable)
+      .innerJoin(personneTable, eq(enseignantTable.idPers, personneTable.idPers))
+      .innerJoin(coursTable, eq(enseignantTable.idCours, coursTable.idCours))
+      .innerJoin(classeTable, eq(coursTable.idClasse, classeTable.idClasse))
+      .innerJoin(cycleTable, eq(classeTable.idCycle, cycleTable.idCycle))
+      .where(and(
+        eq(enseignantTable.isDelete, 0),
+        occupiedIds.length > 0 ? not(inArray(enseignantTable.idPers, occupiedIds)) : undefined,
+      ));
+
+    res.json(rows);
+  } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
+});
+
 router.get("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const [e] = await db.select().from(enseignantTable).where(eq(enseignantTable.idEnseignant, Number(req.params.id))).limit(1);
@@ -94,7 +129,6 @@ router.delete("/enseignants/:id", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNA
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/emploi-du-temps", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE), async (req, res) => {
 router.get("/enseignant/dashboard", authorize(ROLES.ENSEIGNANT), async (req, res) => {
   try {
     const idPers = req.user!.id;
@@ -317,7 +351,7 @@ router.get("/enseignant/dashboard", authorize(ROLES.ENSEIGNANT), async (req, res
   } catch (e) { console.error(e); res.status(500).json({ error: "Erreur serveur" }); }
 });
 
-router.get("/emploi-du-temps", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT), async (req, res) => {
+router.get("/emploi-du-temps", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.PARENT, ROLES.SECRETAIRE), async (req, res) => {
   try {
     const edt = await db.select().from(emploiDuTempsTable);
     const role = getRole(req.user);

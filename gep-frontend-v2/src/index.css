@@ -86,3 +86,31 @@ a { text-decoration: none; color: inherit; }
 /* ---- Scrollbar ---- */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+
+/* ---- Course card hover ---- */
+.course-card {
+  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+  cursor: default;
+}
+.course-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--border);
+}
+
+/* ---- Stamp-style status badge (bulletin tampon) ---- */
+.stamp {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: monospace; font-weight: 600; font-size: 10px;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 5px 10px 5px 9px; border: 1.5px solid currentColor;
+  border-radius: 4px; transform: rotate(-1.6deg); white-space: nowrap;
+}
+.stamp::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor; flex-shrink: 0;
+}
+.stamp.st-draft { color: #54564A; background: #EAE7DA; }
+.stamp.st-published { color: #296155; background: #E4F1EC; }
+.stamp.st-pending { color: #7A5A10; background: #F7EFD6; }
+.stamp.st-validated { color: #296155; background: #D5EDE5; }

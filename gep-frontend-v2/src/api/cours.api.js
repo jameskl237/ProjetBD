@@ -4,6 +4,7 @@ import { createResource } from './resource'
 
 export const coursApi = createResource(ENDPOINTS.cours.root)
 export const enseignantsApi = createResource(ENDPOINTS.cours.enseignants)
+export const enseignantsLibresApi = createResource(ENDPOINTS.cours.enseignantsLibres)
 export const titulairesApi = createResource(ENDPOINTS.cours.titulaires)
 
 export const emploiDuTempsApi = {

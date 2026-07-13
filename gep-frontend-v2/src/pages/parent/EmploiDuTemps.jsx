@@ -360,7 +360,7 @@ export default function ParentEmploiDuTemps() {
                           )
                         })}
                       </tr>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               </div>

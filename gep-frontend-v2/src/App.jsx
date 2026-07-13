@@ -16,6 +16,7 @@ import ClasseIndex from './pages/classes/ClasseIndex'
 import ClasseShow from './pages/classes/ClasseShow'
 import ClasseForm from './pages/classes/ClasseForm'
 import Salles from './pages/classes/Salles'
+import SallesForm from './pages/classes/SallesForm'
 
 import Cours from './pages/cours/Cours'
 import EmploiDuTemps from './pages/cours/EmploiDuTemps'
@@ -108,6 +109,8 @@ export default function App() {
             <Route path="/classes/:id" element={guarded(ADMIN_SEC_ENSEIGNANT, <ClasseShow />)} />
             <Route path="/classes/:id/modifier" element={guarded(ADMIN, <ClasseForm />)} />
             <Route path="/salles" element={guarded(ADMIN, <Salles />)} />
+            <Route path="/salles/nouvelle" element={guarded(ADMIN, <SallesForm />)} />
+            <Route path="/salles/:id/modifier" element={guarded(ADMIN, <SallesForm />)} />
 
             {/* ─── Cours / Enseignants / Emploi du temps ─── */}
             <Route path="/cours" element={guarded(ADMIN_SEC, <Cours />)} />
