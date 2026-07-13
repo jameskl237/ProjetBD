@@ -51,7 +51,6 @@ router.get("/stats", async (_req, res) => {
       performanceRows,
       levelDistributionRows,
       noticesRows,
-      latestAnnee,
       coursBySectionRows,
       absencesTodayRows,
       enseignantsWithCoursRows,
@@ -122,7 +121,6 @@ router.get("/stats", async (_req, res) => {
         .where(eq(messagesTable.valider, 1))
         .orderBy(desc(messagesTable.created_at))
         .limit(5),
-      db.select().from(anneeAcademiqueTable).where(eq(anneeAcademiqueTable.isDelete, 0)).orderBy(desc(anneeAcademiqueTable.idAnnee)).limit(1),
       db
         .select({
           section: cycleTable.libelle,

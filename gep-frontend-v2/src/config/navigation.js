@@ -68,7 +68,6 @@ export const NAV_ITEMS = [
   { to: '/parent', label: 'Tableau de bord', roles: [ROLES.PARENT] },
 
   { to: '/eleves', label: 'Élèves', roles: ADM_SEC_CPT },
-  { to: '/eleves/nouveau', label: 'Nouvel élève', roles: ADM },
   { to: '/classes', label: 'Classes', roles: ADM_SEC_ENC },
   { to: '/salles', label: 'Salles', roles: ADM },
 
@@ -77,7 +76,6 @@ export const NAV_ITEMS = [
   { to: '/emploi-du-temps', label: 'Emploi du temps', roles: ADM_SEC_ENC },
 
   { to: '/parents', label: 'Parents', roles: ADM_SEC },
-  { to: '/personnes', label: 'Comptes (Personnes)', roles: ADM_SEC },
 
   { to: '/paiements', label: 'Paiements', roles: ADM_SEC_CPT },
 

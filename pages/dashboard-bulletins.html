@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Gestion des bulletins — Groupe Scolaire Bilingue Excellence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#22271F;
+  --paper:#F7F4EC;
+  --paper-raised:#FDFCF7;
+  --chalk:#1E3932;
+  --chalk-light:#2C4A42;
+  --chalk-lighter:#3C5D53;
+  --line: rgba(34,39,31,0.14);
+  --line-strong: rgba(34,39,31,0.24);
+
+  --fr:#2B4C7E; --fr-tint:#E6ECF4; --fr-text:#1D3A63;
+  --en:#A63D40; --en-tint:#F5E7E6; --en-text:#7C2C2E;
+  --bil:#3E8E7E; --bil-tint:#E4F1EC; --bil-text:#296155;
+  --gold:#C9A227; --gold-tint:#F7EFD6; --gold-text:#7A5A10;
+  --grey:#6B6E60; --grey-tint:#EAE7DA; --grey-text:#54564A;
+
+  --shadow-sm: 0 1px 2px rgba(30,57,50,0.06), 0 1px 1px rgba(30,57,50,0.04);
+  --shadow-md: 0 8px 20px rgba(30,57,50,0.08), 0 2px 6px rgba(30,57,50,0.05);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{ background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+::selection{ background: var(--gold-tint); color: var(--ink); }
+
+.app{ display:grid; grid-template-columns:248px 1fr; min-height:100vh; }
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{ background:var(--chalk); color:#EDEFE9; padding:28px 20px; display:flex; flex-direction:column; gap:36px; position:relative; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{ width:40px;height:40px; border-radius:9px; background:linear-gradient(155deg, var(--fr) 0 34%, var(--en) 34% 67%, var(--bil) 67% 100%); flex-shrink:0; position:relative; }
+.brand-mark::after{ content:""; position:absolute; inset:5px; border-radius:5px; background:var(--chalk); opacity:0.14; }
+.brand-name{ font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; line-height:1.25; letter-spacing:0.1px; }
+.brand-sub{ font-size:11px; color:#AEC0B8; margin-top:3px; letter-spacing:0.3px; }
+
+.nav{ display:flex; flex-direction:column; gap:2px; }
+.nav-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:1.2px; color:#8CA79C; margin:6px 10px 8px; font-weight:600; }
+.nav a{ display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; color:#CBD6CE; text-decoration:none; font-size:13.8px; font-weight:500; transition:background .15s ease, color .15s ease; }
+.nav a:hover{ background:var(--chalk-light); color:#fff; }
+.nav a.active{ background:var(--chalk-lighter); color:#fff; }
+.nav a.active svg{ color:var(--gold); }
+.nav svg{ width:17px; height:17px; flex-shrink:0; color:#89A499; }
+.nav a:hover svg{ color:#fff; }
+
+.sidebar-foot{ margin-top:auto; border-top:1px solid rgba(255,255,255,0.1); padding-top:16px; display:flex; align-items:center; gap:10px; }
+.avatar{ width:34px;height:34px;border-radius:50%; background:var(--gold-tint); color:#5B4A0E; display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:600; font-size:13px; flex-shrink:0; }
+.sidebar-foot div p{ margin:0; }
+.sf-name{ font-size:13px; font-weight:600; color:#fff; }
+.sf-role{ font-size:11.5px; color:#9DB3A9; }
+
+/* ---------- MAIN ---------- */
+.main{ display:flex; flex-direction:column; min-height:100vh; }
+.topbar{ display:flex; align-items:flex-start; justify-content:space-between; padding:22px 40px 0; gap:20px; }
+.eyebrow{ font-size:11.5px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--bil-text); margin:0 0 6px; }
+.page-title{ font-family:'Fraunces',serif; font-weight:600; font-size:30px; margin:0; color:var(--ink); letter-spacing:-0.2px; }
+.page-sub{ margin:6px 0 0; font-size:14px; color:#5B6155; max-width:560px; }
+
+.term-switch{ display:inline-flex; background:#EFEBDD; border-radius:9px; padding:3px; gap:2px; margin-top:14px; }
+.term-switch button{ border:none; background:transparent; font-family:'Inter',sans-serif; font-weight:600; font-size:12.5px; padding:7px 15px; border-radius:7px; cursor:pointer; color:#6B6E60; transition:all .15s ease; }
+.term-switch button.is-active{ background:var(--paper-raised); color:var(--ink); box-shadow:var(--shadow-sm); }
+
+.topbar-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; padding-top:2px; }
+.btn{ display:inline-flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; padding:10px 16px; border-radius:9px; cursor:pointer; border:1px solid transparent; transition:transform .1s ease, box-shadow .15s ease; white-space:nowrap; }
+.btn:active{ transform:scale(0.98); }
+.btn-ghost{ background:var(--paper-raised); border-color:var(--line-strong); color:var(--ink); }
+.btn-ghost:hover{ border-color:var(--ink); }
+.btn-primary{ background:var(--chalk); color:#fff; box-shadow:var(--shadow-sm); }
+.btn-primary:hover{ background:var(--chalk-light); }
+.btn svg{ width:15px; height:15px; }
+
+.content{ padding:22px 40px 56px; }
+
+/* ---------- BINDER TABS ---------- */
+.tabs-row{ display:flex; align-items:flex-end; gap:6px; margin-top:26px; padding-left:4px; flex-wrap:wrap; }
+.tab{ font-family:'Fraunces',serif; font-weight:600; font-size:14px; padding:11px 20px 10px; cursor:pointer; user-select:none; border-radius:10px 10px 0 0; color:#5B6155; background:#E7E3D6; position:relative; top:6px; transition:top .16s ease, background .16s ease, color .16s ease; display:flex; align-items:center; gap:8px; }
+.tab .dot{ width:7px;height:7px;border-radius:50%; background:currentColor; opacity:0.55; }
+.tab:hover{ top:2px; }
+.tab[data-tab="all"].is-active{ background:var(--paper-raised); color:var(--ink); }
+.tab[data-tab="draft"].is-active{ background:var(--grey-tint); color:var(--grey-text); }
+.tab[data-tab="pending"].is-active{ background:var(--gold-tint); color:var(--gold-text); }
+.tab[data-tab="validated"].is-active{ background:var(--bil-tint); color:var(--bil-text); }
+.tab[data-tab="published"].is-active{ background:var(--fr-tint); color:var(--fr-text); }
+.tab.is-active{ top:0; box-shadow:0 -4px 10px rgba(30,57,50,0.07); z-index:2; }
+
+.folder{ background:var(--paper-raised); border-radius:0 12px 12px 12px; box-shadow:var(--shadow-md); padding:28px 30px 32px; transition:box-shadow .2s ease; }
+.folder[data-active="all"]{ border-top:3px solid var(--ink); }
+.folder[data-active="draft"]{ border-top:3px solid var(--grey); }
+.folder[data-active="pending"]{ border-top:3px solid var(--gold); }
+.folder[data-active="validated"]{ border-top:3px solid var(--bil); }
+.folder[data-active="published"]{ border-top:3px solid var(--fr); }
+
+/* ---------- STATS ---------- */
+.stats{ display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:26px; }
+.stat{ border:1px solid var(--line); border-radius:10px; padding:15px 16px; position:relative; overflow:hidden; }
+.stat::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:4px; }
+.stat.s-all::before{ background:var(--ink); }
+.stat.s-draft::before{ background:var(--grey); }
+.stat.s-pending::before{ background:var(--gold); }
+.stat.s-validated::before{ background:var(--bil); }
+.stat.s-published::before{ background:var(--fr); }
+.stat-label{ font-size:11.5px; color:#75786C; font-weight:600; letter-spacing:0.2px; margin:0 0 6px; }
+.stat-value{ font-family:'Fraunces',serif; font-weight:600; font-size:25px; margin:0; }
+.stat-note{ font-size:11.5px; color:#8B8E80; margin:4px 0 0; font-family:'IBM Plex Mono',monospace; }
+
+/* ---------- FILTER BAR ---------- */
+.filters{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding-bottom:22px; margin-bottom:22px; border-bottom:1px dashed var(--line-strong); }
+.filters select, .filters input[type="search"]{ font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink); border:1px solid var(--line-strong); background:var(--paper-raised); border-radius:8px; padding:9px 12px; outline:none; }
+.filters select{ cursor:pointer; }
+.filters select:focus, .filters input:focus{ border-color:var(--ink); }
+.search-wrap{ position:relative; margin-left:auto; }
+.search-wrap svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:#9A9C8E; }
+.search-wrap input{ padding-left:32px; width:250px; }
+.count-pill{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:#5B6155; background:#EFEBDD; padding:5px 10px; border-radius:20px; }
+
+/* ---------- TABLE (le registre des bulletins) ---------- */
+.table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; }
+table{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:920px; }
+thead th{ text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:0.7px; color:#8B8E80; font-weight:600; padding:12px 16px; background:#F1EEE2; border-bottom:1px solid var(--line-strong); white-space:nowrap; }
+tbody td{ padding:14px 16px; border-bottom:1px solid var(--line); vertical-align:middle; }
+tbody tr:last-child td{ border-bottom:none; }
+tbody tr:hover{ background: rgba(34,39,31,0.025); }
+
+.spine-cell{ width:5px; padding:0 !important; }
+.spine{ width:5px; height:100%; min-height:44px; display:block; }
+tr[data-section="fr"] .spine{ background:var(--fr); }
+tr[data-section="en"] .spine{ background:var(--en); }
+tr[data-section="bil"] .spine{ background:var(--bil); }
+
+.class-cell .class-title{ font-family:'Fraunces',serif; font-weight:600; font-size:15px; margin:0 0 2px; }
+.class-cell .class-code{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#8B8E80; }
+.class-badge{ font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:20px; white-space:nowrap; margin-left:8px; vertical-align:middle; }
+tr[data-section="fr"] .class-badge{ background:var(--fr-tint); color:var(--fr-text); }
+tr[data-section="en"] .class-badge{ background:var(--en-tint); color:var(--en-text); }
+tr[data-section="bil"] .class-badge{ background:var(--bil-tint); color:var(--bil-text); }
+
+.titulaire-cell{ display:flex; align-items:center; gap:9px; }
+.mini-avatar{ width:28px;height:28px;border-radius:50%; background:var(--grey-tint); color:var(--grey-text); display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:600; font-size:11px; flex-shrink:0; }
+.titulaire-name{ font-size:13px; color:var(--ink); }
+
+.ready-cell{ display:flex; flex-direction:column; gap:5px; min-width:120px; }
+.ready-frac{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#5B6155; }
+.ready-bar{ height:5px; border-radius:3px; background:#E7E3D6; overflow:hidden; }
+.ready-bar > span{ display:block; height:100%; border-radius:3px; background:var(--bil); }
+
+/* Stamp-style status badge — clin d'oeil au tampon du bulletin */
+.stamp{ display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:5px 10px 5px 9px; border:1.5px solid currentColor; border-radius:4px; transform:rotate(-1.6deg); white-space:nowrap; }
+.stamp::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; flex-shrink:0; }
+.stamp.st-draft{ color:var(--grey-text); background:var(--grey-tint); }
+.stamp.st-pending{ color:var(--gold-text); background:var(--gold-tint); }
+.stamp.st-validated{ color:var(--bil-text); background:var(--bil-tint); }
+.stamp.st-published{ color:var(--fr-text); background:var(--fr-tint); }
+
+.updated-cell{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#8B8E80; white-space:nowrap; }
+
+.row-actions{ display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+.icon-btn{ width:30px;height:30px; border-radius:7px; border:1px solid var(--line-strong); background:var(--paper-raised); display:flex;align-items:center;justify-content:center; cursor:pointer; color:#5B6155; transition:all .15s ease; flex-shrink:0; }
+.icon-btn:hover{ border-color:var(--ink); color:var(--ink); background:#fff; }
+.icon-btn svg{ width:14.5px; height:14.5px; }
+.action-pill{ font-family:'Inter',sans-serif; font-weight:600; font-size:12px; padding:7px 12px; border-radius:7px; cursor:pointer; border:1px solid transparent; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; transition:all .15s ease; }
+.action-pill svg{ width:12.5px; height:12.5px; }
+.action-pill.a-generate{ background:var(--chalk); color:#fff; }
+.action-pill.a-generate:hover{ background:var(--chalk-light); }
+.action-pill.a-validate{ background:var(--gold); color:#3C2E08; }
+.action-pill.a-validate:hover{ filter:brightness(0.95); }
+.action-pill.a-publish{ background:var(--bil); color:#fff; }
+.action-pill.a-publish:hover{ background:#347364; }
+.action-pill.a-done{ background:var(--fr-tint); color:var(--fr-text); cursor:default; }
+
+.empty{ display:none; text-align:center; padding:60px 20px; color:#8B8E80; }
+.empty svg{ width:34px; height:34px; margin-bottom:12px; color:#B9BCAC; }
+.empty p{ margin:0; font-size:13.5px; }
+
+@media (max-width:880px){
+  .app{ grid-template-columns:1fr; }
+  .sidebar{ display:none; }
+  .content{ padding:18px 18px 40px; }
+  .topbar{ padding:18px 18px 0; flex-direction:column; align-items:flex-start; gap:14px; }
+  .stats{ grid-template-columns:repeat(2,1fr); }
+  .search-wrap{ margin-left:0; width:100%; }
+  .search-wrap input{ width:100%; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.4-3.6 4.2-5.4 7-5.4s5.6 1.8 7 5.4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-empty" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></symbol>
+  <symbol id="i-students" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="2.6"/><circle cx="17" cy="9" r="2.2"/><path d="M2.5 20c1-3.4 3.2-5 5.5-5s4.5 1.6 5.5 5"/><path d="M14 20c.8-2.7 2.4-4 4.2-4 1.7 0 3.2 1.2 4 3.6"/></symbol>
+  <symbol id="i-teachers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M7 20h10M12 16v4"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 19H6.5A2.5 2.5 0 0 0 4 21.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 5-9 5-9-5 9-5Z"/><path d="M3 13l9 5 9-5"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3H9.8l-.4 2.5a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.3-.9c.6.5 1.3.9 2 1.2l.4 2.5h4.4l.4-2.5c.7-.3 1.4-.7 2-1.2l2.3.9 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 12.5h5M9.5 15.5h5M9.5 18.5h3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2.2-8L3 11Z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7 11l5 5 5-5"/><path d="M4 19h16"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M5.5 15A8 8 0 0 0 19 17.5M18.5 9A8 8 0 0 0 5 6.5"/></symbol>
+</svg>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name">Excellence<br>Bilingual School</div>
+        <div class="brand-sub">Espace administration</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Général</div>
+      <a href="#"><svg><use href="#i-home"/></svg> Tableau de bord</a>
+      <a href="#"><svg><use href="#i-students"/></svg> Élèves</a>
+      <a href="#"><svg><use href="#i-teachers"/></svg> Enseignants</a>
+
+      <div class="nav-label">Pédagogie</div>
+      <a href="#"><svg><use href="#i-book"/></svg> Cours</a>
+      <a href="#"><svg><use href="#i-calendar"/></svg> Emploi du temps</a>
+      <a href="#"><svg><use href="#i-layers"/></svg> Sections</a>
+      <a href="#" class="active"><svg><use href="#i-file"/></svg> Bulletins</a>
+
+      <div class="nav-label">Système</div>
+      <a href="#"><svg><use href="#i-settings"/></svg> Paramètres</a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="avatar">DN</div>
+      <div>
+        <p class="sf-name">Mme Nadège Talla</p>
+        <p class="sf-role">Directrice des études</p>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">Pédagogie · Année scolaire 2025–2026</p>
+        <h1 class="page-title">Gestion des bulletins</h1>
+        <p class="page-sub">Suivez la préparation, validez et publiez les bulletins des sections francophone, anglophone et bilingue, classe par classe.</p>
+        <div class="term-switch" id="term-switch">
+          <button data-term="t1">Trimestre 1</button>
+          <button class="is-active" data-term="t2">Trimestre 2</button>
+          <button data-term="t3">Trimestre 3</button>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost"><svg><use href="#i-file"/></svg> Modèle de bulletin</button>
+        <button class="btn btn-ghost" onclick="window.location.href='bulletin-eleve.html'"><svg><use href="#i-plus"/></svg> Nouveau bulletin</button>
+        <button class="btn btn-primary"><svg><use href="#i-refresh"/></svg> Générer les bulletins</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <nav class="tabs-row" id="tabs">
+        <div class="tab is-active" data-tab="all"><span class="dot"></span>Toutes les classes</div>
+        <div class="tab" data-tab="draft"><span class="dot"></span>Brouillon</div>
+        <div class="tab" data-tab="pending"><span class="dot"></span>À valider</div>
+        <div class="tab" data-tab="validated"><span class="dot"></span>Validés</div>
+        <div class="tab" data-tab="published"><span class="dot"></span>Publiés</div>
+      </nav>
+
+      <div class="folder" id="folder" data-active="all">
+
+        <div class="stats">
+          <div class="stat s-all">
+            <p class="stat-label">Classes suivies</p>
+            <p class="stat-value">12</p>
+            <p class="stat-note">329 bulletins</p>
+          </div>
+          <div class="stat s-draft">
+            <p class="stat-label">Brouillon</p>
+            <p class="stat-value">3</p>
+            <p class="stat-note">non commencés</p>
+          </div>
+          <div class="stat s-pending">
+            <p class="stat-label">À valider</p>
+            <p class="stat-value">3</p>
+            <p class="stat-note">en attente direction</p>
+          </div>
+          <div class="stat s-validated">
+            <p class="stat-label">Validés</p>
+            <p class="stat-value">3</p>
+            <p class="stat-note">prêts à publier</p>
+          </div>
+          <div class="stat s-published">
+            <p class="stat-label">Publiés</p>
+            <p class="stat-value">3</p>
+            <p class="stat-note">envoyés aux parents</p>
+          </div>
+        </div>
+
+        <div class="filters">
+          <select id="f-section">
+            <option value="">Toutes les sections</option>
+            <option value="fr">Francophone</option>
+            <option value="en">Anglophone</option>
+            <option value="bil">Bilingue</option>
+          </select>
+          <select id="f-niveau">
+            <option value="">Tous les niveaux</option>
+            <option>SIL</option><option>CP</option><option>CE1</option><option>CE2</option><option>CM1</option><option>CM2</option>
+            <option>Class 1</option><option>Class 2</option><option>Class 3</option><option>Class 4</option><option>Class 5</option>
+          </select>
+          <span class="count-pill" id="count-pill">12 classes affichées</span>
+          <div class="search-wrap">
+            <svg><use href="#i-search"/></svg>
+            <input type="search" id="f-search" placeholder="Rechercher une classe ou un titulaire…">
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="table">
+            <thead>
+              <tr>
+                <th class="spine-cell"></th>
+                <th>Classe</th>
+                <th>Titulaire</th>
+                <th>Effectif</th>
+                <th>Bulletins prêts</th>
+                <th>Statut</th>
+                <th>Dernière action</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tbody">
+
+              <tr data-section="fr" data-niveau="CE2" data-status="published" data-search="ce2 marie ngo bakoa">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">CE2<span class="class-badge">FR</span></p><p class="class-code">FR-CE2-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">MN</div><span class="titulaire-name">Mme Marie Ngo Bakoa</span></div></td>
+                <td>34 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">34 / 34</span><div class="ready-bar"><span style="width:100%"></span></div></div></td>
+                <td><span class="stamp st-published">Publié</span></td>
+                <td class="updated-cell">12 juil., 08h20</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger"><svg><use href="#i-download"/></svg></button>
+                    <span class="action-pill a-done"><svg><use href="#i-check"/></svg> Envoyé</span>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="fr" data-niveau="CM1" data-status="validated" data-search="cm1 jean ateba">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">CM1<span class="class-badge">FR</span></p><p class="class-code">FR-CM1-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">JA</div><span class="titulaire-name">M. Jean Ateba</span></div></td>
+                <td>31 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">31 / 31</span><div class="ready-bar"><span style="width:100%"></span></div></div></td>
+                <td><span class="stamp st-validated">Validé</span></td>
+                <td class="updated-cell">11 juil., 17h05</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger"><svg><use href="#i-download"/></svg></button>
+                    <button class="action-pill a-publish"><svg><use href="#i-send"/></svg> Publier</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="fr" data-niveau="CP" data-status="pending" data-search="cp solange fouda">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">CP<span class="class-badge">FR</span></p><p class="class-code">FR-CP-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">SF</div><span class="titulaire-name">Mme Solange Fouda</span></div></td>
+                <td>28 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">20 / 28</span><div class="ready-bar"><span style="width:71%"></span></div></div></td>
+                <td><span class="stamp st-pending">À valider</span></td>
+                <td class="updated-cell">10 juil., 09h40</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger"><svg><use href="#i-download"/></svg></button>
+                    <button class="action-pill a-validate"><svg><use href="#i-check"/></svg> Valider</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="fr" data-niveau="CM2" data-status="draft" data-search="cm2 paul mvondo">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">CM2<span class="class-badge">FR</span></p><p class="class-code">FR-CM2-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">PM</div><span class="titulaire-name">M. Paul Mvondo</span></div></td>
+                <td>29 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">0 / 29</span><div class="ready-bar"><span style="width:0%"></span></div></div></td>
+                <td><span class="stamp st-draft">Brouillon</span></td>
+                <td class="updated-cell">—</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger" disabled style="opacity:.35;cursor:default;"><svg><use href="#i-download"/></svg></button>
+                    <button class="action-pill a-generate"><svg><use href="#i-refresh"/></svg> Générer</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="fr" data-niveau="SIL" data-status="published" data-search="sil grace essomba">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">SIL<span class="class-badge">FR</span></p><p class="class-code">FR-SIL-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">GE</div><span class="titulaire-name">Mme Grâce Essomba</span></div></td>
+                <td>25 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">25 / 25</span><div class="ready-bar"><span style="width:100%"></span></div></div></td>
+                <td><span class="stamp st-published">Publié</span></td>
+                <td class="updated-cell">09 juil., 15h12</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger"><svg><use href="#i-download"/></svg></button>
+                    <span class="action-pill a-done"><svg><use href="#i-check"/></svg> Envoyé</span>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="en" data-niveau="Class 4" data-status="validated" data-search="class 4 comfort ashu">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">Class 4<span class="class-badge">EN</span></p><p class="class-code">EN-C4-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">CA</div><span class="titulaire-name">Mrs Comfort Ashu</span></div></td>
+                <td>33 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">33 / 33</span><div class="ready-bar"><span style="width:100%"></span></div></div></td>
+                <td><span class="stamp st-validated">Validé</span></td>
+                <td class="updated-cell">11 juil., 12h30</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger"><svg><use href="#i-download"/></svg></button>
+                    <button class="action-pill a-publish"><svg><use href="#i-send"/></svg> Publier</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="en" data-niveau="Class 2" data-status="pending" data-search="class 2 bernard tabe">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">Class 2<span class="class-badge">EN</span></p><p class="class-code">EN-C2-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">BT</div><span class="titulaire-name">Mr Bernard Tabe</span></div></td>
+                <td>30 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">18 / 30</span><div class="ready-bar"><span style="width:60%"></span></div></div></td>
+                <td><span class="stamp st-pending">À valider</span></td>
+                <td class="updated-cell">10 juil., 11h02</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger"><svg><use href="#i-download"/></svg></button>
+                    <button class="action-pill a-validate"><svg><use href="#i-check"/></svg> Valider</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="en" data-niveau="Class 5" data-status="draft" data-search="class 5 rose egbe">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">Class 5<span class="class-badge">EN</span></p><p class="class-code">EN-C5-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">RE</div><span class="titulaire-name">Mrs Rose Egbe</span></div></td>
+                <td>27 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">0 / 27</span><div class="ready-bar"><span style="width:0%"></span></div></div></td>
+                <td><span class="stamp st-draft">Brouillon</span></td>
+                <td class="updated-cell">—</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger" disabled style="opacity:.35;cursor:default;"><svg><use href="#i-download"/></svg></button>
+                    <button class="action-pill a-generate"><svg><use href="#i-refresh"/></svg> Générer</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="en" data-niveau="Class 3" data-status="published" data-search="class 3 samuel fonki">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">Class 3<span class="class-badge">EN</span></p><p class="class-code">EN-C3-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">SF</div><span class="titulaire-name">Mr Samuel Fonki</span></div></td>
+                <td>26 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">26 / 26</span><div class="ready-bar"><span style="width:100%"></span></div></div></td>
+                <td><span class="stamp st-published">Publié</span></td>
+                <td class="updated-cell">08 juil., 16h48</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger"><svg><use href="#i-download"/></svg></button>
+                    <span class="action-pill a-done"><svg><use href="#i-check"/></svg> Envoyé</span>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="bil" data-niveau="CE1 · Class 3" data-status="validated" data-search="ce1 class 3 brenda ekwalla">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">CE1 · Class 3<span class="class-badge">BIL</span></p><p class="class-code">BIL-N3-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">BE</div><span class="titulaire-name">Mme Brenda Ekwalla</span></div></td>
+                <td>22 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">22 / 22</span><div class="ready-bar"><span style="width:100%"></span></div></div></td>
+                <td><span class="stamp st-validated">Validé</span></td>
+                <td class="updated-cell">12 juil., 07h55</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger"><svg><use href="#i-download"/></svg></button>
+                    <button class="action-pill a-publish"><svg><use href="#i-send"/></svg> Publier</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="bil" data-niveau="CM1 · Class 5" data-status="pending" data-search="cm1 class 5 divine nkeng">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">CM1 · Class 5<span class="class-badge">BIL</span></p><p class="class-code">BIL-N5-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">DN</div><span class="titulaire-name">M. Divine Nkeng</span></div></td>
+                <td>24 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">10 / 24</span><div class="ready-bar"><span style="width:42%"></span></div></div></td>
+                <td><span class="stamp st-pending">À valider</span></td>
+                <td class="updated-cell">09 juil., 13h18</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger"><svg><use href="#i-download"/></svg></button>
+                    <button class="action-pill a-validate"><svg><use href="#i-check"/></svg> Valider</button>
+                  </div>
+                </td>
+              </tr>
+
+              <tr data-section="bil" data-niveau="CP · Class 1" data-status="draft" data-search="cp class 1 solange ateba">
+                <td class="spine-cell"><span class="spine"></span></td>
+                <td class="class-cell"><p class="class-title">CP · Class 1<span class="class-badge">BIL</span></p><p class="class-code">BIL-N1-BUL-T2</p></td>
+                <td><div class="titulaire-cell"><div class="mini-avatar">SA</div><span class="titulaire-name">Mme Solange Ateba</span></div></td>
+                <td>20 élèves</td>
+                <td><div class="ready-cell"><span class="ready-frac">0 / 20</span><div class="ready-bar"><span style="width:0%"></span></div></div></td>
+                <td><span class="stamp st-draft">Brouillon</span></td>
+                <td class="updated-cell">—</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Voir"><svg><use href="#i-eye"/></svg></button>
+                    <button class="icon-btn" title="Télécharger" disabled style="opacity:.35;cursor:default;"><svg><use href="#i-download"/></svg></button>
+                    <button class="action-pill a-generate"><svg><use href="#i-refresh"/></svg> Générer</button>
+                  </div>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+        <div class="empty" id="empty">
+          <svg><use href="#i-empty"/></svg>
+          <p>Aucune classe ne correspond à ces critères. Essayez d'ajuster les filtres.</p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const tabs = document.querySelectorAll('.tab');
+const folder = document.getElementById('folder');
+const rows = document.querySelectorAll('#tbody tr');
+const fSection = document.getElementById('f-section');
+const fNiveau = document.getElementById('f-niveau');
+const fSearch = document.getElementById('f-search');
+const countPill = document.getElementById('count-pill');
+const emptyState = document.getElementById('empty');
+const tableWrap = document.querySelector('.table-wrap');
+const termBtns = document.querySelectorAll('#term-switch button');
+
+let activeTab = 'all';
+
+tabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('is-active'));
+    tab.classList.add('is-active');
+    activeTab = tab.dataset.tab;
+    folder.dataset.active = activeTab;
+    applyFilters();
+  });
+});
+
+termBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    termBtns.forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+  });
+});
+
+function applyFilters(){
+  const section = fSection.value;
+  const niveau = fNiveau.value.toLowerCase();
+  const search = fSearch.value.trim().toLowerCase();
+  let visible = 0;
+
+  rows.forEach(row => {
+    const matchTab = activeTab === 'all' || row.dataset.status === activeTab;
+    const matchSection = !section || row.dataset.section === section;
+    const matchNiveau = !niveau || row.dataset.niveau.toLowerCase().includes(niveau);
+    const matchSearch = !search || row.dataset.search.includes(search);
+    const show = matchTab && matchSection && matchNiveau && matchSearch;
+    row.style.display = show ? '' : 'none';
+    if(show) visible++;
+  });
+
+  countPill.textContent = visible + (visible > 1 ? ' classes affichées' : ' classe affichée');
+  tableWrap.style.display = visible ? '' : 'none';
+  emptyState.style.display = visible ? 'none' : 'block';
+}
+
+fSection.addEventListener('change', applyFilters);
+fNiveau.addEventListener('change', applyFilters);
+fSearch.addEventListener('input', applyFilters);
+
+// Ouvre le bulletin d'une classe sur la page dédiée "Bulletin élève"
+document.querySelectorAll('.icon-btn[title="Voir"]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const row = btn.closest('tr');
+    const code = row.querySelector('.class-code')?.textContent.trim();
+    if(code){ window.location.href = 'bulletin-eleve.html?classe=' + encodeURIComponent(code); }
+  });
+});
+</script>
+
+</body>
+</html>

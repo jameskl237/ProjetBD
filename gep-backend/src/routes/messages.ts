@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { messagesTable, personneTable, parentsTable } from "@workspace/db/schema";
-import { eq, and, inArray, or } from "drizzle-orm";
+import { messagesTable, personneTable, parentsTable, anneeAcademiqueTable, salleTable, frequenteTable, enseignantTable, coursTable } from "@workspace/db/schema";
+import { eq, and, inArray, or, aliasedTable, desc } from "drizzle-orm";
 import { authenticate } from "../middlewares/auth.ts";
 import { authorize, ROLES, getRole } from "../middlewares/rbac.ts";
 
@@ -17,9 +17,10 @@ router.get("/", async (req, res) => {
     const rows = await db
       .select({ message: messagesTable, expediteur: expediteurAlias, parent: parentsTable, destinataire: destinataireAlias })
       .from(messagesTable)
-      .leftJoin(personneTable, eq(messagesTable.idExp_Pers, personneTable.idPers))
-      .leftJoin(parentsTable, eq(messagesTable.idParent, parentsTable.idParent));
-    const msgs = rows.map(({ message, expediteur, parent }) => ({ ...message, expediteur, parent }));
+      .leftJoin(expediteurAlias, eq(messagesTable.idExp_Pers, expediteurAlias.idPers))
+      .leftJoin(parentsTable, eq(messagesTable.idParent, parentsTable.idParent))
+      .leftJoin(destinataireAlias, eq(messagesTable.recipientPersId, destinataireAlias.idPers));
+    const msgs = rows.map(({ message, expediteur, parent, destinataire }) => ({ ...message, expediteur, parent, destinataire }));
 
     // Les admins/sec voient tout. Les enseignants/parents ne voient que les annonces qui leur sont destinées.
     if (role === ROLES.ADMINISTRATEUR || role === ROLES.SECRETAIRE || role === ROLES.COMPTABLE) {

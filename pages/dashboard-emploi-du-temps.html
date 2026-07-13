@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Emploi du temps — Groupe Scolaire Bilingue Excellence</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#22271F;
+  --paper:#F7F4EC;
+  --paper-raised:#FDFCF7;
+  --chalk:#1E3932;
+  --chalk-light:#2C4A42;
+  --chalk-lighter:#3C5D53;
+  --line: rgba(34,39,31,0.14);
+  --line-strong: rgba(34,39,31,0.24);
+
+  --fr:#2B4C7E;   --fr-tint:#E6ECF4;  --fr-text:#1D3A63;
+  --en:#A63D40;   --en-tint:#F5E7E6;  --en-text:#7C2C2E;
+  --bil:#3E8E7E;  --bil-tint:#E4F1EC; --bil-text:#296155;
+  --gold:#C9A227; --gold-tint:#F7EFD6; --gold-text:#6B5514;
+  --gen:#8B8E80;  --gen-tint:#EDEAE0; --gen-text:#54574B;
+  --danger:#A63D40;
+
+  --shadow-sm: 0 1px 2px rgba(30,57,50,0.06), 0 1px 1px rgba(30,57,50,0.04);
+  --shadow-md: 0 8px 20px rgba(30,57,50,0.08), 0 2px 6px rgba(30,57,50,0.05);
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{ background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+::selection{ background:var(--gold-tint); color:var(--ink); }
+
+.app{ display:grid; grid-template-columns:248px 1fr; min-height:100vh; }
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{ background:var(--chalk); color:#EDEFE9; padding:28px 20px; display:flex; flex-direction:column; gap:36px; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-mark{ width:40px;height:40px;border-radius:9px; background:linear-gradient(155deg, var(--fr) 0 34%, var(--en) 34% 67%, var(--bil) 67% 100%); flex-shrink:0; position:relative; }
+.brand-mark::after{ content:""; position:absolute; inset:5px; border-radius:5px; background:var(--chalk); opacity:0.14; }
+.brand-name{ font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; line-height:1.25; }
+.brand-sub{ font-size:11px; color:#AEC0B8; margin-top:3px; letter-spacing:0.3px; }
+.nav{ display:flex; flex-direction:column; gap:2px; }
+.nav-label{ font-size:10.5px; text-transform:uppercase; letter-spacing:1.2px; color:#8CA79C; margin:6px 10px 8px; font-weight:600; }
+.nav a{ display:flex; align-items:center; gap:11px; padding:9px 12px; border-radius:8px; color:#CBD6CE; text-decoration:none; font-size:13.8px; font-weight:500; transition:background .15s ease, color .15s ease; }
+.nav a:hover{ background:var(--chalk-light); color:#fff; }
+.nav a.active{ background:var(--chalk-lighter); color:#fff; }
+.nav a.active svg{ color:var(--gold); }
+.nav svg{ width:17px; height:17px; flex-shrink:0; color:#89A499; }
+.nav a:hover svg{ color:#fff; }
+.sidebar-foot{ margin-top:auto; border-top:1px solid rgba(255,255,255,0.1); padding-top:16px; display:flex; align-items:center; gap:10px; }
+.avatar{ width:34px;height:34px;border-radius:50%; background:var(--gold-tint); color:#5B4A0E; display:flex;align-items:center;justify-content:center; font-family:'Fraunces',serif; font-weight:600; font-size:13px; flex-shrink:0; }
+.sf-name{ font-size:13px; font-weight:600; color:#fff; margin:0; }
+.sf-role{ font-size:11.5px; color:#9DB3A9; margin:0; }
+
+/* ---------- MAIN ---------- */
+.main{ display:flex; flex-direction:column; min-height:100vh; }
+.topbar{ display:flex; align-items:flex-start; justify-content:space-between; padding:22px 40px 0; gap:20px; flex-wrap:wrap; }
+.eyebrow{ font-size:11.5px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--bil-text); margin:0 0 6px; }
+.page-title{ font-family:'Fraunces',serif; font-weight:600; font-size:30px; margin:0; color:var(--ink); letter-spacing:-0.2px; }
+.page-sub{ margin:6px 0 0; font-size:14px; color:#5B6155; max-width:520px; }
+.topbar-actions{ display:flex; align-items:center; gap:10px; }
+.btn{ display:inline-flex; align-items:center; gap:8px; font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; padding:10px 16px; border-radius:9px; cursor:pointer; border:1px solid transparent; transition:transform .1s ease, box-shadow .15s ease, background .15s ease; }
+.btn:active{ transform:scale(0.98); }
+.btn-ghost{ background:var(--paper-raised); border-color:var(--line-strong); color:var(--ink); }
+.btn-ghost:hover{ border-color:var(--ink); }
+.btn-danger{ color:var(--danger); border-color:rgba(166,61,64,0.4); }
+.btn-danger:hover{ background:var(--en-tint); border-color:var(--danger); }
+.btn-primary{ background:var(--chalk); color:#fff; box-shadow:var(--shadow-sm); }
+.btn-primary:hover{ background:var(--chalk-light); }
+.btn svg{ width:15px; height:15px; }
+
+.content{ padding:22px 40px 56px; }
+
+/* ---------- CLASS BAR ---------- */
+.class-bar{
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  background:var(--paper-raised); border:1px solid var(--line); border-radius:12px;
+  padding:16px 20px; margin-top:24px; box-shadow:var(--shadow-sm);
+}
+.class-bar label{ font-size:11.5px; font-weight:600; color:#75786C; display:block; margin-bottom:5px; }
+.class-bar select{
+  font-family:'Fraunces',serif; font-weight:600; font-size:15px; color:var(--ink);
+  border:1px solid var(--line-strong); background:#fff; border-radius:8px; padding:9px 14px; cursor:pointer; min-width:210px;
+}
+.section-badge{ font-size:11.5px; font-weight:600; padding:5px 12px; border-radius:20px; }
+.meta-strip{ display:flex; align-items:center; gap:18px; margin-left:auto; flex-wrap:wrap; }
+.meta-item{ display:flex; align-items:center; gap:7px; font-size:13px; color:#4B4F44; }
+.meta-item svg{ width:15px; height:15px; color:#93968A; }
+
+/* ---------- LEGEND ---------- */
+.legend{ display:flex; align-items:center; gap:18px; margin:20px 2px 16px; flex-wrap:wrap; }
+.legend-item{ display:flex; align-items:center; gap:7px; font-size:12.5px; color:#5B6155; }
+.legend-dot{ width:9px; height:9px; border-radius:50%; }
+
+/* ---------- TABLE ---------- */
+.table-wrap{ background:var(--paper-raised); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow-md); overflow:hidden; }
+table.schedule{ width:100%; border-collapse:collapse; table-layout:fixed; }
+table.schedule thead th{
+  font-family:'Fraunces',serif; font-weight:600; font-size:13.5px; color:var(--ink);
+  padding:13px 8px; text-align:center; border-bottom:2px solid var(--line-strong); background:#F1EEE2;
+}
+table.schedule thead th:first-child{ width:118px; }
+.time-cell{
+  font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#6C6F62;
+  padding:10px 10px; text-align:right; border-right:1px solid var(--line); vertical-align:middle; white-space:nowrap;
+}
+.course-cell{
+  border:1px solid var(--line); padding:9px 10px; vertical-align:top; cursor:pointer;
+  transition:filter .12s ease; height:64px;
+}
+.course-cell:hover{ filter:brightness(0.97); }
+.course-cell:focus-visible{ outline:2px solid var(--chalk); outline-offset:-2px; }
+.cc-subject{ margin:0 0 3px; font-family:'Fraunces',serif; font-weight:600; font-size:13.5px; line-height:1.25; }
+.cc-teacher{ margin:0; font-size:11.5px; color:#4B4F44; }
+.cc-room{ margin:1px 0 0; font-size:10.5px; color:#8B8E80; font-family:'IBM Plex Mono',monospace; }
+.empty-cell{ background:transparent; display:flex; align-items:center; justify-content:center; }
+.empty-cell:hover{ background:#F1EEE2; }
+.cc-add{ font-size:12px; color:#B9BCAC; font-weight:600; }
+.empty-cell:hover .cc-add{ color:#5B6155; }
+tr.break-row{ background:#EFEBDD; }
+.break-cell{
+  text-align:center; font-size:12px; font-weight:600; color:#8B8E80; letter-spacing:0.6px;
+  text-transform:uppercase; padding:8px; border:1px solid var(--line);
+}
+
+/* ---------- EDITOR PANEL ---------- */
+.editor{
+  margin-top:20px; background:var(--paper-raised); border:1px solid var(--line-strong); border-radius:12px;
+  padding:20px 22px; box-shadow:var(--shadow-md); border-top:3px solid var(--chalk);
+}
+.editor[hidden]{ display:none; }
+.editor-title{ font-family:'Fraunces',serif; font-weight:600; font-size:16px; margin:0; }
+.editor-sub{ font-size:12.5px; color:#75786C; margin:3px 0 0; font-family:'IBM Plex Mono',monospace; }
+.editor-fields{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:18px 0 6px; }
+.editor-fields label{ font-size:11.5px; font-weight:600; color:#75786C; display:flex; flex-direction:column; gap:6px; }
+.editor-fields input, .editor-fields select{
+  font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink); font-weight:400;
+  border:1px solid var(--line-strong); background:#fff; border-radius:8px; padding:9px 11px; outline:none;
+}
+.editor-fields input:focus, .editor-fields select:focus{ border-color:var(--ink); }
+.editor-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:14px; }
+
+@media (max-width:880px){
+  .app{ grid-template-columns:1fr; }
+  .sidebar{ display:none; }
+  .content{ padding:18px 18px 40px; }
+  .topbar{ padding:18px 18px 0; }
+  .meta-strip{ margin-left:0; }
+  .editor-fields{ grid-template-columns:1fr 1fr; }
+  table.schedule{ font-size:11px; }
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 11l8-7 8 7"/><path d="M6 10v9h12v-9"/></symbol>
+  <symbol id="i-students" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="2.6"/><circle cx="17" cy="9" r="2.2"/><path d="M2.5 20c1-3.4 3.2-5 5.5-5s4.5 1.6 5.5 5"/><path d="M14 20c.8-2.7 2.4-4 4.2-4 1.7 0 3.2 1.2 4 3.6"/></symbol>
+  <symbol id="i-teachers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M7 20h10M12 16v4"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"/><path d="M20 19H6.5A2.5 2.5 0 0 0 4 21.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l9 5-9 5-9-5 9-5Z"/><path d="M3 13l9 5 9-5"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3H9.8l-.4 2.5a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.3-.9c.6.5 1.3.9 2 1.2l.4 2.5h4.4l.4-2.5c.7-.3 1.4-.7 2-1.2l2.3.9 2-3.4-2-1.6c.1-.4.1-.8.1-1.2Z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.4-3.6 4.2-5.4 7-5.4s5.6 1.8 7 5.4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.3"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.4"/><path d="M3 20c.9-3.4 3.1-5 6-5s5.1 1.6 6 5"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="1.5"/><path d="M6 14h12v7H6z"/></symbol>
+</svg>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name">Excellence<br>Bilingual School</div>
+        <div class="brand-sub">Espace administration</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Général</div>
+      <a href="#"><svg><use href="#i-home"/></svg> Tableau de bord</a>
+      <a href="#"><svg><use href="#i-students"/></svg> Élèves</a>
+      <a href="#"><svg><use href="#i-teachers"/></svg> Enseignants</a>
+
+      <div class="nav-label">Pédagogie</div>
+      <a href="#"><svg><use href="#i-book"/></svg> Cours</a>
+      <a href="#" class="active"><svg><use href="#i-calendar"/></svg> Emploi du temps</a>
+      <a href="#"><svg><use href="#i-layers"/></svg> Sections</a>
+
+      <div class="nav-label">Système</div>
+      <a href="#"><svg><use href="#i-settings"/></svg> Paramètres</a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="avatar">DN</div>
+      <div>
+        <p class="sf-name">Mme Nadège Talla</p>
+        <p class="sf-role">Directrice des études</p>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">Pédagogie · Année scolaire 2025–2026</p>
+        <h1 class="page-title">Emploi du temps</h1>
+        <p class="page-sub">Construisez l'emploi du temps de chaque classe, créneau par créneau. Cliquez sur une case pour l'ajouter ou la modifier.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost"><svg><use href="#i-print"/></svg> Imprimer</button>
+        <button class="btn btn-primary"><svg><use href="#i-calendar"/></svg> Publier l'emploi du temps</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <div class="class-bar">
+        <div>
+          <label for="class-select">Classe</label>
+          <select id="class-select"></select>
+        </div>
+        <span class="section-badge" id="section-badge"></span>
+        <div class="meta-strip">
+          <span class="meta-item"><svg><use href="#i-user"/></svg><span id="meta-titulaire"></span></span>
+          <span class="meta-item"><svg><use href="#i-pin"/></svg><span id="meta-room"></span></span>
+          <span class="meta-item"><svg><use href="#i-group"/></svg><span id="meta-effectif"></span></span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--fr)"></span>Langues</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--gold)"></span>Mathématiques</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--bil)"></span>Sciences</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--en)"></span>Arts et sport</span>
+        <span class="legend-item"><span class="legend-dot" style="background:var(--gen)"></span>Vie de classe</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="schedule">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+
+      <div class="editor" id="editor" hidden>
+        <p class="editor-title" id="editor-title">Modifier le créneau</p>
+        <p class="editor-sub" id="editor-sub">Lundi · 08h15–09h00</p>
+        <div class="editor-fields">
+          <label>Matière
+            <input id="ed-subject" type="text" placeholder="Ex. Mathématiques">
+          </label>
+          <label>Famille
+            <select id="ed-fam">
+              <option value="lang">Langues</option>
+              <option value="math">Mathématiques</option>
+              <option value="sci">Sciences</option>
+              <option value="art">Arts et sport</option>
+              <option value="gen">Vie de classe</option>
+            </select>
+          </label>
+          <label>Enseignant
+            <input id="ed-teacher" type="text" placeholder="Nom de l'enseignant">
+          </label>
+          <label>Salle
+            <input id="ed-room" type="text" placeholder="Ex. Salle 12">
+          </label>
+        </div>
+        <div class="editor-actions">
+          <button class="btn btn-ghost" id="ed-cancel">Annuler</button>
+          <button class="btn btn-ghost btn-danger" id="ed-delete">Supprimer le cours</button>
+          <button class="btn btn-primary" id="ed-save">Enregistrer</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const FAMILIES = {
+  lang:{ label:'Langues', tint:'var(--fr-tint)', text:'var(--fr-text)' },
+  math:{ label:'Mathématiques', tint:'var(--gold-tint)', text:'var(--gold-text)' },
+  sci:{ label:'Sciences', tint:'var(--bil-tint)', text:'var(--bil-text)' },
+  art:{ label:'Arts et sport', tint:'var(--en-tint)', text:'var(--en-text)' },
+  gen:{ label:'Vie de classe', tint:'var(--gen-tint)', text:'var(--gen-text)' }
+};
+
+const DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+
+const TIME_SLOTS = [
+  { time:'07h30 – 08h15', type:'course' },
+  { time:'08h15 – 09h00', type:'course' },
+  { time:'09h00 – 09h45', type:'course' },
+  { time:'09h45 – 10h15', type:'break', label:'Récréation' },
+  { time:'10h15 – 11h00', type:'course' },
+  { time:'11h00 – 11h45', type:'course' },
+  { time:'11h45 – 13h00', type:'break', label:'Pause déjeuner' },
+  { time:'13h00 – 13h45', type:'course' },
+  { time:'13h45 – 14h30', type:'course' }
+];
+
+function c(subject, teacher, room, fam){ return { subject, teacher, room, fam }; }
+
+const schedules = {
+  ce2a:{
+    label:'CE2 A', section:'fr', sectionLabel:'Francophone',
+    titulaire:'M. Jean Ateba', room:'Salle 12', effectif:'38 élèves',
+    grid:[
+      [c('Mathématiques','M. Ateba','Salle 12','math'), c('Français','Mme Ngo Bakoa','Salle 12','lang'), c('Mathématiques','M. Ateba','Salle 12','math'), c('Mathématiques','M. Ateba','Salle 12','math'), c('Français','Mme Ngo Bakoa','Salle 12','lang')],
+      [c('Français','Mme Ngo Bakoa','Salle 12','lang'), c('Mathématiques','M. Ateba','Salle 12','math'), c('Français','Mme Ngo Bakoa','Salle 12','lang'), c('Français','Mme Ngo Bakoa','Salle 12','lang'), c('Mathématiques','M. Ateba','Salle 12','math')],
+      [c('Histoire-Géographie','M. Ateba','Salle 12','gen'), c('Éducation civique et morale','Mme Fouda','Salle 12','gen'), c('Sciences d\u2019observation','M. Mvondo','Salle 12','sci'), c('Sciences d\u2019observation','M. Mvondo','Salle 12','sci'), c('Éducation civique et morale','Mme Fouda','Salle 12','gen')],
+      [c('Sciences d\u2019observation','M. Mvondo','Salle 12','sci'), c('Français (orthographe)','Mme Ngo Bakoa','Salle 12','lang'), c('Histoire-Géographie','M. Ateba','Salle 12','gen'), c('Français','Mme Ngo Bakoa','Salle 12','lang'), c('Arts plastiques','M. Owona','Salle 12','art')],
+      [c('Français (lecture)','Mme Ngo Bakoa','Salle 12','lang'), c('Mathématiques','M. Ateba','Salle 12','math'), c('Français','Mme Ngo Bakoa','Salle 12','lang'), c('Mathématiques','M. Ateba','Salle 12','math'), c('Chant et poésie','Mme Fouda','Salle 12','art')],
+      [c('Anglais (LV)','Mme Eyenga','Salle 12','lang'), c('EPS','M. Biloa','Cour','art'), null, c('Anglais (LV)','Mme Eyenga','Salle 12','lang'), c('Devoirs surveillés','M. Ateba','Salle 12','gen')],
+      [c('Arts plastiques','M. Owona','Salle 12','art'), c('Chant et poésie','Mme Fouda','Salle 12','art'), null, c('EPS','M. Biloa','Cour','art'), c('Bibliothèque','Mme Ngo Bakoa','CDI','gen')]
+    ]
+  },
+  class4:{
+    label:'Class 4', section:'en', sectionLabel:'Anglophone',
+    titulaire:'Mrs. Comfort Ashu', room:'Room 6', effectif:'41 pupils',
+    grid:[
+      [c('English language','Mrs. Ashu','Room 6','lang'), c('Mathematics','Mr. Tabe','Room 6','math'), c('English language','Mrs. Ashu','Room 6','lang'), c('Mathematics','Mr. Tabe','Room 6','math'), c('English language','Mrs. Ashu','Room 6','lang')],
+      [c('Mathematics','Mr. Tabe','Room 6','math'), c('English language','Mrs. Ashu','Room 6','lang'), c('Mathematics','Mr. Tabe','Room 6','math'), c('English language','Mrs. Ashu','Room 6','lang'), c('Mathematics','Mr. Tabe','Room 6','math')],
+      [c('Social studies','Mr. Fonki','Room 6','gen'), c('Religious and moral education','Mrs. Egbe','Room 6','gen'), c('Basic science','Mrs. Egbe','Room 6','sci'), c('Basic science','Mrs. Egbe','Room 6','sci'), c('Religious and moral education','Mrs. Egbe','Room 6','gen')],
+      [c('Basic science','Mrs. Egbe','Room 6','sci'), c('English','Mrs. Ashu','Room 6','lang'), c('Social studies','Mr. Fonki','Room 6','gen'), c('English','Mrs. Ashu','Room 6','lang'), c('Creative arts','Mr. Fonki','Room 6','art')],
+      [c('English (reading)','Mrs. Ashu','Room 6','lang'), c('Mathematics','Mr. Tabe','Room 6','math'), c('English','Mrs. Ashu','Room 6','lang'), c('Mathematics','Mr. Tabe','Room 6','math'), c('Music','Mrs. Egbe','Room 6','art')],
+      [c('French','Mme Eyenga','Room 6','lang'), c('Creative arts','Mr. Fonki','Room 6','art'), null, c('French','Mme Eyenga','Room 6','lang'), c('Homework club','Mrs. Ashu','Room 6','gen')],
+      [c('Physical education','Mr. Biloa','Field','art'), c('Music','Mrs. Egbe','Room 6','art'), null, c('Physical education','Mr. Biloa','Field','art'), c('Library','Mrs. Ashu','Library','gen')]
+    ]
+  },
+  cm1bil:{
+    label:'CM1 Bilingue', section:'bil', sectionLabel:'Bilingue',
+    titulaire:'M. Divine Nkeng', room:'Salle 4', effectif:'35 élèves',
+    grid:[
+      [c('Mathématiques / Mathematics','M. Nkeng','Salle 4','math'), c('Français','M. Nkeng','Salle 4','lang'), c('Mathématiques','M. Nkeng','Salle 4','math'), c('Mathématiques','M. Nkeng','Salle 4','math'), c('Français','M. Nkeng','Salle 4','lang')],
+      [c('Français','M. Nkeng','Salle 4','lang'), c('Mathématiques','M. Nkeng','Salle 4','math'), c('English','Mrs. Ashu','Salle 4','lang'), c('Français','M. Nkeng','Salle 4','lang'), c('Mathématiques','M. Nkeng','Salle 4','math')],
+      [c('English language','Mrs. Ashu','Salle 4','lang'), c('English','Mrs. Ashu','Salle 4','lang'), c('Français','M. Nkeng','Salle 4','lang'), c('English','Mrs. Ashu','Salle 4','lang'), c('English','Mrs. Ashu','Salle 4','lang')],
+      [c('Sciences / Science','Mme Ekwalla','Salle 4','sci'), c('Mathematics','M. Nkeng','Salle 4','math'), c('Science','Mme Ekwalla','Salle 4','sci'), c('Sciences / Science','Mme Ekwalla','Salle 4','sci'), c('Arts / Creative arts','M. Owona','Salle 4','art')],
+      [c('Expression orale','Mme Ateba','Salle 4','lang'), c('French','M. Nkeng','Salle 4','lang'), c('Social studies','Mrs. Ashu','Salle 4','gen'), c('Mathématiques','M. Nkeng','Salle 4','math'), c('Music','M. Owona','Salle 4','art')],
+      [c('Anglais renforcement','Mrs. Ashu','Salle 4','lang'), c('EPS / PE','M. Biloa','Cour','art'), null, c('Français renforcement','M. Nkeng','Salle 4','lang'), c('Évaluation','M. Nkeng','Salle 4','gen')],
+      [c('Arts / Creative arts','M. Owona','Salle 4','art'), c('Chant / Music','M. Owona','Salle 4','art'), null, c('English club','Mrs. Ashu','Salle 4','lang'), c('Bibliothèque','M. Nkeng','CDI','gen')]
+    ]
+  }
+};
+
+const SECTION_STYLE = {
+  fr:{ bg:'var(--fr-tint)', color:'var(--fr-text)' },
+  en:{ bg:'var(--en-tint)', color:'var(--en-text)' },
+  bil:{ bg:'var(--bil-tint)', color:'var(--bil-text)' }
+};
+
+const classSelect = document.getElementById('class-select');
+const sectionBadge = document.getElementById('section-badge');
+const metaTitulaire = document.getElementById('meta-titulaire');
+const metaRoom = document.getElementById('meta-room');
+const metaEffectif = document.getElementById('meta-effectif');
+const tableBody = document.getElementById('table-body');
+const editor = document.getElementById('editor');
+const editorTitle = document.getElementById('editor-title');
+const editorSub = document.getElementById('editor-sub');
+const edSubject = document.getElementById('ed-subject');
+const edFam = document.getElementById('ed-fam');
+const edTeacher = document.getElementById('ed-teacher');
+const edRoom = document.getElementById('ed-room');
+const edDelete = document.getElementById('ed-delete');
+
+let currentClass = 'ce2a';
+let currentEdit = null;
+
+Object.keys(schedules).forEach(key=>{
+  const opt = document.createElement('option');
+  opt.value = key; opt.textContent = schedules[key].label;
+  classSelect.appendChild(opt);
+});
+classSelect.value = currentClass;
+
+function renderMeta(){
+  const data = schedules[currentClass];
+  const style = SECTION_STYLE[data.section];
+  sectionBadge.textContent = data.sectionLabel;
+  sectionBadge.style.background = style.bg;
+  sectionBadge.style.color = style.color;
+  metaTitulaire.textContent = 'Titulaire : ' + data.titulaire;
+  metaRoom.textContent = data.room;
+  metaEffectif.textContent = data.effectif;
+}
+
+function renderTable(){
+  const data = schedules[currentClass];
+  tableBody.innerHTML = '';
+  let courseIdx = 0;
+  TIME_SLOTS.forEach(slot=>{
+    const tr = document.createElement('tr');
+    const th = document.createElement('th');
+    th.className = 'time-cell';
+    th.textContent = slot.time;
+    th.scope = 'row';
+    tr.appendChild(th);
+
+    if(slot.type === 'break'){
+      tr.classList.add('break-row');
+      const td = document.createElement('td');
+      td.colSpan = DAYS.length;
+      td.className = 'break-cell';
+      td.textContent = slot.label;
+      tr.appendChild(td);
+    } else {
+      const rowIdx = courseIdx;
+      DAYS.forEach((day, dayIdx)=>{
+        const cellData = data.grid[rowIdx][dayIdx];
+        const td = document.createElement('td');
+        td.className = 'course-cell';
+        td.tabIndex = 0;
+        if(cellData){
+          const fam = FAMILIES[cellData.fam];
+          td.style.background = fam.tint;
+          td.innerHTML = '<p class="cc-subject" style="color:'+fam.text+'">'+cellData.subject+'</p>'
+            + '<p class="cc-teacher">'+cellData.teacher+'</p>'
+            + '<p class="cc-room">'+cellData.room+'</p>';
+        } else {
+          td.classList.add('empty-cell');
+          td.innerHTML = '<span class="cc-add">+ Ajouter</span>';
+        }
+        const openThis = ()=> openEditor(rowIdx, dayIdx, slot.time, day);
+        td.addEventListener('click', openThis);
+        td.addEventListener('keydown', e=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openThis(); } });
+        tr.appendChild(td);
+      });
+      courseIdx++;
+    }
+    tableBody.appendChild(tr);
+  });
+}
+
+function openEditor(rowIdx, dayIdx, time, day){
+  currentEdit = { rowIdx, dayIdx };
+  const cellData = schedules[currentClass].grid[rowIdx][dayIdx];
+  editorSub.textContent = day + ' · ' + time;
+  if(cellData){
+    editorTitle.textContent = 'Modifier le créneau';
+    edSubject.value = cellData.subject;
+    edFam.value = cellData.fam;
+    edTeacher.value = cellData.teacher;
+    edRoom.value = cellData.room;
+    edDelete.style.display = 'inline-flex';
+  } else {
+    editorTitle.textContent = 'Ajouter un cours';
+    edSubject.value = '';
+    edFam.value = 'lang';
+    edTeacher.value = schedules[currentClass].titulaire;
+    edRoom.value = schedules[currentClass].room;
+    edDelete.style.display = 'none';
+  }
+  editor.hidden = false;
+  editor.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+document.getElementById('ed-save').addEventListener('click', ()=>{
+  if(!currentEdit) return;
+  const subject = edSubject.value.trim();
+  if(!subject){ edSubject.focus(); return; }
+  schedules[currentClass].grid[currentEdit.rowIdx][currentEdit.dayIdx] = c(subject, edTeacher.value.trim() || '—', edRoom.value.trim() || '—', edFam.value);
+  editor.hidden = true;
+  currentEdit = null;
+  renderTable();
+});
+
+edDelete.addEventListener('click', ()=>{
+  if(!currentEdit) return;
+  schedules[currentClass].grid[currentEdit.rowIdx][currentEdit.dayIdx] = null;
+  editor.hidden = true;
+  currentEdit = null;
+  renderTable();
+});
+
+document.getElementById('ed-cancel').addEventListener('click', ()=>{
+  editor.hidden = true;
+  currentEdit = null;
+});
+
+classSelect.addEventListener('change', ()=>{
+  currentClass = classSelect.value;
+  editor.hidden = true;
+  currentEdit = null;
+  renderMeta();
+  renderTable();
+});
+
+renderMeta();
+renderTable();
+</script>
+
+</body>
+</html>

@@ -45,7 +45,10 @@ function BulletinSearch() {
   }, [])
 
   const filteredEleves = classeId
-    ? eleves.filter((e) => String(e.idClasse) === classeId)
+    ? eleves.filter((e) => {
+        const inscription = e.inscriptions?.[0]
+        return String(inscription?.classe?.idClasse) === classeId
+      })
     : eleves
 
   const handleLoad = useCallback(async () => {

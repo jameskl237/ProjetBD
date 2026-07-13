@@ -142,17 +142,23 @@ async function buildBulletin(matricule: number) {
   if (!eleveRow) return null;
   const eleve = { ...eleveRow.eleve, ville: eleveRow.ville };
 
-  const evaluations = await db.select().from(evaluationTable).where(eq(evaluationTable.matricule, matricule));
-  const sessions = await db.select().from(sessionTable);
-  const epreuves = await db.select().from(epreuveTable);
-  const cours = await db.select().from(coursTable);
-  const appreciations = await db.select().from(appreciationTable);
+  let evaluations: any[] = [];
+  let sessions: any[] = [];
+  let epreuves: any[] = [];
+  let cours: any[] = [];
+  let appreciations: any[] = [];
+
+  try { evaluations = await db.select().from(evaluationTable).where(eq(evaluationTable.matricule, matricule)); } catch { evaluations = []; }
+  try { sessions = await db.select().from(sessionTable); } catch { sessions = []; }
+  try { epreuves = await db.select().from(epreuveTable); } catch { epreuves = []; }
+  try { cours = await db.select().from(coursTable); } catch { cours = []; }
+  try { appreciations = await db.select().from(appreciationTable); } catch { appreciations = []; }
 
   const sessionsMap = Object.fromEntries(sessions.map(s => [s.idSession, s]));
   const epreuvesMap = Object.fromEntries(epreuves.map(e => [e.idEpreuve, e]));
   const coursMap = Object.fromEntries(cours.map(c => [c.idCours, c]));
 
-  const bySession: Record<number, { session: typeof sessions[0]; lignes: Array<{ cours: string; coef: number; note: number; appreciation: string; appreciationFr: string; appreciationEn: string }> }> = {};
+  const bySession: Record<number, { session: { idSession: number; libelle: string; description: string | null; idTrimestre: number; idPers: number; date_passage: any; created_at: any }; lignes: Array<{ cours: string; coef: number; note: number; appreciation: string; appreciationFr: string; appreciationEn: string }> }> = {};
 
   for (const ev of evaluations) {
     const sid = ev.idSession ?? 0;

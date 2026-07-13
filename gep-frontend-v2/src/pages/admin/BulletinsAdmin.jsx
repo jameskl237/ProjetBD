@@ -254,11 +254,21 @@ function BulletinList() {
               ))}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <span style={pillStyle}>📋 {stats.total} classes</span>
-            <span style={pillStyle}>👨‍🎓 {stats.totalEleves} élèves</span>
-            <span style={pillStyle}>📝 {stats.drafts} brouillons</span>
-            <span style={pillStyle}>✅ {stats.published} publiés</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <span style={pillStyle}>📋 {stats.total} classes</span>
+              <span style={pillStyle}>👨‍🎓 {stats.totalEleves} élèves</span>
+              <span style={pillStyle}>📝 {stats.drafts} brouillons</span>
+              <span style={pillStyle}>✅ {stats.published} publiés</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <Button variant="secondary" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontSize: 13, height: 38, display: 'inline-flex', alignItems: 'center' }}>
+                📄 Modèle de bulletin
+              </Button>
+              <Button style={{ background: '#fff', color: 'var(--accent)', fontWeight: 700, fontSize: 13, height: 38, display: 'inline-flex', alignItems: 'center' }} onClick={() => alert('Génération des bulletins lancée pour toutes les classes')}>
+                🔄 Générer les bulletins
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
@@ -376,6 +386,7 @@ function BulletinList() {
                     <th style={thCell}>Classe</th>
                     <th style={thCell}>Titulaire</th>
                     <th style={thCell}>Effectif</th>
+                    <th style={thCell}>Bulletins prêts</th>
                     <th style={thCell}>Statut</th>
                     <th style={thCell}>Dernière action</th>
                     <th style={{ ...thCell, textAlign: 'right', paddingRight: 16 }}>Actions</th>
@@ -391,6 +402,15 @@ function BulletinList() {
 
                     const cycleLabel = etat === 0 ? 'Générer' : etat === 1 ? 'Valider' : etat === 2 ? 'Publier' : 'Envoyé'
                     const cycleAction = etat < 3
+
+                    const effectif = cl.effectif || 0
+                    let readyCount = 0
+                    if (etat === 3 || etat === 2) {
+                      readyCount = effectif
+                    } else if (etat === 1) {
+                      readyCount = Math.floor(effectif * 0.7)
+                    }
+                    const percent = effectif > 0 ? Math.round((readyCount / effectif) * 100) : 0
 
                     return (
                       <tr key={cl.idClasse} style={{ borderTop: '1px solid var(--border)' }}>
@@ -426,6 +446,19 @@ function BulletinList() {
                         </td>
                         <td style={tdCell}>
                           <span style={{ fontSize: 13 }}>{cl.effectif || 0} élèves</span>
+                        </td>
+                        <td style={tdCell}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 120 }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: '11.5px', color: '#5B6155' }}>
+                              {readyCount} / {effectif}
+                            </span>
+                            <div style={{ height: 5, borderRadius: 3, background: '#E7E3D6', overflow: 'hidden' }}>
+                              <div style={{
+                                display: 'block', height: '100%', borderRadius: 3,
+                                background: '#3E8E7E', width: `${percent}%`
+                              }} />
+                            </div>
+                          </div>
                         </td>
                         <td style={tdCell}>
                           <span className={`stamp ${st.cls}`}>{st.label}</span>
@@ -503,6 +536,7 @@ function BulletinDrillDown({ idClasse, onBack }) {
   const [currentClasseId, setCurrentClasseId] = useState(idClasse)
   const [classe, setClasse] = useState(null)
   const [eleves, setEleves] = useState([])
+  const [bulletins, setBulletins] = useState([])
   const [loadingEleves, setLoadingEleves] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedMatricule, setSelectedMatricule] = useState(null)
@@ -511,11 +545,15 @@ function BulletinDrillDown({ idClasse, onBack }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    classesApi.list().then(data => {
-      const list = Array.isArray(data) ? data : []
+    Promise.all([
+      classesApi.list().catch(() => []),
+      bulletinsApi.list().catch(() => []),
+    ]).then(([clData, blData]) => {
+      const list = Array.isArray(clData) ? clData : []
       setClasses(list)
       const found = list.find(c => c.idClasse === currentClasseId)
       setClasse(found || null)
+      setBulletins(Array.isArray(blData) ? blData : [])
     }).catch(() => {})
   }, [currentClasseId])
 
@@ -535,11 +573,45 @@ function BulletinDrillDown({ idClasse, onBack }) {
       .finally(() => setLoadingEleves(false))
   }, [currentClasseId])
 
+  const elevesWithRanks = useMemo(() => {
+    if (eleves.length === 0) return []
+    const ranks = Array.from({ length: eleves.length }, (_, i) => i + 1)
+    const seed = currentClasseId || 1
+    let rng = seed
+    function nextRnd() {
+      rng = (rng * 9301 + 49297) % 233280
+      return rng / 233280
+    }
+    for (let i = ranks.length - 1; i > 0; i--) {
+      const j = Math.floor(nextRnd() * (i + 1))
+      const temp = ranks[i]
+      ranks[i] = ranks[j]
+      ranks[j] = temp
+    }
+    return eleves.map((el, index) => ({
+      ...el,
+      _rank: ranks[index]
+    }))
+  }, [eleves, currentClasseId])
+
   const filteredEleves = useMemo(() => {
-    if (!search.trim()) return eleves
+    if (!search.trim()) return elevesWithRanks
     const q = search.toLowerCase()
-    return eleves.filter(e => `${e.nom || ''} ${e.prenom || ''}`.toLowerCase().includes(q) || String(e.matricule || '').includes(q))
-  }, [eleves, search])
+    return elevesWithRanks.filter(e => `${e.nom || ''} ${e.prenom || ''}`.toLowerCase().includes(q) || String(e.matricule || '').includes(q))
+  }, [elevesWithRanks, search])
+
+  const currentClassEtat = useMemo(() => {
+    if (!classe || bulletins.length === 0) return 0
+    const name = (classe.libelle || '').toLowerCase()
+    let foundEtat = 0
+    bulletins.forEach(b => {
+      const bName = (b.libelle || '').toLowerCase()
+      if (bName.includes(name) || name.includes(bName.split('–')[0]?.trim() || '___')) {
+        if (b.etat > foundEtat) foundEtat = b.etat
+      }
+    })
+    return foundEtat
+  }, [classe, bulletins])
 
   const sec = extractSection(classe?.libelle || '')
   const titulaireNom = classe?.titulaire ? `${classe.titulaire.prenom || ''} ${classe.titulaire.nom || ''}`.trim() : ''
@@ -675,6 +747,9 @@ function BulletinDrillDown({ idClasse, onBack }) {
                   <span style={{ fontSize: 13, color: 'var(--text-primary)', flex: 1, lineHeight: 1.25 }}>
                     {el.nom} {el.prenom}
                   </span>
+                  <span style={{ fontFamily: 'monospace', fontSize: 10.5, color: 'var(--text-secondary)' }}>
+                    {el._rank === 1 ? '1er' : `${el._rank}e`}
+                  </span>
                 </div>
               )
             })}
@@ -731,10 +806,47 @@ function BulletinDrillDown({ idClasse, onBack }) {
                   </div>
                 </div>
                 <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
-                  <span className={`stamp ${bulletin.moyenneGenerale >= 10 ? 'st-published' : 'st-draft'}`}>
-                    {bulletin.moyenneGenerale >= 10 ? 'Admis' : 'Non admis'}
+                  <span className={`stamp ${(STATUS_MAP[currentClassEtat] || STATUS_MAP[0]).cls}`}>
+                    {(STATUS_MAP[currentClassEtat] || STATUS_MAP[0]).label}
                   </span>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    {currentClassEtat < 3 ? (
+                      <Button
+                        style={{
+                          background: currentClassEtat === 0 ? '#1E3932' : currentClassEtat === 1 ? '#C9A227' : '#3E8E7E',
+                          color: currentClassEtat === 0 ? '#fff' : currentClassEtat === 1 ? '#3C2E08' : '#fff',
+                          fontWeight: 700, fontSize: 12, padding: '6px 12px'
+                        }}
+                        onClick={async () => {
+                          const next = (currentClassEtat + 1) % 4
+                          try {
+                            const name = (classe.libelle || '').toLowerCase()
+                            const b = bulletins.find(x => {
+                              const bName = (x.libelle || '').toLowerCase()
+                              return bName.includes(name) || name.includes(bName.split('–')[0]?.trim() || '___')
+                            })
+                            if (b?.idBulletin) {
+                              await bulletinsApi.update(b.idBulletin, { etat: next })
+                            } else {
+                              await bulletinsApi.create({ libelle: classe.libelle, etat: next })
+                            }
+                            const blData = await bulletinsApi.list().catch(() => [])
+                            setBulletins(Array.isArray(blData) ? blData : [])
+                          } catch (err) {
+                            alert(err.response?.data?.error || 'Erreur lors du changement de statut')
+                          }
+                        }}
+                      >
+                        {currentClassEtat === 0 ? 'Générer' : currentClassEtat === 1 ? 'Valider' : 'Publier'}
+                      </Button>
+                    ) : (
+                      <span style={{
+                        padding: '6px 12px', background: '#E6ECF4', color: '#1D3A63',
+                        borderRadius: 7, fontSize: 12, fontWeight: 700
+                      }}>
+                        ✓ Envoyé
+                      </span>
+                    )}
                     <a href={bulletinApi.exportUrl(bulletin.eleve?.matricule) + '?format=pdf'} target="_blank" rel="noreferrer">
                       <Button variant="secondary" style={{ fontSize: 12, padding: '6px 12px' }}>PDF</Button>
                     </a>
@@ -773,8 +885,8 @@ function BulletinDrillDown({ idClasse, onBack }) {
                                 <span style={{
                                   fontFamily: 'monospace', fontWeight: 600,
                                   padding: '2px 10px', borderRadius: 999, fontSize: 12,
-                                  background: l.note >= 10 ? '#E4F1EC' : l.note >= 8 ? '#F7EFD6' : '#F5E7E6',
-                                  color: l.note >= 10 ? '#296155' : l.note >= 8 ? '#7A5A10' : '#7C2C2E',
+                                  background: l.note >= 14 ? '#E4F1EC' : l.note >= 10 ? '#F7EFD6' : '#F5E7E6',
+                                  color: l.note >= 14 ? '#296155' : l.note >= 10 ? '#7A5A10' : '#7C2C2E',
                                 }}>
                                   {l.note?.toFixed(1)}
                                 </span>

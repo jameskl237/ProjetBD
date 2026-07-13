@@ -36,18 +36,19 @@ async function findEmploiConflict(jour: string, heure: string, idCours: number, 
 router.get("/enseignants", authorize(ROLES.ADMINISTRATEUR, ROLES.ENSEIGNANT, ROLES.SECRETAIRE), async (_req, res) => {
   try {
     const rows = await db
-      .select({ enseignant: enseignantTable, personne: personneTable, cours: coursTable, classe: classeTable, titulaire: titulaireTable, salle: salleTable })
+      .select({ enseignant: enseignantTable, personne: personneTable, cours: coursTable, classe: classeTable, cycle: cycleTable, titulaire: titulaireTable, salle: salleTable })
       .from(enseignantTable)
       .leftJoin(personneTable, eq(enseignantTable.idPers, personneTable.idPers))
       .leftJoin(coursTable, eq(enseignantTable.idCours, coursTable.idCours))
       .leftJoin(classeTable, eq(coursTable.idClasse, classeTable.idClasse))
+      .leftJoin(cycleTable, eq(classeTable.idCycle, cycleTable.idCycle))
       .leftJoin(titulaireTable, eq(enseignantTable.idPers, titulaireTable.idPers))
       .leftJoin(salleTable, eq(titulaireTable.idSalle, salleTable.idSalle))
       .where(eq(enseignantTable.isDelete, 0));
-    const ens = rows.map(({ enseignant, personne, cours, classe, salle }) => ({
+    const ens = rows.map(({ enseignant, personne, cours, classe, cycle, salle }) => ({
       ...enseignant,
       personne,
-      cours: cours ? { ...cours, classe } : null,
+      cours: cours ? { ...cours, classe, section: cycle?.libelle ?? null } : null,
       salle: salle || null,
     }));
     res.json(ens);
